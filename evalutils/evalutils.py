@@ -1,3 +1,6 @@
 # -*- coding: utf-8 -*-
+from abc import ABCMeta
 
-"""Main module."""
+
+class Evaluation(metaclass=ABCMeta):
+    pass
