@@ -6,10 +6,12 @@ class BoundingBox(object):
         """
         A bounding box is a face defined by 4 edges on a 2D plane. It must have
         a non-zero width and height.
-        :param x1: Left edge of the bounding box
-        :param x2: Right edge of the bounding box
-        :param y1: Bottom edge of the bounding box
-        :param y2: Top edge of the bounding box
+
+        Args:
+            x1: Left edge of the bounding box
+            x2: Right edge of the bounding box
+            y1: Bottom edge of the bounding box
+            y2: Top edge of the bounding box
         """
 
         # Force the provided values to the correct edges
@@ -31,10 +33,15 @@ class BoundingBox(object):
     def intersection(self, *, bb2: 'BoundingBox') -> float:
         """
         Calculates the intersection area between this bounding box and a
-        second, axis aligned, bounding box. Returns 0 if the two bounding boxes
-        do not intersect.
-        :param bb2: The second bounding box
-        :return: The intersection area in natural units
+        second, axis aligned, bounding box.
+
+        Args:
+            bb2: The second bounding box
+
+        Returns:
+            The intersection area in natural units if the two bounding boxes
+            overlap, zero otherwise.
+
         """
 
         # Get the face that is the intersection between the 8 edges
@@ -56,8 +63,13 @@ class BoundingBox(object):
         """
         Calculates the union between this bounding box and a second,
         axis aligned, bounding box.
-        :param bb2: The second bounding box
-        :return: The union area in natural units
+
+        Args:
+            bb2: The second bounding box
+
+        Returns:
+            The union area in natural units
+
         """
         return self.area + bb2.area - self.intersection(bb2=bb2)
 
@@ -65,7 +77,12 @@ class BoundingBox(object):
         """
         Calculates the intersection over union between this bounding box and a
         second, axis aligned, bounding box.
-        :param bb2: The second bounding box
-        :return: The intersection over union in natural units
+
+        Args:
+            bb2: The second bounding box
+
+        Returns:
+            The intersection over union in natural units
+
         """
         return self.intersection(bb2=bb2) / self.union(bb2=bb2)
