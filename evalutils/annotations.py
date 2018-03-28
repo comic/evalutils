@@ -7,11 +7,22 @@ class BoundingBox(object):
         A bounding box is a face defined by 4 edges on a 2D plane. It must have
         a non-zero width and height.
 
-        Args:
-            x1: Left edge of the bounding box
-            x2: Right edge of the bounding box
-            y1: Bottom edge of the bounding box
-            y2: Top edge of the bounding box
+        Parameters
+        ----------
+        x1
+            Left edge of the bounding box
+        x2
+            Right edge of the bounding box
+        y1
+            Bottom edge of the bounding box
+        y2
+            Top edge of the bounding box
+
+        Raises
+        ------
+        ValueError
+            If the bounding box has zero width or height
+
         """
 
         # Force the provided values to the correct edges
@@ -35,10 +46,13 @@ class BoundingBox(object):
         Calculates the intersection area between this bounding box and a
         second, axis aligned, bounding box.
 
-        Args:
-            bb2: The second bounding box
+        Parameters
+        ----------
+        bb2
+            The second bounding box
 
-        Returns:
+        Returns
+        -------
             The intersection area in natural units if the two bounding boxes
             overlap, zero otherwise.
 
@@ -64,10 +78,13 @@ class BoundingBox(object):
         Calculates the union between this bounding box and a second,
         axis aligned, bounding box.
 
-        Args:
-            bb2: The second bounding box
+        Parameters
+        ----------
+        bb2
+            The second bounding box
 
-        Returns:
+        Returns
+        -------
             The union area in natural units
 
         """
@@ -78,10 +95,13 @@ class BoundingBox(object):
         Calculates the intersection over union between this bounding box and a
         second, axis aligned, bounding box.
 
-        Args:
-            bb2: The second bounding box
+        Parameters
+        ----------
+        bb2
+            The second bounding box
 
-        Returns:
+        Returns
+        -------
             The intersection over union in natural units
 
         """

@@ -18,32 +18,106 @@ def test_bbox_area(x1, x2, y1, y2, expected):
 
 def test_invalid_bbox():
     with pytest.raises(ValueError):
-        BoundingBox(x1=10, x2=10, y1=10, y2=11)
+        BoundingBox(x1=10.0, x2=10.0, y1=10.0, y2=11.0)
 
     with pytest.raises(ValueError):
-        BoundingBox(x1=10, x2=11, y1=10, y2=10)
+        BoundingBox(x1=10.0, x2=11.0, y1=10.0, y2=10.0)
 
 
 @pytest.mark.parametrize(
     "bb1,bb2,expected",
     [
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=10, x2=20, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=10, x2=20, y1=30, y2=40),
          100),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=5, x2=15, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=5, x2=15, y1=30, y2=40),
          50),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=0, x2=10, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=10, y1=30, y2=40),
          0),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=0, x2=9, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=9, y1=30, y2=40),
          0),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=0, x2=11, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=30, y2=40),
          10),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=0, x2=11, y1=35, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=35, y2=40),
          5),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=0, x2=11, y1=40, y2=41),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=40, y2=41),
          0),
-        (BoundingBox(x1=10, x2=20, y1=30, y2=40), BoundingBox(x1=-10, x2=-20, y1=30, y2=40),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=-10, x2=-20, y1=30, y2=40),
          0),
     ])
 def test_bbox_intersection(bb1, bb2, expected):
     assert bb1.intersection(bb2=bb2) == expected
     assert bb2.intersection(bb2=bb1) == expected
+
+
+@pytest.mark.parametrize(
+    "bb1,bb2,expected",
+    [
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         100),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=5, x2=15, y1=30, y2=40),
+         150),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=10, y1=30, y2=40),
+         200),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=9, y1=30, y2=40),
+         190),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=30, y2=40),
+         200),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=35, y2=40),
+         150),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=40, y2=41),
+         111),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=-10, x2=-20, y1=30, y2=40),
+         200),
+    ])
+def test_bbox_union(bb1, bb2, expected):
+    assert bb1.union(bb2=bb2) == expected
+    assert bb2.union(bb2=bb1) == expected
+
+
+@pytest.mark.parametrize(
+    "bb1,bb2,expected",
+    [
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         1),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=5, x2=15, y1=30, y2=40),
+         1 / 3),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=10, y1=30, y2=40),
+         0),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=9, y1=30, y2=40),
+         0),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=30, y2=40),
+         0.05),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=35, y2=40),
+         5 / 150),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=0, x2=11, y1=40, y2=41),
+         0),
+        (BoundingBox(x1=10, x2=20, y1=30, y2=40),
+         BoundingBox(x1=-10, x2=-20, y1=30, y2=40),
+         0),
+    ])
+def test_bbox_intersection_over_union(bb1, bb2, expected):
+    assert bb1.intersection_over_union(bb2=bb2) == expected
+    assert bb2.intersection_over_union(bb2=bb1) == expected
