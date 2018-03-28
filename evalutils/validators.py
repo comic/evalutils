@@ -27,3 +27,15 @@ class DataFrameValidator(ABC):
 
         """
         raise ValidationError
+
+class UniqueFileIndicesValidator(DataFrameValidator):
+    pass
+
+class UniqueImagesValidator(DataFrameValidator):
+    pass
+
+class ExpectedColumnNamesValidator(DataFrameValidator):
+    pass
+
+class NumberOfCasesValidator(DataFrameValidator):
+    pass
