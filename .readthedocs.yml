@@ -1,5 +1,2 @@
-
-requirements_file: requirements_dev.txt
-
 conda:
     file: docs/environment.yml

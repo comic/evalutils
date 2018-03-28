@@ -4,6 +4,7 @@ channels:
 dependencies:
  - pip:
     - SimpleITK
+    - sphinx-autodoc-typehints
  - python=3.6
  - pandas
  - imageio
