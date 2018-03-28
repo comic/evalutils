@@ -2,7 +2,8 @@ name: evalutils
 channels:
  - anaconda
 dependencies:
+ - pip:
+    - SimpleITK
  - python=3.6
  - pandas
  - imageio
- - SimpleITK
