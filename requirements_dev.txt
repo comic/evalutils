@@ -12,5 +12,3 @@ twine==1.11.0
 pytest==3.5.0
 pytest-cov==2.5.1
 pytest-runner==4.2
-
-scikit-build
