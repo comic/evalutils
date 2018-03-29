@@ -20,7 +20,7 @@ class Evaluation(ABC):
         file_sorter_key=first_int_in_filename_key,
         file_loader: FileLoader,
         output_file: Path = Path('/output/metrics.json'),
-        validators: Tuple[DataFrameValidator] = (),
+        validators: Tuple[DataFrameValidator, ...] = (),
     ):
         super().__init__()
         self._ground_truth_path = ground_truth_path

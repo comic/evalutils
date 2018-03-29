@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Tuple
 
 from pandas import DataFrame
 
@@ -11,21 +12,21 @@ from evalutils.io import first_int_in_filename_key
 class DataFrameValidator(ABC):
     @abstractmethod
     def validate(self, *, df: DataFrame):
-        """ Validates a single aspect of a dataframe
+        """ Validates a single aspect of a DataFrame
 
         Parameters
         ----------
         df
-            The dataframe to be validated
+            The DataFrame to be validated
 
         Returns
         -------
-            None if the dataframe is valid
+            None if the DataFrame is valid
 
         Raises
         ------
         ValidationError
-            If the dataframe is not valid
+            If the DataFrame is not valid
 
         """
         raise ValidationError
@@ -36,7 +37,7 @@ class UniquePathIndicesValidator(DataFrameValidator):
         try:
             paths = df['path']
         except KeyError:
-            raise ValidationError('Column `path` not found in dataframe.')
+            raise ValidationError('Column `path` not found in DataFrame.')
 
         idx = [first_int_in_filename_key(Path(p)) for p in paths]
 
@@ -52,7 +53,63 @@ class UniqueImagesValidator(DataFrameValidator):
 
 
 class ExpectedColumnNamesValidator(DataFrameValidator):
-    pass
+    def __init__(
+        self,
+        *,
+        expected: Tuple[str, ...],
+        extra_cols_check: bool = True,
+    ):
+        """ Validates that the DataFrame has the expected columns
+
+        Examples
+        --------
+        TODO
+
+        Parameters
+        ----------
+        expected
+            The expected columns in the DataFrame
+        extra_cols_check
+            Perform the check for extra columns, default is true but you may
+            want to disable this if you're sure that extra columns can be
+            ignored.
+
+        Raises
+        ------
+        ValueError
+            If no columns are defined
+
+        """
+        self._expected = expected
+
+        if len(self._expected) == 0:
+            raise ValueError(
+                'You must define what columns you expect to find in the '
+                f'DataFrame in order to use {self.__class__.__name__}.'
+            )
+
+        self._extra_cols_check = extra_cols_check
+
+    def validate(self, *, df: DataFrame):
+
+        undefined_cols = [c for c in self._expected if c not in df.columns]
+
+        if undefined_cols:
+            raise ValidationError(
+                f'We expected to find the following columns but we didn\'t: '
+                f'{undefined_cols}. Please check the column labels, and '
+                f'note that this is case sensitive. We only found: '
+                f'{df.columns}.'
+            )
+
+        extra_cols = [c for c in df.columns if c not in self._expected]
+
+        if self._extra_cols_check and extra_cols:
+            raise ValidationError(
+                f'We only expected to find the columns {self._expected}. '
+                f'However, we also found that extra columns were defined: '
+                f'{extra_cols}. Please remove them.'
+            )
 
 
 class NumberOfCasesValidator(DataFrameValidator):
