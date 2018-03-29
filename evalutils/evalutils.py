@@ -79,7 +79,7 @@ class Evaluation:
         cases = DataFrame()
         for f in sorted(folder.glob('**/*'), key=self._file_sorter_key):
             try:
-                cases.append(
+                cases = cases.append(
                     self._file_loader.load(fname=f), ignore_index=True,
                 )
             except FileLoaderError:
@@ -156,7 +156,7 @@ class Evaluation:
     def score(self):
         self._case_results = DataFrame()
         for idx, case in self._cases.iterrows():
-            self._case_results.append(
+            self._case_results = self._case_results.append(
                 self.score_case(idx=idx, case=case), ignore_index=True
             )
         self._aggregate_results = self.score_aggregates()
@@ -164,9 +164,7 @@ class Evaluation:
     # noinspection PyUnusedLocal
     @staticmethod
     def score_case(*, idx: int, case: Series) -> Dict:
-        return {
-            'case_idx': idx,
-        }
+        return {}
 
     def score_aggregates(self) -> Dict:
         aggregate_results = {}
