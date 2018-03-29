@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-class BoundingBox(object):
+class BoundingBox:
     def __init__(self, *, x1: float, x2: float, y1: float, y2: float):
         """
         A bounding box is a face defined by 4 edges on a 2D plane. It must have

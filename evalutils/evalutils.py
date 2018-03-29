@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-from abc import ABC
 from pathlib import Path
 from typing import Tuple, Dict, Set
 
@@ -11,7 +10,7 @@ from .io import first_int_in_filename_key, FileLoader
 from .validators import DataFrameValidator
 
 
-class Evaluation(ABC):
+class Evaluation:
     def __init__(
         self,
         *,
@@ -20,7 +19,7 @@ class Evaluation(ABC):
         file_sorter_key=first_int_in_filename_key,
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...] = (),
-        join_column: str = None,
+        join_key: str = None,
         aggregates: Set[str] = {
             'mean',
             'std',
@@ -35,13 +34,12 @@ class Evaluation(ABC):
         },
         output_file: Path = Path('/output/metrics.json'),
     ):
-        super().__init__()
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
         self._file_loader = file_loader
         self._validators = validators
-        self._join_column = join_column
+        self._join_key = join_key
         self._aggregates = aggregates
         self._output_file = output_file
 
@@ -52,6 +50,7 @@ class Evaluation(ABC):
 
         self._case_results = DataFrame()
         self._aggregate_results = {}
+        super().__init__()
 
     @property
     def _metrics(self):
@@ -98,8 +97,8 @@ class Evaluation(ABC):
             validator.validate(df=df)
 
     def merge_ground_truth_and_predictions(self):
-        if self._join_column:
-            kwargs = {'on': self._join_column}
+        if self._join_key:
+            kwargs = {'on': self._join_key}
         else:
             kwargs = {'left_index': True, 'right_index': True}
 
@@ -125,11 +124,11 @@ class Evaluation(ABC):
             self._raise_extra_predictions_error(extra=extra)
 
     def _raise_missing_predictions_error(self, *, missing):
-        if self._join_column:
-            missing = [p[self._join_column] for p in missing]
+        if self._join_key:
+            missing = [p[self._join_key] for p in missing]
             message = (
                 'Predictions missing: you did not submit predictions for '
-                f'{self._join_column}: {missing}. Please try again.'
+                f'{self._join_key}: {missing}. Please try again.'
             )
         else:
             message = (
@@ -140,11 +139,11 @@ class Evaluation(ABC):
         raise ValidationError(message)
 
     def _raise_extra_predictions_error(self, *, extra):
-        if self._join_column:
-            extra = [p[self._join_column] for p in extra]
+        if self._join_key:
+            extra = [p[self._join_key] for p in extra]
             message = (
                 'Too many predictions: we do not have the ground truth data '
-                f'for {self._join_column}: {extra}. Please try again.'
+                f'for {self._join_key}: {extra}. Please try again.'
             )
         else:
             message = (
