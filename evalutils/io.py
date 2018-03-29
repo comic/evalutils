@@ -46,6 +46,34 @@ class FileLoader(ABC):
     @staticmethod
     @abstractmethod
     def load(*, fname: Path) -> Dict:
+        """
+
+        TODO
+
+        Notes
+        -----
+        For this to work with the validators you must:
+
+            If you load an image it must be saved in the `img` column
+
+            If you reference a Path it must be saved in the `path` column
+
+
+        Parameters
+        ----------
+        fname
+            TODO
+
+        Returns
+        -------
+            TODO
+
+        Raises
+        ------
+        FileLoaderError
+            If a file cannot be loaded as the specified type
+
+        """
         raise FileLoaderError
 
 

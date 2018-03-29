@@ -51,10 +51,14 @@ class Evaluation(ABC):
         self.save()
 
     def load(self):
-        self._ground_truth_cases = self._load_cases(self._ground_truth_path)
-        self._predictions_cases = self._load_cases(self._predictions_path)
+        self._ground_truth_cases = self._load_cases(
+            folder=self._ground_truth_path
+        )
+        self._predictions_cases = self._load_cases(
+            folder=self._predictions_path
+        )
 
-    def _load_cases(self, folder: Path) -> DataFrame:
+    def _load_cases(self, *, folder: Path) -> DataFrame:
         cases = DataFrame()
         for f in sorted(folder.glob('**/*'), key=self._file_sorter_key):
             try:
@@ -67,13 +71,13 @@ class Evaluation(ABC):
         return cases
 
     def validate(self):
-        self._validate_data_frame(self._ground_truth_cases)
-        self._validate_data_frame(self._predictions_cases)
+        self._validate_data_frame(df=self._ground_truth_cases)
+        self._validate_data_frame(df=self._predictions_cases)
         self.cross_validate()
 
-    def _validate_data_frame(self, df: DataFrame):
+    def _validate_data_frame(self, *, df: DataFrame):
         for validator in self._validators:
-            validator.validate(df)
+            validator.validate(df=df)
 
     def cross_validate(self):
         pass
