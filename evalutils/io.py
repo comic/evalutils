@@ -8,7 +8,7 @@ from SimpleITK import ReadImage
 from imageio import imread
 from pandas import read_csv
 
-from evalutils.exceptions import FileLoaderError
+from .exceptions import FileLoaderError
 
 
 def get_first_int_in(s: str) -> Union[int, None]:

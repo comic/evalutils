@@ -5,8 +5,8 @@ from typing import Tuple
 
 from pandas import DataFrame
 
-from evalutils.exceptions import ValidationError
-from evalutils.io import first_int_in_filename_key
+from .exceptions import ValidationError
+from .io import first_int_in_filename_key
 
 
 class DataFrameValidator(ABC):

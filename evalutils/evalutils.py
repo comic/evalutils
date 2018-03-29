@@ -2,13 +2,13 @@
 import json
 from abc import ABC
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Dict, Set
 
-from pandas import DataFrame, merge
+from pandas import DataFrame, merge, Series
 
-from evalutils.exceptions import FileLoaderError, ValidationError
-from evalutils.io import first_int_in_filename_key, FileLoader
-from evalutils.validators import DataFrameValidator
+from .exceptions import FileLoaderError, ValidationError
+from .io import first_int_in_filename_key, FileLoader
+from .validators import DataFrameValidator
 
 
 class Evaluation(ABC):
@@ -21,6 +21,18 @@ class Evaluation(ABC):
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...] = (),
         join_column: str = None,
+        aggregates: Set[str] = {
+            'mean',
+            'std',
+            'min',
+            'max',
+            '25%',
+            '50%',
+            '75%',
+            'count',
+            'uniq',
+            'freq',
+        },
         output_file: Path = Path('/output/metrics.json'),
     ):
         super().__init__()
@@ -28,8 +40,9 @@ class Evaluation(ABC):
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
         self._file_loader = file_loader
-        self._join_column = join_column
         self._validators = validators
+        self._join_column = join_column
+        self._aggregates = aggregates
         self._output_file = output_file
 
         self._ground_truth_cases = DataFrame()
@@ -68,8 +81,7 @@ class Evaluation(ABC):
         for f in sorted(folder.glob('**/*'), key=self._file_sorter_key):
             try:
                 cases.append(
-                    self._file_loader.load(fname=f),
-                    ignore_index=True,
+                    self._file_loader.load(fname=f), ignore_index=True,
                 )
             except FileLoaderError:
                 # Couldn't load this file with this loader, but don't worry
@@ -143,16 +155,53 @@ class Evaluation(ABC):
         raise ValidationError(message)
 
     def score(self):
-        pass
+        self._case_results = DataFrame()
+        for idx, case in self._cases.iterrows():
+            self._case_results.append(
+                self.score_case(idx=idx, case=case), ignore_index=True
+            )
+        self._aggregate_results = self.score_aggregates()
 
-    def score_case(self):
-        pass
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def score_case(*, idx: int, case: Series) -> Dict:
+        return {
+            'case_idx': idx,
+        }
 
-    def score_aggregates(self):
-        pass
+    def score_aggregates(self) -> Dict:
+        aggregate_results = {}
+
+        for col in self._case_results.columns:
+            aggregate_results[col] = self.aggregate_series(
+                series=self._case_results[col]
+            )
+
+        return aggregate_results
+
+    def aggregate_series(self, *, series: Series) -> Dict:
+        summary = series.describe()
+        valid_keys = [a for a in self._aggregates if a in summary]
+
+        series_summary = {}
+
+        for k in valid_keys:
+            value = summary[k]
+            key = k.replace('%', 'pc')
+
+            try:
+                json.dumps(value)
+            except TypeError:
+                # We cannot serialize this value to JSON, so cast the value to
+                # an int. This occurs for freq & count keys in pandas
+                value = int(value)
+
+            series_summary[key] = value
+
+        return series_summary
 
     def save(self):
-        pass
+        self.write_metrics_json()
 
     def write_metrics_json(self):
         with open(self._output_file, 'w') as f:
