@@ -10,6 +10,7 @@ from evalutils.validators import (
     UniquePathIndicesValidator,
     ExpectedColumnNamesValidator,
     UniqueImagesValidator,
+    NumberOfCasesValidator,
 )
 
 
@@ -84,3 +85,21 @@ def test_unique_images_duplicate(images):
 def test_unique_images_ok(images):
     df = DataFrame(images)
     UniqueImagesValidator().validate(df=df)
+
+
+def test_number_of_predictions_badly_configured():
+    with pytest.raises(ValueError):
+        NumberOfCasesValidator(num_cases=-32)
+
+
+def test_number_of_predictions_wrong():
+    df = DataFrame({'foo': ['bar'] * 1337})
+    with pytest.raises(ValidationError):
+        NumberOfCasesValidator(num_cases=1000).validate(df=df)
+    with pytest.raises(ValidationError):
+        NumberOfCasesValidator(num_cases=2000).validate(df=df)
+
+
+def test_number_of_predictions_ok():
+    df = DataFrame({'foo': ['bar'] * 10})
+    NumberOfCasesValidator(num_cases=10).validate(df=df)

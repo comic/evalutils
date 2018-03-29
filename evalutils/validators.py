@@ -92,15 +92,15 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
             If no columns are defined
 
         """
-        self._expected = expected
-
-        if len(self._expected) == 0:
+        if len(expected) == 0:
             raise ValueError(
                 'You must define what columns you expect to find in the '
                 f'DataFrame in order to use {self.__class__.__name__}.'
             )
 
+        self._expected = expected
         self._extra_cols_check = extra_cols_check
+        super().__init__()
 
     def validate(self, *, df: DataFrame):
 
@@ -125,4 +125,19 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
 
 
 class NumberOfCasesValidator(DataFrameValidator):
-    pass
+    def __init__(self, *, num_cases: int):
+        if num_cases <= 0:
+            raise ValueError(
+                'The expected number of cases must be greater than zero in '
+                f'{self.__class__.__name__}.'
+            )
+
+        self._num_cases = num_cases
+        super().__init__()
+
+    def validate(self, *, df: DataFrame):
+        if len(df) != self._num_cases:
+            raise ValidationError(
+                f'We expected to find {self._num_cases}, but we found '
+                f'{len(df)}. Please correct the number of predictions.'
+            )
