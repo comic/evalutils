@@ -5,8 +5,11 @@ import pytest
 from pandas import DataFrame
 
 from evalutils.exceptions import ValidationError
+from evalutils.io import ImageIOLoader
 from evalutils.validators import (
-    UniquePathIndicesValidator, ExpectedColumnNamesValidator,
+    UniquePathIndicesValidator,
+    ExpectedColumnNamesValidator,
+    UniqueImagesValidator,
 )
 
 
@@ -51,3 +54,33 @@ def test_expected_columns_ok():
     validator = ExpectedColumnNamesValidator(expected=('foo', 'bar',))
     df = DataFrame(columns=['foo', 'bar'])
     validator.validate(df=df)
+
+
+@pytest.fixture(scope='module')
+def images():
+    image1 = ImageIOLoader().load(
+        fname=Path(__file__).parent / 'resources' / 'images' / '1_mask.png'
+    )
+    image2 = ImageIOLoader().load(
+        fname=Path(__file__).parent / 'resources' / 'images' / '2_mask.png'
+    )
+    return [image1, image2]
+
+
+def test_unique_images_no_img_col():
+    df = DataFrame(columns=['foo'])
+    with pytest.raises(ValidationError):
+        UniqueImagesValidator().validate(df=df)
+
+
+def test_unique_images_duplicate(images):
+    df = DataFrame([images[0], images[0]])
+    assert df.columns.all() in ['img', 'path']
+
+    with pytest.raises(ValidationError):
+        UniqueImagesValidator().validate(df=df)
+
+
+def test_unique_images_ok(images):
+    df = DataFrame(images)
+    UniqueImagesValidator().validate(df=df)

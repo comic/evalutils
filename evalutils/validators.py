@@ -49,7 +49,19 @@ class UniquePathIndicesValidator(DataFrameValidator):
 
 
 class UniqueImagesValidator(DataFrameValidator):
-    pass
+    def validate(self, *, df: DataFrame):
+        try:
+            images = df['img']
+        except KeyError:
+            raise ValidationError('Column `img` not found in DataFrame.')
+
+        hashes = [hash(img.tostring()) for img in images]
+
+        if len(set(hashes)) != len(images):
+            raise ValidationError(
+                'The images are not unique, please submit a unique image for '
+                'each case.'
+            )
 
 
 class ExpectedColumnNamesValidator(DataFrameValidator):
