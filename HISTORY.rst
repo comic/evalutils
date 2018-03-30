@@ -2,6 +2,14 @@
 History
 =======
 
+0.1.5 (2018-03-30)
+------------------
+
+* Corrects loading of some CSV files
+* Adds logging and more tests
+* Adds referencing to `_ground_truth` and `_prediction` in joined pandas tables
+
+
 0.1.3 (2018-03-29)
 ------------------
 
