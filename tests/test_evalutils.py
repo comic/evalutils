@@ -73,6 +73,7 @@ def test_series_aggregation():
             return {
                 "accuracy": 1.0 if case["class_ground_truth"] == case[
                     "class_prediction"] else 0.0,
+                "case_id": str(idx),
             }
 
     e = C()
@@ -81,5 +82,5 @@ def test_series_aggregation():
     assert e._metrics["aggregates"]["accuracy"]["mean"] == 0.5
     assert len(e._metrics) == 2
     assert len(e._metrics["case"]["accuracy"]) == 8
-    assert len(e._metrics["aggregates"]) == 1
+    assert len(e._metrics["aggregates"]) == 2
     assert len(e._metrics["aggregates"]["accuracy"]) == 8
