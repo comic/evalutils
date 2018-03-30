@@ -8,6 +8,7 @@ from typing import Union, Dict
 from SimpleITK import ReadImage
 from imageio import imread
 from pandas import read_csv
+from pandas.errors import ParserError, EmptyDataError
 
 from .exceptions import FileLoaderError
 
@@ -114,3 +115,8 @@ class CSVLoader(FileLoader):
             return read_csv(fname, skipinitialspace=True).to_dict()
         except UnicodeDecodeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
+        except(ParserError, EmptyDataError):
+            raise ValueError(
+                f"CSV file could not be loaded: we could not load "
+                f"{fname.name} using `pandas.read_csv`."
+            )

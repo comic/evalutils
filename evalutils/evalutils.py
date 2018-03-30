@@ -91,7 +91,7 @@ class Evaluation:
                 new_cases = self._file_loader.load(fname=f)
             except FileLoaderError:
                 logger.warning(
-                    f"Could not load {f} using {self._file_loader}."
+                    f"Could not load {f.name} using {self._file_loader}."
                 )
             else:
                 if cases is None:
