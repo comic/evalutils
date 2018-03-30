@@ -6,8 +6,8 @@ from typing import Tuple, Dict, Set
 
 from pandas import DataFrame, merge, Series
 
-from .exceptions import FileLoaderError, ValidationError
-from .io import first_int_in_filename_key, FileLoader
+from .exceptions import FileLoaderError, ValidationError, ConfigurationError
+from .io import first_int_in_filename_key, FileLoader, CSVLoader
 from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class Evaluation:
         predictions_path: Path = Path("/input/"),
         file_sorter_key=first_int_in_filename_key,
         file_loader: FileLoader,
-        validators: Tuple[DataFrameValidator, ...] = (),
+        validators: Tuple[DataFrameValidator, ...],
         join_key: str = None,
         aggregates: Set[str] = {
             "mean",
@@ -54,6 +54,11 @@ class Evaluation:
         self._case_results = DataFrame()
         self._aggregate_results = {}
         super().__init__()
+
+        if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
+            raise ConfigurationError(
+                f"You must set a `join_key` when using {self._file_loader}."
+            )
 
     @property
     def _metrics(self):
@@ -96,7 +101,7 @@ class Evaluation:
 
         if cases is None:
             raise FileLoaderError(
-                f"Could not find any files to load in {folder} with "
+                f"Could not load and files in {folder} with "
                 f"{self._file_loader}."
             )
 

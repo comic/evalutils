@@ -11,3 +11,7 @@ class FileLoaderError(EvalUtilsException):
 
 class ValidationError(EvalUtilsException):
     pass
+
+
+class ConfigurationError(EvalUtilsException):
+    pass
