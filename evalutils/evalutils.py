@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 from pathlib import Path
 from typing import Tuple, Dict, Set
 
@@ -9,30 +10,32 @@ from .exceptions import FileLoaderError, ValidationError
 from .io import first_int_in_filename_key, FileLoader
 from .validators import DataFrameValidator
 
+logger = logging.getLogger(__name__)
+
 
 class Evaluation:
     def __init__(
         self,
         *,
         ground_truth_path: Path,
-        predictions_path: Path = Path('/input/'),
+        predictions_path: Path = Path("/input/"),
         file_sorter_key=first_int_in_filename_key,
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...] = (),
         join_key: str = None,
         aggregates: Set[str] = {
-            'mean',
-            'std',
-            'min',
-            'max',
-            '25%',
-            '50%',
-            '75%',
-            'count',
-            'uniq',
-            'freq',
+            "mean",
+            "std",
+            "min",
+            "max",
+            "25%",
+            "50%",
+            "75%",
+            "count",
+            "uniq",
+            "freq",
         },
-        output_file: Path = Path('/output/metrics.json'),
+        output_file: Path = Path("/output/metrics.json"),
     ):
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
@@ -55,8 +58,8 @@ class Evaluation:
     @property
     def _metrics(self):
         return {
-            'case': self._case_results.to_dict(),
-            'aggregates': self._aggregate_results,
+            "case": self._case_results.to_dict(),
+            "aggregates": self._aggregate_results,
         }
 
     def evaluate(self):
@@ -76,16 +79,27 @@ class Evaluation:
         )
 
     def _load_cases(self, *, folder: Path) -> DataFrame:
-        cases = DataFrame()
-        for f in sorted(folder.glob('**/*'), key=self._file_sorter_key):
+        cases = None
+
+        for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
             try:
-                cases = cases.append(
-                    self._file_loader.load(fname=f), ignore_index=True,
-                )
+                new_cases = self._file_loader.load(fname=f)
             except FileLoaderError:
-                # Couldn't load this file with this loader, but don't worry
-                # about it. This will be found in the validation.
-                pass
+                logger.warning(
+                    f"Could not load {f} using {self._file_loader}."
+                )
+            else:
+                if cases is None:
+                    cases = DataFrame(new_cases)
+                else:
+                    cases = cases.append(new_cases, ignore_index=True)
+
+        if cases is None:
+            raise FileLoaderError(
+                f"Could not find any files to load in {folder} with "
+                f"{self._file_loader}."
+            )
+
         return cases
 
     def validate(self):
@@ -98,24 +112,24 @@ class Evaluation:
 
     def merge_ground_truth_and_predictions(self):
         if self._join_key:
-            kwargs = {'on': self._join_key}
+            kwargs = {"on": self._join_key}
         else:
-            kwargs = {'left_index': True, 'right_index': True}
+            kwargs = {"left_index": True, "right_index": True}
 
         self._cases = merge(
             left=self._ground_truth_cases,
             right=self._predictions_cases,
             indicator=True,
-            how='outer',
-            suffixes=('ground_truth', 'prediction'),
+            how="outer",
+            suffixes=("_ground_truth", "_prediction"),
             **kwargs,
         )
 
     def cross_validate(self):
         missing = [p for _, p in self._cases.iterrows() if
-                   p['_merge'] == 'left_only']
+                   p["_merge"] == "left_only"]
         extra = [p for _, p in self._cases.iterrows() if
-                 p['_merge'] == 'right_only']
+                 p["_merge"] == "right_only"]
 
         if missing:
             self._raise_missing_predictions_error(missing=missing)
@@ -127,13 +141,13 @@ class Evaluation:
         if self._join_key:
             missing = [p[self._join_key] for p in missing]
             message = (
-                'Predictions missing: you did not submit predictions for '
-                f'{self._join_key}: {missing}. Please try again.'
+                "Predictions missing: you did not submit predictions for "
+                f"{self._join_key}: {missing}. Please try again."
             )
         else:
             message = (
-                'Predictions missing: you did not submit enough predictions,'
-                'please try again.'
+                "Predictions missing: you did not submit enough predictions, "
+                "please try again."
             )
 
         raise ValidationError(message)
@@ -142,13 +156,13 @@ class Evaluation:
         if self._join_key:
             extra = [p[self._join_key] for p in extra]
             message = (
-                'Too many predictions: we do not have the ground truth data '
-                f'for {self._join_key}: {extra}. Please try again.'
+                "Too many predictions: we do not have the ground truth data "
+                f"for {self._join_key}: {extra}. Please try again."
             )
         else:
             message = (
-                'Too many predictions: you submitted too many predictions, '
-                'please try again.'
+                "Too many predictions: you submitted too many predictions, "
+                "please try again."
             )
 
         raise ValidationError(message)
@@ -184,13 +198,15 @@ class Evaluation:
 
         for k in valid_keys:
             value = summary[k]
-            key = k.replace('%', 'pc')
+            key = k.replace("%", "pc")
 
             try:
                 json.dumps(value)
             except TypeError:
-                # We cannot serialize this value to JSON, so cast the value to
-                # an int. This occurs for freq & count keys in pandas
+                logger.warning(
+                    f"Could not serialize {key}: {value} as json, "
+                    f"so converting {value} to int."
+                )
                 value = int(value)
 
             series_summary[key] = value
@@ -201,5 +217,5 @@ class Evaluation:
         self.write_metrics_json()
 
     def write_metrics_json(self):
-        with open(self._output_file, 'w') as f:
+        with open(self._output_file, "w") as f:
             f.write(json.dumps(self._metrics))

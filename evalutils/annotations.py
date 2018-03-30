@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BoundingBox:
@@ -32,16 +35,27 @@ class BoundingBox:
         self.y_top = float(max(y1, y2))
 
         if self.x_right <= self.x_left:
-            raise ValueError('Bounding box has zero width')
+            raise ValueError("Bounding box has zero width")
         elif self.y_top <= self.y_bottom:
-            raise ValueError('Bounding box has zero height')
+            raise ValueError("Bounding box has zero height")
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}"
+            f"("
+            f"x1={self.x_left}, "
+            f"x2={self.x_right}, "
+            f"y1={self.y_bottom}, "
+            f"y2={self.y_top}"
+            f")"
+        )
 
     @property
     def area(self) -> float:
         """ Return the area of the bounding box in natural units """
         return (self.x_right - self.x_left) * (self.y_top - self.y_bottom)
 
-    def intersection(self, *, bb2: 'BoundingBox') -> float:
+    def intersection(self, *, bb2: "BoundingBox") -> float:
         """
         Calculates the intersection area between this bounding box and a
         second, axis aligned, bounding box.
@@ -66,14 +80,16 @@ class BoundingBox:
         y_top = min(self.y_top, bb2.y_top)
 
         if x_right <= x_left or y_top <= y_bottom:
-            # The two bounding boxes do not intersect
+            logger.warning(
+                f"The bounding boxes do not intersect. bb1={self}, bb2={bb2}."
+            )
             return 0.0
         else:
             return BoundingBox(
                 x1=x_left, x2=x_right, y1=y_bottom, y2=y_top
             ).area
 
-    def union(self, *, bb2: 'BoundingBox') -> float:
+    def union(self, *, bb2: "BoundingBox") -> float:
         """
         Calculates the union between this bounding box and a second,
         axis aligned, bounding box.
@@ -90,7 +106,7 @@ class BoundingBox:
         """
         return self.area + bb2.area - self.intersection(bb2=bb2)
 
-    def intersection_over_union(self, *, bb2: 'BoundingBox') -> float:
+    def intersection_over_union(self, *, bb2: "BoundingBox") -> float:
         """
         Calculates the intersection over union between this bounding box and a
         second, axis aligned, bounding box.

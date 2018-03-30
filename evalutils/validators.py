@@ -35,32 +35,32 @@ class DataFrameValidator(ABC):
 class UniquePathIndicesValidator(DataFrameValidator):
     def validate(self, *, df: DataFrame):
         try:
-            paths = df['path']
+            paths = df["path"]
         except KeyError:
-            raise ValidationError('Column `path` not found in DataFrame.')
+            raise ValidationError("Column `path` not found in DataFrame.")
 
         idx = [first_int_in_filename_key(Path(p)) for p in paths]
 
         if len(set(idx)) != len(paths):
             raise ValidationError(
-                'The first number is each filename is not unique, please '
-                'check that your files are named correctly.'
+                "The first number is each filename is not unique, please "
+                "check that your files are named correctly."
             )
 
 
 class UniqueImagesValidator(DataFrameValidator):
     def validate(self, *, df: DataFrame):
         try:
-            images = df['img']
+            images = df["img"]
         except KeyError:
-            raise ValidationError('Column `img` not found in DataFrame.')
+            raise ValidationError("Column `img` not found in DataFrame.")
 
         hashes = [hash(img.tostring()) for img in images]
 
         if len(set(hashes)) != len(images):
             raise ValidationError(
-                'The images are not unique, please submit a unique image for '
-                'each case.'
+                "The images are not unique, please submit a unique image for "
+                "each case."
             )
 
 
@@ -94,8 +94,8 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
         """
         if len(expected) == 0:
             raise ValueError(
-                'You must define what columns you expect to find in the '
-                f'DataFrame in order to use {self.__class__.__name__}.'
+                "You must define what columns you expect to find in the "
+                f"DataFrame in order to use {self.__class__.__name__}."
             )
 
         self._expected = expected
@@ -108,19 +108,19 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
 
         if undefined_cols:
             raise ValidationError(
-                f'We expected to find the following columns but we didn\'t: '
-                f'{undefined_cols}. Please check the column labels, and '
-                f'note that this is case sensitive. We only found: '
-                f'{df.columns}.'
+                f"We expected to find the following columns but we didn\'t: "
+                f"{undefined_cols}. Please check the column labels, and "
+                f"note that this is case sensitive. We only found: "
+                f"{df.columns}."
             )
 
         extra_cols = [c for c in df.columns if c not in self._expected]
 
         if self._extra_cols_check and extra_cols:
             raise ValidationError(
-                f'We only expected to find the columns {self._expected}. '
-                f'However, we also found that extra columns were defined: '
-                f'{extra_cols}. Please remove them.'
+                f"We only expected to find the columns {self._expected}. "
+                f"However, we also found that extra columns were defined: "
+                f"{extra_cols}. Please remove them."
             )
 
 
@@ -128,8 +128,8 @@ class NumberOfCasesValidator(DataFrameValidator):
     def __init__(self, *, num_cases: int):
         if num_cases <= 0:
             raise ValueError(
-                'The expected number of cases must be greater than zero in '
-                f'{self.__class__.__name__}.'
+                "The expected number of cases must be greater than zero in "
+                f"{self.__class__.__name__}."
             )
 
         self._num_cases = num_cases
@@ -138,6 +138,6 @@ class NumberOfCasesValidator(DataFrameValidator):
     def validate(self, *, df: DataFrame):
         if len(df) != self._num_cases:
             raise ValidationError(
-                f'We expected to find {self._num_cases}, but we found '
-                f'{len(df)}. Please correct the number of predictions.'
+                f"We expected to find {self._num_cases}, but we found "
+                f"{len(df)}. Please correct the number of predictions."
             )
