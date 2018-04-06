@@ -1,0 +1,7 @@
+{
+    "challenge_name": "",
+    "package_name": "{{ cookiecutter.challenge_name|replace(' ', '') }}",
+    "evalutils_name": "",
+    "evalutils_version": "",
+    "docker_base_container": "python:3.6-slim"
+}

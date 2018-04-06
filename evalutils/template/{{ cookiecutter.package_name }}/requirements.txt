@@ -1,0 +1,1 @@
+{{ cookiecutter.evalutils_name }}=={{ cookiecutter.evalutils_version }}

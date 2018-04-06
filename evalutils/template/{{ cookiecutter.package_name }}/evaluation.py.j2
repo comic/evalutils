@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict
+
+from pandas import Series
+
+from evalutils import Evaluation
+from evalutils.io import CSVLoader
+from evalutils.validators import ExpectedColumnNamesValidator
+
+
+class {{ cookiecutter.package_name }}(Evaluation):
+    def __init__(self):
+        super().__init__(
+            file_loader=CSVLoader(),
+            ground_truth_path=Path("/evaluation/ground-truth/"),
+            join_key="case",
+            validators=(
+                ExpectedColumnNamesValidator(expected=("case", "class",)),
+            ),
+        )
+
+    @staticmethod
+    def score_case(*, idx: int, case: Series) -> Dict:
+        return {
+            "accuracy": 1.0 if case["class_ground_truth"] == case[
+                "class_prediction"] else 0.0,
+            "case_id": str(idx),
+        }
+
+    def save(self):
+        # In this example we do not want to report the case wise accuracy
+        # results to metrics.json as this can leak the ground truth data.
+        # So, we remove it from the _case_results DataFrame
+        del self._case_results["accuracy"]
+        super().save()
+
+
+if __name__ == "__main__":
+    evaluation = {{ cookiecutter.package_name }}()
+    evaluation.evaluate()

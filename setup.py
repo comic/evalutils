@@ -14,7 +14,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['pandas', 'imageio', 'SimpleITK', ]
+requirements = ['pandas', 'imageio', 'SimpleITK', 'cookiecutter', 'click', ] 
 
 setup_requirements = ['pytest-runner', ]
 
@@ -53,4 +53,9 @@ setup(
     url='https://github.com/comic/evalutils',
     version=about['__version__'],
     zip_safe=False,
+    entry_points={
+        'console_scripts': [
+            'evalutils = evalutils.__main__:main',
+        ]
+    },
 )
