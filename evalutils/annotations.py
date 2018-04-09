@@ -50,6 +50,14 @@ class BoundingBox:
             f")"
         )
 
+    def __eq__(self, other: 'BoundingBox'):
+        return (
+            self.x_left == other.x_left
+            and self.x_right == other.x_right
+            and self.y_bottom == other.y_bottom
+            and self.y_top == other.y_top
+        )
+
     @property
     def area(self) -> float:
         """ Return the area of the bounding box in natural units """

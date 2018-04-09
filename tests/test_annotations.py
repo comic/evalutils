@@ -121,3 +121,10 @@ def test_bbox_union(bb1, bb2, expected):
 def test_bbox_intersection_over_union(bb1, bb2, expected):
     assert bb1.intersection_over_union(bb2=bb2) == expected
     assert bb2.intersection_over_union(bb2=bb1) == expected
+
+def test_eq():
+    bb1 = BoundingBox(x1=10, x2=20, y1=30, y2=40)
+    bb2 = BoundingBox(x1=10, x2=20, y1=30, y2=40)
+
+    assert bb1 == bb2
+    assert bb1 != BoundingBox(x1=11, x2=20, y1=30, y2=40)
