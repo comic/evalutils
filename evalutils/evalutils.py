@@ -203,6 +203,8 @@ class Evaluation:
 
         for k in valid_keys:
             value = summary[k]
+
+            # % in keys could cause problems when looking up values later
             key = k.replace("%", "pc")
 
             try:
