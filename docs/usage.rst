@@ -2,6 +2,6 @@
 Usage
 =====
 
-To use evalutils in a project::
+Getting Started
+---------------
 
-    import evalutils
