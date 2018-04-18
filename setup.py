@@ -14,7 +14,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['pandas', 'imageio', 'SimpleITK', 'cookiecutter', 'click', ] 
+requirements = ['pandas', 'imageio', 'SimpleITK', 'cookiecutter', 'click', ]
 
 setup_requirements = ['pytest-runner', ]
 
@@ -46,6 +46,9 @@ setup(
     keywords='evalutils',
     name=NAME,
     packages=find_packages(include=['evalutils']),
+    package_data={
+        'evalutils': ['template/*', 'template/**/*', 'template/**/**/*', ]
+    },
     python_requires=REQUIRES_PYTHON,
     setup_requires=setup_requirements,
     test_suite='tests',

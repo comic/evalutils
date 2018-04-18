@@ -35,7 +35,7 @@ do this with docker
 
 .. code-block:: console
 
-    $ docker run -it --rm -v ($pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init myproject"
+    $ docker run -it --rm -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init myproject"
 
 .. _`Grand Challenge`: https://grand-challenge.org
 .. _docker: https://www.docker.com/
