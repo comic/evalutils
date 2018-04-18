@@ -50,7 +50,7 @@ class BoundingBox:
             f")"
         )
 
-    def __eq__(self, other: 'BoundingBox'):
+    def __eq__(self, other: "BoundingBox"):
         return (
             self.x_left == other.x_left
             and self.x_right == other.x_right
