@@ -27,15 +27,26 @@ evalutils
 
 evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.
 
-
 * Free software: MIT license
 * Documentation: https://evalutils.readthedocs.io.
-
 
 Features
 --------
 
-* TODO
+* Generation your challenge evaluation project boilerplate using Cookiecutter_
+* Scripts to build, test and export your generated docker container for grand-challenge.org
+* Loading of CSV, ITK and Pillow compatible prediction files
+* Validation of submitted predictions
+* Interface to SciKit-Learn metrics and Pandas aggregations
+* Bounding box annotations with Intersection Over Union calculations
+
+
+Getting Started
+---------------
+
+evalutils_ requires Python 3.6, and can be installed from `pip`. Please
+see the `Getting Started`_ documentation for more details.
+
 
 Credits
 -------
@@ -44,3 +55,5 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _evalutils: https://github.com/comic/evalutils
+.. _`Getting Started`: https://evalutils.readthedocs.io/en/latest/usage.html
