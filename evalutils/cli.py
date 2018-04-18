@@ -29,5 +29,6 @@ def init(challenge_name):
                 "evalutils_version": __version__,
             },
         )
+        click.echo(f"Created project {challenge_name}")
     except FailedHookException:
         exit(1)

@@ -1,6 +1,9 @@
 language: python
+sudo: required
+services:
+  - docker
 python:
-- 3.6
+  - 3.6
 env:
   global:
     - CC_TEST_REPORTER_ID=6b6477c13b8278e4b1be45a6056015ca69fb26748ca7b011cb871a566e6312aa
