@@ -2,7 +2,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Tuple, Dict, Set
+from typing import Tuple, Dict, Set, Callable
 
 from pandas import DataFrame, merge, Series
 
@@ -17,9 +17,9 @@ class Evaluation:
     def __init__(
         self,
         *,
-        ground_truth_path: Path,
+        ground_truth_path: Path = Path("/usr/src/evaluation/ground-truth/"),
         predictions_path: Path = Path("/input/"),
-        file_sorter_key=first_int_in_filename_key,
+        file_sorter_key: Callable = first_int_in_filename_key,
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...],
         join_key: str = None,
@@ -37,6 +37,21 @@ class Evaluation:
         },
         output_file: Path = Path("/output/metrics.json"),
     ):
+        """
+
+
+
+        Parameters
+        ----------
+        ground_truth_path
+        predictions_path
+        file_sorter_key
+        file_loader
+        validators
+        join_key
+        aggregates
+        output_file
+        """
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
@@ -203,6 +218,8 @@ class Evaluation:
 
         for k in valid_keys:
             value = summary[k]
+
+            # % in keys could cause problems when looking up values later
             key = k.replace("%", "pc")
 
             try:

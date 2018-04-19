@@ -9,15 +9,14 @@ from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
-class {{ cookiecutter.package_name }}(Evaluation):
+class {{ cookiecutter.package_name|capitalize }}(Evaluation):
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
-            ground_truth_path=Path("/evaluation/ground-truth/"),
-            join_key="case",
             validators=(
                 ExpectedColumnNamesValidator(expected=("case", "class",)),
             ),
+            join_key="case",
         )
 
     @staticmethod
@@ -37,5 +36,5 @@ class {{ cookiecutter.package_name }}(Evaluation):
 
 
 if __name__ == "__main__":
-    evaluation = {{ cookiecutter.package_name }}()
+    evaluation = {{ cookiecutter.package_name|capitalize }}()
     evaluation.evaluate()
