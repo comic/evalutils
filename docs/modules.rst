@@ -11,6 +11,21 @@ Evalutils
 .. autoclass:: Evaluation()
     :members:
 
+IO
+--
+
+.. py:module:: evalutils.io
+
+.. automodule:: evalutils.io
+   :members:
+
+Validators
+----------
+
+.. py:module:: evalutils.validators
+
+.. automodule:: evalutils.validators
+   :members:
 
 Annotations
 -----------

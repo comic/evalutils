@@ -106,8 +106,56 @@ The superclass of ``Evaluation`` is what you need to adapt to your specific chal
                  ),
             }
 
+In this case the evaluation is loading csv files, so uses an instance ``CSVLoader`` which will do the loading of the data.
+In this example, both the ground truth and the prediction CSV files will contain the columns `case` (an index) and `class` (the predicted class of this case).
+We want to validate that the correct columns appear in both the ground truth and submitted predictions, so we use the ``ExpectedColumnNamesValidator`` with the names of the columns we expect to find.
+See :mod:`evalutils.validators` for a list of other validators that you can use.
 
+The ground truth and predictions will be loaded into two DataFrames.
+The last argument is a ``join_key``, the is the name of the column that will appear in both DataFrames that serves as an index to join the dataframes on in order to create ``self._cases``.
+The ``join_key`` is manditory when you use a ``CSVLoader``.
+This should be set to some sort of common index, such as a `case` identifier.
+When loading in files they are first going to be sorted so you might not need a ``join_key``, but you could also write a function that matches the cases based on filename.
 
+The last part is performing the actual evaluation.
+In this example we are only getting one number per submission, the accuracy score.
+This number is calculated using ``sklearn.metrics.accuracy_score``.
+The ``self._cases`` data frame will contain all of the columns that you expect, and for those that have not been joined they will be available as ``"<column_name>_ground_truth"`` and ``"<column_name>_prediction"``.
+
+Add The Ground Truth and Test Data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The next step is to add the ground truth and test data (an example submission) to the repo.
+If using CSV data simply update the ``ground-truth/reference.csv`` file, and then update the expected column names and join key in evaluate.py.
+Otherwise, see :mod:`evalutils.io` for other loaders such as the ones for ITK files or images.
+You can also add your own loader by extending the ``FileLoader`` class.
+
+Adapt The Evaluation
+^^^^^^^^^^^^^^^^^^^^
+
+Change the function in ``score_aggregates`` to fit your needs.
+The only requirement here is that it returns a dictionary.
+If you need to score cases individually before aggregating them, you should remove the implementation of ``score_aggregates`` and implement ``score_case`` instead.
+See :class:`evalutils.Evaluation` for more possibilities.
+
+Build, Test and Deploy
+^^^^^^^^^^^^^^^^^^^^^^
+
+When you're ready to test your evaluation you can simply invoke
+
+.. code-block:: console
+    $ ./test.sh
+
+This will build your docker container, add the test data as a temporary volume, run the evaluation, and then ``cat /output/metrics.json``.
+If the output looks ok, then you're ready to go.
+
+You can deploy the evaluation container with
+
+.. code-block:: console
+    $ ./deploy.sh
+
+which will create myproject.tar in the folder.
+You can then upload this directly to `Grand Challenge`_ on your evaluation methods page.
 
 .. _`Grand Challenge`: https://grand-challenge.org
 .. _docker: https://www.docker.com/
