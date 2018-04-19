@@ -2,10 +2,15 @@
 History
 =======
 
+0.1.10 (2018-04-19)
+-------------------
+
+* Simplifies the example template
+
 0.1.9 (2018-04-19)
 ------------------
 
-* **Breaking Change** Renamed ``bb2`` to ``other`` in ``BoundingBox()``
+* **Breaking change:** Renamed ``bb2`` to ``other`` in ``BoundingBox()``
 * ``ground_truth_path`` is no longer a required argument
 
 0.1.8 (2018-04-18)
