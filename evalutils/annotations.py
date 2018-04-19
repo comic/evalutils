@@ -51,7 +51,7 @@ class BoundingBox:
         )
 
     def __eq__(self, other: "BoundingBox"):
-        return (
+        return self is other or (
             self.x_left == other.x_left
             and self.x_right == other.x_right
             and self.y_bottom == other.y_bottom
@@ -63,33 +63,35 @@ class BoundingBox:
         """ Return the area of the bounding box in natural units """
         return (self.x_right - self.x_left) * (self.y_top - self.y_bottom)
 
-    def intersection(self, *, bb2: "BoundingBox") -> float:
+    def intersection(self, *, other: "BoundingBox") -> float:
         """
-        Calculates the intersection area between this bounding box and a
-        second, axis aligned, bounding box.
+        Calculates the intersection area between this bounding box and
+        another, axis aligned, bounding box.
 
         Parameters
         ----------
-        bb2
-            The second bounding box
+        other
+            The other bounding box
 
         Returns
         -------
+        float
             The intersection area in natural units if the two bounding boxes
             overlap, zero otherwise.
 
         """
 
         # Get the face that is the intersection between the 8 edges
-        x_left = max(self.x_left, bb2.x_left)
-        x_right = min(self.x_right, bb2.x_right)
+        x_left = max(self.x_left, other.x_left)
+        x_right = min(self.x_right, other.x_right)
 
-        y_bottom = max(self.y_bottom, bb2.y_bottom)
-        y_top = min(self.y_top, bb2.y_top)
+        y_bottom = max(self.y_bottom, other.y_bottom)
+        y_top = min(self.y_top, other.y_top)
 
         if x_right <= x_left or y_top <= y_bottom:
             logger.warning(
-                f"The bounding boxes do not intersect. bb1={self}, bb2={bb2}."
+                f"The bounding boxes do not intersect. bb1={self}, "
+                f"other={other}."
             )
             return 0.0
         else:
@@ -97,36 +99,38 @@ class BoundingBox:
                 x1=x_left, x2=x_right, y1=y_bottom, y2=y_top
             ).area
 
-    def union(self, *, bb2: "BoundingBox") -> float:
+    def union(self, *, other: "BoundingBox") -> float:
         """
-        Calculates the union between this bounding box and a second,
+        Calculates the union between this bounding box and another,
         axis aligned, bounding box.
 
         Parameters
         ----------
-        bb2
-            The second bounding box
+        other
+            The other bounding box
 
         Returns
         -------
+        float
             The union area in natural units
 
         """
-        return self.area + bb2.area - self.intersection(bb2=bb2)
+        return self.area + other.area - self.intersection(other=other)
 
-    def intersection_over_union(self, *, bb2: "BoundingBox") -> float:
+    def intersection_over_union(self, *, other: "BoundingBox") -> float:
         """
         Calculates the intersection over union between this bounding box and a
         second, axis aligned, bounding box.
 
         Parameters
         ----------
-        bb2
-            The second bounding box
+        other
+            The other bounding box
 
         Returns
         -------
+        float
             The intersection over union in natural units
 
         """
-        return self.intersection(bb2=bb2) / self.union(bb2=bb2)
+        return self.intersection(other=other) / self.union(other=other)

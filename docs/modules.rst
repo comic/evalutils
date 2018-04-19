@@ -2,6 +2,16 @@
 Modules
 =======
 
+
+Evalutils
+---------
+
+.. py:module:: evalutils
+
+.. autoclass:: Evaluation()
+    :members:
+
+
 Annotations
 -----------
 
