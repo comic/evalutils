@@ -99,20 +99,12 @@ The superclass of ``Evaluation`` is what you need to adapt to your specific chal
                 join_key="case",
             )
 
-        @staticmethod
-        def score_case(*, idx: int, case: Series) -> Dict:
+        def score_aggregates(self):
             return {
-                "accuracy": 1.0 if case["class_ground_truth"] == case[
-                    "class_prediction"] else 0.0,
-                "case_id": str(idx),
+                "accuracy_score": accuracy_score(
+                    self._cases["class_ground_truth"], self._cases["class_prediction"]
+                 ),
             }
-
-        def save(self):
-            # In this example we do not want to report the case wise accuracy
-            # results to metrics.json as this can leak the ground truth data.
-            # So, we remove it from the _case_results DataFrame
-            del self._case_results["accuracy"]
-            super().save()
 
 
 

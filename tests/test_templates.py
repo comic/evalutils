@@ -37,7 +37,7 @@ def test_cli(tmpdir):
 
     out = subprocess.check_output(["./test.sh"], cwd=project_dir)
 
-    assert '"std": 0.53452248' in out.decode()
+    assert '"accuracy_score": 0.5' in out.decode()
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" not in files

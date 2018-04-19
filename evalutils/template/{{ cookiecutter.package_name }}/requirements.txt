@@ -1,1 +1,3 @@
 {{ cookiecutter.evalutils_name }}=={{ cookiecutter.evalutils_version }}
+scikit-learn==0.19.1
+scipy==1.0.1
