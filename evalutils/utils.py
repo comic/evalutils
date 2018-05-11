@@ -4,7 +4,7 @@ from typing import List, Tuple
 from sklearn.neighbors import BallTree
 
 DetectionScore = namedtuple(
-    'DetectionScore', ['true_positives', 'false_negatives', 'false_positives'],
+    "DetectionScore", ["true_positives", "false_negatives", "false_positives"],
 )
 
 
