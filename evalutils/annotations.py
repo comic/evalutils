@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Callable
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -137,30 +134,3 @@ class BoundingBox:
 
         """
         return self.intersection(other=other) / self.union(other=other)
-
-
-class Point:
-    def __init__(
-        self,
-        *,
-        pos: List[float],
-        score: float = 1,
-        merge_method: Callable = np.mean,
-        n_merged: int = 0
-    ):
-        super().__init__()
-        self.pos = np.array(pos)
-        self.score = score
-        self.merge_method = merge_method
-        self.n_merged = n_merged
-
-    def __add__(self, other):
-        assert self.merge_method == other.merge_method
-        return Point(
-            pos=(self.pos + other.pos) / 2.0,
-            score=self.merge_method([self.score, other.score]),
-            merge_method=self.merge_method,
-            n_merged=self.n_merged + other.n_merged,
-        )
-
-    __radd__ = __add__
