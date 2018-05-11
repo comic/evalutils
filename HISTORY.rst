@@ -2,6 +2,12 @@
 History
 =======
 
+0.1.11 (XXXX-XX-XX)
+-------------------
+
+* **Breaking change:** Renamed ``Evaluation`` to ``ClassificationEvaluation``
+* Adds support for ``DetectionEvaluation``
+
 0.1.10 (2018-04-19)
 -------------------
 

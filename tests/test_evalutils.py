@@ -5,13 +5,13 @@ from pathlib import Path
 import pytest
 from pandas import Series
 
-from evalutils import Evaluation
+from evalutils import ClassificationEvaluation
 from evalutils.exceptions import ConfigurationError, FileLoaderError
 from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
-class TestEval(Evaluation):
+class TestEval(ClassificationEvaluation):
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
@@ -34,7 +34,7 @@ def test_class_creation():
 
 
 def test_csv_with_no_join():
-    class C(Evaluation):
+    class C(ClassificationEvaluation):
         def __init__(self, **kwargs):
             super().__init__(
                 ground_truth_path=Path('/tmp'),
@@ -51,7 +51,7 @@ def test_csv_with_no_join():
 
 
 def test_wrong_loader():
-    class C(Evaluation):
+    class C(ClassificationEvaluation):
         def __init__(self):
             super().__init__(
                 file_loader=CSVLoader(),

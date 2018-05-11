@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Tuple, Dict, Set, Callable
 
@@ -13,7 +14,7 @@ from .validators import DataFrameValidator
 logger = logging.getLogger(__name__)
 
 
-class Evaluation:
+class BaseEvaluation(ABC):
     def __init__(
         self,
         *,
@@ -37,21 +38,6 @@ class Evaluation:
         },
         output_file: Path = Path("/output/metrics.json"),
     ):
-        """
-
-
-
-        Parameters
-        ----------
-        ground_truth_path
-        predictions_path
-        file_sorter_key
-        file_loader
-        validators
-        join_key
-        aggregates
-        output_file
-        """
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
@@ -70,11 +56,6 @@ class Evaluation:
         self._aggregate_results = {}
         super().__init__()
 
-        if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
-            raise ConfigurationError(
-                f"You must set a `join_key` when using {self._file_loader}."
-            )
-
     @property
     def _metrics(self):
         return {
@@ -86,7 +67,6 @@ class Evaluation:
         self.load()
         self.validate()
         self.merge_ground_truth_and_predictions()
-        self.cross_validate()
         self.score()
         self.save()
 
@@ -130,62 +110,9 @@ class Evaluation:
         for validator in self._validators:
             validator.validate(df=df)
 
+    @abstractmethod
     def merge_ground_truth_and_predictions(self):
-        if self._join_key:
-            kwargs = {"on": self._join_key}
-        else:
-            kwargs = {"left_index": True, "right_index": True}
-
-        self._cases = merge(
-            left=self._ground_truth_cases,
-            right=self._predictions_cases,
-            indicator=True,
-            how="outer",
-            suffixes=("_ground_truth", "_prediction"),
-            **kwargs,
-        )
-
-    def cross_validate(self):
-        missing = [p for _, p in self._cases.iterrows() if
-                   p["_merge"] == "left_only"]
-        extra = [p for _, p in self._cases.iterrows() if
-                 p["_merge"] == "right_only"]
-
-        if missing:
-            self._raise_missing_predictions_error(missing=missing)
-
-        if extra:
-            self._raise_extra_predictions_error(extra=extra)
-
-    def _raise_missing_predictions_error(self, *, missing):
-        if self._join_key:
-            missing = [p[self._join_key] for p in missing]
-            message = (
-                "Predictions missing: you did not submit predictions for "
-                f"{self._join_key}: {missing}. Please try again."
-            )
-        else:
-            message = (
-                "Predictions missing: you did not submit enough predictions, "
-                "please try again."
-            )
-
-        raise ValidationError(message)
-
-    def _raise_extra_predictions_error(self, *, extra):
-        if self._join_key:
-            extra = [p[self._join_key] for p in extra]
-            message = (
-                "Too many predictions: we do not have the ground truth data "
-                f"for {self._join_key}: {extra}. Please try again."
-            )
-        else:
-            message = (
-                "Too many predictions: you submitted too many predictions, "
-                "please try again."
-            )
-
-        raise ValidationError(message)
+        pass
 
     def score(self):
         self._case_results = DataFrame()
@@ -241,3 +168,86 @@ class Evaluation:
     def write_metrics_json(self):
         with open(self._output_file, "w") as f:
             f.write(json.dumps(self._metrics))
+
+
+class ClassificationEvaluation(BaseEvaluation):
+    """
+    ClassificationEvaluations have the same number of predictions as the
+    number of ground truth cases. These can be things like, what is the
+    stage of this case, or segment some things in this case.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
+            raise ConfigurationError(
+                f"You must set a `join_key` when using {self._file_loader}."
+            )
+
+    def merge_ground_truth_and_predictions(self):
+        if self._join_key:
+            kwargs = {"on": self._join_key}
+        else:
+            kwargs = {"left_index": True, "right_index": True}
+
+        self._cases = merge(
+            left=self._ground_truth_cases,
+            right=self._predictions_cases,
+            indicator=True,
+            how="outer",
+            suffixes=("_ground_truth", "_prediction"),
+            **kwargs,
+        )
+
+        self.cross_validate()
+
+    def cross_validate(self):
+        missing = [p for _, p in self._cases.iterrows() if
+                   p["_merge"] == "left_only"]
+        extra = [p for _, p in self._cases.iterrows() if
+                 p["_merge"] == "right_only"]
+
+        if missing:
+            self._raise_missing_predictions_error(missing=missing)
+
+        if extra:
+            self._raise_extra_predictions_error(extra=extra)
+
+    def _raise_missing_predictions_error(self, *, missing):
+        if self._join_key:
+            missing = [p[self._join_key] for p in missing]
+            message = (
+                "Predictions missing: you did not submit predictions for "
+                f"{self._join_key}: {missing}. Please try again."
+            )
+        else:
+            message = (
+                "Predictions missing: you did not submit enough predictions, "
+                "please try again."
+            )
+
+        raise ValidationError(message)
+
+    def _raise_extra_predictions_error(self, *, extra):
+        if self._join_key:
+            extra = [p[self._join_key] for p in extra]
+            message = (
+                "Too many predictions: we do not have the ground truth data "
+                f"for {self._join_key}: {extra}. Please try again."
+            )
+        else:
+            message = (
+                "Too many predictions: you submitted too many predictions, "
+                "please try again."
+            )
+
+        raise ValidationError(message)
+
+
+class DetectionEvaluation(BaseEvaluation):
+    """
+    DetectionEvaluations have a different number of predictions from the
+    number of ground truth annotations. An example would be detecting lung
+    nodules in a CT volume, or malignant cells in a pathology slide.
+    """
+    pass
