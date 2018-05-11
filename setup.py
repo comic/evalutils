@@ -20,7 +20,6 @@ requirements = [
     'SimpleITK',
     'cookiecutter',
     'click',
-    'numpy',
     'scipy',
     'scikit-learn',
 ]
