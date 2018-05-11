@@ -16,10 +16,16 @@ class TestEval(ClassificationEvaluation):
         super().__init__(
             file_loader=CSVLoader(),
             ground_truth_path=(
-                Path(__file__).parent / 'resources' / 'reference'
+                Path(__file__).parent /
+                'resources' /
+                'classification' /
+                'reference'
             ),
             predictions_path=(
-                Path(__file__).parent / 'resources' / 'submission'
+                Path(__file__).parent /
+                'resources' /
+                'classification' /
+                'submission'
             ),
             output_file=Path('/tmp/metrics.json'),
             join_key='case',

@@ -56,6 +56,11 @@ class BaseEvaluation(ABC):
         self._aggregate_results = {}
         super().__init__()
 
+        if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
+            raise ConfigurationError(
+                f"You must set a `join_key` when using {self._file_loader}."
+            )
+
     @property
     def _metrics(self):
         return {
@@ -177,13 +182,6 @@ class ClassificationEvaluation(BaseEvaluation):
     stage of this case, or segment some things in this case.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
-            raise ConfigurationError(
-                f"You must set a `join_key` when using {self._file_loader}."
-            )
-
     def merge_ground_truth_and_predictions(self):
         if self._join_key:
             kwargs = {"on": self._join_key}
@@ -250,4 +248,8 @@ class DetectionEvaluation(BaseEvaluation):
     number of ground truth annotations. An example would be detecting lung
     nodules in a CT volume, or malignant cells in a pathology slide.
     """
-    pass
+
+    def merge_ground_truth_and_predictions(self):
+        join_key_ids = set(self._ground_truth_cases[self._join_key])
+
+        # TODO - create a new dataframe of dataframes where the columns are the join_key, ground_truth and prediction
