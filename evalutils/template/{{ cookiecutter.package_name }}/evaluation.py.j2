@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from sklearn.metrics import accuracy_score
 
-from evalutils import ClassificationEvaluation
+from evalutils import Evaluation
 from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
-class {{ cookiecutter.package_name|capitalize }}(ClassificationEvaluation):
+class {{ cookiecutter.package_name|capitalize }}(Evaluation):
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),

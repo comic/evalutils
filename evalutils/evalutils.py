@@ -4,6 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Tuple, Dict, Set, Callable
+from warnings import warn
 
 from pandas import DataFrame, merge, Series
 
@@ -72,6 +73,7 @@ class BaseEvaluation(ABC):
         self.load()
         self.validate()
         self.merge_ground_truth_and_predictions()
+        self.cross_validate()
         self.score()
         self.save()
 
@@ -118,6 +120,48 @@ class BaseEvaluation(ABC):
     @abstractmethod
     def merge_ground_truth_and_predictions(self):
         pass
+
+    def cross_validate(self):
+        missing = [p for _, p in self._cases.iterrows() if
+                   p["_merge"] == "left_only"]
+        extra = [p for _, p in self._cases.iterrows() if
+                 p["_merge"] == "right_only"]
+
+        if missing:
+            self._raise_missing_predictions_error(missing=missing)
+
+        if extra:
+            self._raise_extra_predictions_error(extra=extra)
+
+    def _raise_missing_predictions_error(self, *, missing):
+        if self._join_key:
+            missing = [p[self._join_key] for p in missing]
+            message = (
+                "Predictions missing: you did not submit predictions for "
+                f"{self._join_key}: {missing}. Please try again."
+            )
+        else:
+            message = (
+                "Predictions missing: you did not submit enough predictions, "
+                "please try again."
+            )
+
+        raise ValidationError(message)
+
+    def _raise_extra_predictions_error(self, *, extra):
+        if self._join_key:
+            extra = [p[self._join_key] for p in extra]
+            message = (
+                "Too many predictions: we do not have the ground truth data "
+                f"for {self._join_key}: {extra}. Please try again."
+            )
+        else:
+            message = (
+                "Too many predictions: you submitted too many predictions, "
+                "please try again."
+            )
+
+        raise ValidationError(message)
 
     def score(self):
         self._case_results = DataFrame()
@@ -197,49 +241,21 @@ class ClassificationEvaluation(BaseEvaluation):
             **kwargs,
         )
 
-        self.cross_validate()
 
-    def cross_validate(self):
-        missing = [p for _, p in self._cases.iterrows() if
-                   p["_merge"] == "left_only"]
-        extra = [p for _, p in self._cases.iterrows() if
-                 p["_merge"] == "right_only"]
+class Evaluation(ClassificationEvaluation):
+    """
+    Legacy class, you should use ClassificationEvaluation instead.
+    """
 
-        if missing:
-            self._raise_missing_predictions_error(missing=missing)
-
-        if extra:
-            self._raise_extra_predictions_error(extra=extra)
-
-    def _raise_missing_predictions_error(self, *, missing):
-        if self._join_key:
-            missing = [p[self._join_key] for p in missing]
-            message = (
-                "Predictions missing: you did not submit predictions for "
-                f"{self._join_key}: {missing}. Please try again."
-            )
-        else:
-            message = (
-                "Predictions missing: you did not submit enough predictions, "
-                "please try again."
-            )
-
-        raise ValidationError(message)
-
-    def _raise_extra_predictions_error(self, *, extra):
-        if self._join_key:
-            extra = [p[self._join_key] for p in extra]
-            message = (
-                "Too many predictions: we do not have the ground truth data "
-                f"for {self._join_key}: {extra}. Please try again."
-            )
-        else:
-            message = (
-                "Too many predictions: you submitted too many predictions, "
-                "please try again."
-            )
-
-        raise ValidationError(message)
+    def __init__(self, *args, **kwargs):
+        warn(
+            (
+                "The Evaluation class is deprecated, "
+                "please use ClassificationEvaluation instead"
+            ),
+            DeprecationWarning
+        )
+        super().__init__(*args, **kwargs)
 
 
 class DetectionEvaluation(BaseEvaluation):
