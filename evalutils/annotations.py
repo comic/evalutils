@@ -41,7 +41,7 @@ class BoundingBox:
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}"
+            f"{self.__class__.__qualname__}"
             f"("
             f"x1={self.x_left}, "
             f"x2={self.x_right}, "
@@ -50,13 +50,18 @@ class BoundingBox:
             f")"
         )
 
+    def __hash__(self):
+        return hash((self.x_left, self.x_right, self.y_bottom, self.y_top))
+
     def __eq__(self, other: "BoundingBox"):
-        return self is other or (
-            self.x_left == other.x_left
-            and self.x_right == other.x_right
-            and self.y_bottom == other.y_bottom
-            and self.y_top == other.y_top
-        )
+        if self.__class__ is other.__class__:
+            return (
+                self.x_left == other.x_left
+                and self.x_right == other.x_right
+                and self.y_bottom == other.y_bottom
+                and self.y_top == other.y_top
+            )
+        return NotImplemented
 
     @property
     def area(self) -> float:

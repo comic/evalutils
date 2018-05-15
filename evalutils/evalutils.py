@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Tuple, Dict, Set, Callable
+from warnings import warn
 
-from pandas import DataFrame, merge, Series
+from pandas import DataFrame, merge, Series, concat
 
 from .exceptions import FileLoaderError, ValidationError, ConfigurationError
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
@@ -13,7 +15,7 @@ from .validators import DataFrameValidator
 logger = logging.getLogger(__name__)
 
 
-class Evaluation:
+class BaseEvaluation(ABC):
     def __init__(
         self,
         *,
@@ -37,21 +39,6 @@ class Evaluation:
         },
         output_file: Path = Path("/output/metrics.json"),
     ):
-        """
-
-
-
-        Parameters
-        ----------
-        ground_truth_path
-        predictions_path
-        file_sorter_key
-        file_loader
-        validators
-        join_key
-        aggregates
-        output_file
-        """
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
@@ -130,39 +117,19 @@ class Evaluation:
         for validator in self._validators:
             validator.validate(df=df)
 
+    @abstractmethod
     def merge_ground_truth_and_predictions(self):
-        if self._join_key:
-            kwargs = {"on": self._join_key}
-        else:
-            kwargs = {"left_index": True, "right_index": True}
+        pass
 
-        self._cases = merge(
-            left=self._ground_truth_cases,
-            right=self._predictions_cases,
-            indicator=True,
-            how="outer",
-            suffixes=("_ground_truth", "_prediction"),
-            **kwargs,
-        )
-
+    @abstractmethod
     def cross_validate(self):
-        missing = [p for _, p in self._cases.iterrows() if
-                   p["_merge"] == "left_only"]
-        extra = [p for _, p in self._cases.iterrows() if
-                 p["_merge"] == "right_only"]
+        pass
 
-        if missing:
-            self._raise_missing_predictions_error(missing=missing)
-
-        if extra:
-            self._raise_extra_predictions_error(extra=extra)
-
-    def _raise_missing_predictions_error(self, *, missing):
-        if self._join_key:
-            missing = [p[self._join_key] for p in missing]
+    def _raise_missing_predictions_error(self, *, missing=None):
+        if missing is not None:
             message = (
                 "Predictions missing: you did not submit predictions for "
-                f"{self._join_key}: {missing}. Please try again."
+                f"{missing}. Please try again."
             )
         else:
             message = (
@@ -172,12 +139,11 @@ class Evaluation:
 
         raise ValidationError(message)
 
-    def _raise_extra_predictions_error(self, *, extra):
-        if self._join_key:
-            extra = [p[self._join_key] for p in extra]
+    def _raise_extra_predictions_error(self, *, extra=None):
+        if extra is not None:
             message = (
                 "Too many predictions: we do not have the ground truth data "
-                f"for {self._join_key}: {extra}. Please try again."
+                f"for {extra}. Please try again."
             )
         else:
             message = (
@@ -187,17 +153,13 @@ class Evaluation:
 
         raise ValidationError(message)
 
+    @abstractmethod
     def score(self):
-        self._case_results = DataFrame()
-        for idx, case in self._cases.iterrows():
-            self._case_results = self._case_results.append(
-                self.score_case(idx=idx, case=case), ignore_index=True
-            )
-        self._aggregate_results = self.score_aggregates()
+        pass
 
     # noinspection PyUnusedLocal
     @staticmethod
-    def score_case(*, idx: int, case: Series) -> Dict:
+    def score_case(*, idx: int, case: DataFrame) -> Dict:
         return {}
 
     def score_aggregates(self) -> Dict:
@@ -241,3 +203,125 @@ class Evaluation:
     def write_metrics_json(self):
         with open(self._output_file, "w") as f:
             f.write(json.dumps(self._metrics))
+
+
+class ClassificationEvaluation(BaseEvaluation):
+    """
+    ClassificationEvaluations have the same number of predictions as the
+    number of ground truth cases. These can be things like, what is the
+    stage of this case, or segment some things in this case.
+    """
+
+    def merge_ground_truth_and_predictions(self):
+        if self._join_key:
+            kwargs = {"on": self._join_key}
+        else:
+            kwargs = {"left_index": True, "right_index": True}
+
+        self._cases = merge(
+            left=self._ground_truth_cases,
+            right=self._predictions_cases,
+            indicator=True,
+            how="outer",
+            suffixes=("_ground_truth", "_prediction"),
+            **kwargs,
+        )
+
+    def cross_validate(self):
+        missing = [p for _, p in self._cases.iterrows() if
+                   p["_merge"] == "left_only"]
+
+        if missing:
+            if self._join_key:
+                missing = [p[self._join_key] for p in missing]
+            self._raise_missing_predictions_error(missing=missing)
+
+        extra = [p for _, p in self._cases.iterrows() if
+                 p["_merge"] == "right_only"]
+
+        if extra:
+            if self._join_key:
+                extra = [p[self._join_key] for p in extra]
+            self._raise_extra_predictions_error(extra=extra)
+
+    def score(self):
+        self._case_results = DataFrame()
+        for idx, case in self._cases.iterrows():
+            self._case_results = self._case_results.append(
+                self.score_case(idx=idx, case=case), ignore_index=True
+            )
+        self._aggregate_results = self.score_aggregates()
+
+
+class Evaluation(ClassificationEvaluation):
+    """
+    Legacy class, you should use ClassificationEvaluation instead.
+    """
+
+    def __init__(self, *args, **kwargs):
+        warn(
+            (
+                "The Evaluation class is deprecated, "
+                "please use ClassificationEvaluation instead"
+            ),
+            DeprecationWarning
+        )
+        super().__init__(*args, **kwargs)
+
+
+class DetectionEvaluation(BaseEvaluation):
+    """
+    DetectionEvaluations have a different number of predictions from the
+    number of ground truth annotations. An example would be detecting lung
+    nodules in a CT volume, or malignant cells in a pathology slide.
+    """
+
+    def merge_ground_truth_and_predictions(self):
+        self._cases = concat(
+            [self._ground_truth_cases, self._predictions_cases],
+            keys=["ground_truth", "predictions"]
+        )
+
+    def cross_validate(self):
+        expected_keys = set(self._ground_truth_cases[self._join_key])
+        submitted_keys = set(self._predictions_cases[self._join_key])
+
+        missing = expected_keys - submitted_keys
+        if missing:
+            self._raise_missing_predictions_error(missing=missing)
+
+        extra = submitted_keys - expected_keys
+        if extra:
+            self._raise_extra_predictions_error(extra=extra)
+
+    def score(self):
+        cases = set(self._ground_truth_cases[self._join_key])
+
+        self._case_results = DataFrame()
+
+        for idx, case in enumerate(cases):
+            self._case_results = self._case_results.append(
+                self.score_case(
+                    idx=idx,
+                    case=self._cases.loc[self._cases[self._join_key] == case],
+                ), ignore_index=True
+            )
+        self._aggregate_results = self.score_aggregates()
+
+    def score_aggregates(self):
+        aggregate_results = super().score_aggregates()
+
+        totals = self._case_results.sum()
+
+        for s in totals.index:
+            aggregate_results[s]["sum"] = totals[s]
+
+        tp = aggregate_results["true_positives"]["sum"]
+        fp = aggregate_results["false_positives"]["sum"]
+        fn = aggregate_results["false_negatives"]["sum"]
+
+        aggregate_results["precision"] = tp / (tp + fp)
+        aggregate_results["recall"] = tp / (tp + fn)
+        aggregate_results["f1_score"] = 2 * tp / ((2 * tp) + fp + fn)
+
+        return aggregate_results

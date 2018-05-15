@@ -5,21 +5,27 @@ from pathlib import Path
 import pytest
 from pandas import Series
 
-from evalutils import Evaluation
+from evalutils import ClassificationEvaluation
 from evalutils.exceptions import ConfigurationError, FileLoaderError
 from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
-class TestEval(Evaluation):
+class ClassificationTestEval(ClassificationEvaluation):
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
             ground_truth_path=(
-                Path(__file__).parent / 'resources' / 'reference'
+                Path(__file__).parent /
+                'resources' /
+                'classification' /
+                'reference'
             ),
             predictions_path=(
-                Path(__file__).parent / 'resources' / 'submission'
+                Path(__file__).parent /
+                'resources' /
+                'classification' /
+                'submission'
             ),
             output_file=Path('/tmp/metrics.json'),
             join_key='case',
@@ -30,11 +36,11 @@ class TestEval(Evaluation):
 
 
 def test_class_creation():
-    TestEval().evaluate()
+    ClassificationTestEval().evaluate()
 
 
 def test_csv_with_no_join():
-    class C(Evaluation):
+    class C(ClassificationEvaluation):
         def __init__(self, **kwargs):
             super().__init__(
                 ground_truth_path=Path('/tmp'),
@@ -51,7 +57,7 @@ def test_csv_with_no_join():
 
 
 def test_wrong_loader():
-    class C(Evaluation):
+    class C(ClassificationEvaluation):
         def __init__(self):
             super().__init__(
                 file_loader=CSVLoader(),
@@ -67,7 +73,7 @@ def test_wrong_loader():
 
 
 def test_series_aggregation():
-    class C(TestEval):
+    class C(ClassificationTestEval):
         @staticmethod
         def score_case(*, idx: int, case: Series):
             return {

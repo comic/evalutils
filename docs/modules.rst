@@ -8,7 +8,7 @@ Evalutils
 
 .. py:module:: evalutils
 
-.. autoclass:: Evaluation()
+.. autoclass:: ClassificationEvaluation()
     :members:
 
 IO
