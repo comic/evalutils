@@ -11,7 +11,7 @@ from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
-class TestEval(ClassificationEvaluation):
+class ClassificationTestEval(ClassificationEvaluation):
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
@@ -36,7 +36,7 @@ class TestEval(ClassificationEvaluation):
 
 
 def test_class_creation():
-    TestEval().evaluate()
+    ClassificationTestEval().evaluate()
 
 
 def test_csv_with_no_join():
@@ -73,7 +73,7 @@ def test_wrong_loader():
 
 
 def test_series_aggregation():
-    class C(TestEval):
+    class C(ClassificationTestEval):
         @staticmethod
         def score_case(*, idx: int, case: Series):
             return {

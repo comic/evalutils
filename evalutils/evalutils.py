@@ -121,17 +121,9 @@ class BaseEvaluation(ABC):
     def merge_ground_truth_and_predictions(self):
         pass
 
+    @abstractmethod
     def cross_validate(self):
-        missing = [p for _, p in self._cases.iterrows() if
-                   p["_merge"] == "left_only"]
-        extra = [p for _, p in self._cases.iterrows() if
-                 p["_merge"] == "right_only"]
-
-        if missing:
-            self._raise_missing_predictions_error(missing=missing)
-
-        if extra:
-            self._raise_extra_predictions_error(extra=extra)
+        pass
 
     def _raise_missing_predictions_error(self, *, missing):
         if self._join_key:
@@ -241,6 +233,18 @@ class ClassificationEvaluation(BaseEvaluation):
             **kwargs,
         )
 
+    def cross_validate(self):
+        missing = [p for _, p in self._cases.iterrows() if
+                   p["_merge"] == "left_only"]
+        extra = [p for _, p in self._cases.iterrows() if
+                 p["_merge"] == "right_only"]
+
+        if missing:
+            self._raise_missing_predictions_error(missing=missing)
+
+        if extra:
+            self._raise_extra_predictions_error(extra=extra)
+
 
 class Evaluation(ClassificationEvaluation):
     """
@@ -268,4 +272,29 @@ class DetectionEvaluation(BaseEvaluation):
     def merge_ground_truth_and_predictions(self):
         join_key_ids = set(self._ground_truth_cases[self._join_key])
 
-        # TODO - create a new dataframe of dataframes where the columns are the join_key, ground_truth and prediction
+        self._cases = DataFrame(
+            columns=(self._join_key, 'ground_truth', 'prediction')
+        )
+
+        for key in join_key_ids:
+            self._cases = self._cases.append(
+                DataFrame(data={
+                    self._join_key: [key],
+                    'ground_truth': [self.slice_on_join_key(
+                        df=self._ground_truth_cases, key=key,
+                    )],
+                    'prediction': [self.slice_on_join_key(
+                        df=self._predictions_cases, key=key,
+                    )],
+                })
+            )
+
+    def slice_on_join_key(self, *, df: DataFrame, key: str) -> DataFrame:
+        d = df.loc[df[self._join_key] == key]
+        del d[self._join_key]
+        d.reindex(d.columns)
+        return d
+
+    def cross_validate(self):
+        # TODO: Cross-validation
+        return
