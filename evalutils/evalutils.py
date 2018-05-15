@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Tuple, Dict, Set, Callable
 from warnings import warn
 
-from pandas import DataFrame, merge, Series
+from pandas import DataFrame, merge, Series, concat
 
 from .exceptions import FileLoaderError, ValidationError, ConfigurationError
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
@@ -125,12 +125,11 @@ class BaseEvaluation(ABC):
     def cross_validate(self):
         pass
 
-    def _raise_missing_predictions_error(self, *, missing):
-        if self._join_key:
-            missing = [p[self._join_key] for p in missing]
+    def _raise_missing_predictions_error(self, *, missing=None):
+        if missing is not None:
             message = (
                 "Predictions missing: you did not submit predictions for "
-                f"{self._join_key}: {missing}. Please try again."
+                f"{missing}. Please try again."
             )
         else:
             message = (
@@ -140,12 +139,11 @@ class BaseEvaluation(ABC):
 
         raise ValidationError(message)
 
-    def _raise_extra_predictions_error(self, *, extra):
-        if self._join_key:
-            extra = [p[self._join_key] for p in extra]
+    def _raise_extra_predictions_error(self, *, extra=None):
+        if extra is not None:
             message = (
                 "Too many predictions: we do not have the ground truth data "
-                f"for {self._join_key}: {extra}. Please try again."
+                f"for {extra}. Please try again."
             )
         else:
             message = (
@@ -155,17 +153,13 @@ class BaseEvaluation(ABC):
 
         raise ValidationError(message)
 
+    @abstractmethod
     def score(self):
-        self._case_results = DataFrame()
-        for idx, case in self._cases.iterrows():
-            self._case_results = self._case_results.append(
-                self.score_case(idx=idx, case=case), ignore_index=True
-            )
-        self._aggregate_results = self.score_aggregates()
+        pass
 
     # noinspection PyUnusedLocal
     @staticmethod
-    def score_case(*, idx: int, case: Series) -> Dict:
+    def score_case(*, idx: int, case: DataFrame) -> Dict:
         return {}
 
     def score_aggregates(self) -> Dict:
@@ -236,14 +230,27 @@ class ClassificationEvaluation(BaseEvaluation):
     def cross_validate(self):
         missing = [p for _, p in self._cases.iterrows() if
                    p["_merge"] == "left_only"]
+
+        if missing:
+            if self._join_key:
+                missing = [p[self._join_key] for p in missing]
+            self._raise_missing_predictions_error(missing=missing)
+
         extra = [p for _, p in self._cases.iterrows() if
                  p["_merge"] == "right_only"]
 
-        if missing:
-            self._raise_missing_predictions_error(missing=missing)
-
         if extra:
+            if self._join_key:
+                extra = [p[self._join_key] for p in extra]
             self._raise_extra_predictions_error(extra=extra)
+
+    def score(self):
+        self._case_results = DataFrame()
+        for idx, case in self._cases.iterrows():
+            self._case_results = self._case_results.append(
+                self.score_case(idx=idx, case=case), ignore_index=True
+            )
+        self._aggregate_results = self.score_aggregates()
 
 
 class Evaluation(ClassificationEvaluation):
@@ -270,31 +277,51 @@ class DetectionEvaluation(BaseEvaluation):
     """
 
     def merge_ground_truth_and_predictions(self):
-        join_key_ids = set(self._ground_truth_cases[self._join_key])
-
-        self._cases = DataFrame(
-            columns=(self._join_key, 'ground_truth', 'prediction')
+        self._cases = concat(
+            [self._ground_truth_cases, self._predictions_cases],
+            keys=["ground_truth", "predictions"]
         )
 
-        for key in join_key_ids:
-            self._cases = self._cases.append(
-                DataFrame(data={
-                    self._join_key: [key],
-                    'ground_truth': [self.slice_on_join_key(
-                        df=self._ground_truth_cases, key=key,
-                    )],
-                    'prediction': [self.slice_on_join_key(
-                        df=self._predictions_cases, key=key,
-                    )],
-                })
-            )
-
-    def slice_on_join_key(self, *, df: DataFrame, key: str) -> DataFrame:
-        d = df.loc[df[self._join_key] == key]
-        del d[self._join_key]
-        d.reindex(d.columns)
-        return d
-
     def cross_validate(self):
-        # TODO: Cross-validation
-        return
+        expected_keys = set(self._ground_truth_cases[self._join_key])
+        submitted_keys = set(self._predictions_cases[self._join_key])
+
+        missing = expected_keys - submitted_keys
+        if missing:
+            self._raise_missing_predictions_error(missing=missing)
+
+        extra = submitted_keys - expected_keys
+        if extra:
+            self._raise_extra_predictions_error(extra=extra)
+
+    def score(self):
+        cases = set(self._ground_truth_cases[self._join_key])
+
+        self._case_results = DataFrame()
+
+        for idx, case in enumerate(cases):
+            self._case_results = self._case_results.append(
+                self.score_case(
+                    idx=idx,
+                    case=self._cases.loc[self._cases[self._join_key] == case],
+                ), ignore_index=True
+            )
+        self._aggregate_results = self.score_aggregates()
+
+    def score_aggregates(self):
+        aggregate_results = super().score_aggregates()
+
+        totals = self._case_results.sum()
+
+        for s in totals.index:
+            aggregate_results[s]["sum"] = totals[s]
+
+        tp = aggregate_results["true_positives"]["sum"]
+        fp = aggregate_results["false_positives"]["sum"]
+        fn = aggregate_results["false_negatives"]["sum"]
+
+        aggregate_results["precision"] = tp / (tp + fp)
+        aggregate_results["recall"] = tp / (tp + fn)
+        aggregate_results["f1_score"] = 2 * tp / ((2 * tp) + fp + fn)
+
+        return aggregate_results
