@@ -5,5 +5,5 @@ __email__ = "jamesmeakin@gmail.com"
 
 from .__version__ import __version__  # noqa: F401
 from .evalutils import (  # noqa: F401
-    ClassificationEvaluation, DetectionEvaluation,
+    ClassificationEvaluation, DetectionEvaluation, Evaluation,
 )
