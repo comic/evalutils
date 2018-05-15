@@ -2,7 +2,7 @@
 History
 =======
 
-0.1.11 (XXXX-XX-XX)
+0.1.11 (2018-05-15)
 -------------------
 
 * **Breaking change:** Renamed ``Evaluation`` to ``ClassificationEvaluation``
