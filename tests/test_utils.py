@@ -36,10 +36,10 @@ def test_point_merging():
 
 
 targets = [
-    (10.0, 10.0),
-    (5.0, 5.0),
-    (2.0, 2.0),
-    (11.2, 11.2),
+    (10.0, 10.0), # 1, TP+=1, FP-=1
+    (5.0, 5.0), # -, FN+=1
+    (2.0, 2.0), # 3, 2, TP+=1, FP-=1
+    (11.2, 11.2), # 1, already taken by 0
 ]
 
 preds = [
@@ -57,7 +57,7 @@ def test_find_hits():
 
     assert neighbours[0] == [1]
     assert list(neighbours[1]) == []
-    assert list(neighbours[2]) == [2, 3]
+    assert list(neighbours[2]) == [3, 2]
     assert list(neighbours[3]) == [1]
     assert len(neighbours) == len(targets)
 
@@ -65,9 +65,9 @@ def test_find_hits():
 def test_score_detection():
     detection_score = score_detection(ground_truth=targets, predictions=preds)
 
-    assert detection_score.false_negatives == 1
-    assert detection_score.true_positives == 3
-    assert detection_score.false_positives == 2
+    assert detection_score.false_negatives == 2
+    assert detection_score.true_positives == 2
+    assert detection_score.false_positives == 3
 
 
 def test_multi_hit():

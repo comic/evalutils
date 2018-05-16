@@ -50,23 +50,21 @@ def score_detection(
     prediction_hit_a_target = [False] * len(predictions)
 
     for hits_for_target in hits_for_targets:
-        if len(hits_for_target) > 0:
-            true_positives += 1
-            for idx in hits_for_target:
-                prediction_hit_a_target[idx] = True
+        for hit_idx in hits_for_target:
+            # Go from the nearest to the farthest hit, mark the closest one
+            # as a hit for this point
+            if not prediction_hit_a_target[hit_idx]:
+                prediction_hit_a_target[hit_idx] = True
+                true_positives += 1
+                break
         else:
             false_negatives += 1
 
     false_positives = prediction_hit_a_target.count(False)
 
-    if (true_positives + false_positives) != len(predictions):
-        # A predicted point could be counted as a hit for many ground truth
-        # points, so correct this if this happens
-        double_counted_points = (
-            (true_positives + false_positives) - len(predictions)
-        )
-        true_positives -= double_counted_points
-        false_negatives += double_counted_points
+    assert 0 <= true_positives <= min(len(predictions), len(ground_truth))
+    assert 0 <= false_positives <= len(predictions)
+    assert 0 <= false_negatives <= len(ground_truth)
 
     assert true_positives + false_negatives == len(ground_truth)
     assert true_positives + false_positives == len(predictions)
@@ -86,7 +84,8 @@ def find_hits_for_targets(
 ) -> List[Tuple[int, ...]]:
     """
     Generates a list of the predicted points that are within a radius r of the
-    targets.
+    targets. The indicies are returned in sorted order, from closest to
+    farthest point.
 
     Parameters
     ----------
@@ -107,5 +106,7 @@ def find_hits_for_targets(
 
     """
     predictions_tree = BallTree(predictions)
-    hits = predictions_tree.query_radius(X=targets, r=radius)
+    hits, _ = predictions_tree.query_radius(
+        X=targets, r=radius, return_distance=True, sort_results=True,
+    )
     return hits

@@ -2,6 +2,11 @@
 History
 =======
 
+0.1.12 (2018-05-16)
+-------------------
+
+* Fixed a bug where the number of `false_negatives` could be less than 0.
+
 0.1.11 (2018-05-15)
 -------------------
 
