@@ -97,9 +97,9 @@ class BaseEvaluation(ABC):
                 )
             else:
                 if cases is None:
-                    cases = DataFrame(new_cases)
+                    cases = [new_cases]
                 else:
-                    cases = cases.append(new_cases, ignore_index=True)
+                    cases.append(new_cases)
 
         if cases is None:
             raise FileLoaderError(
@@ -107,7 +107,7 @@ class BaseEvaluation(ABC):
                 f"{self._file_loader}."
             )
 
-        return cases
+        return DataFrame(cases)
 
     def validate(self):
         self._validate_data_frame(df=self._ground_truth_cases)
