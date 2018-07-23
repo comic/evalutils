@@ -138,7 +138,7 @@ The only requirement here is that it returns a dictionary.
 If you need to score cases individually before aggregating them, you should remove the implementation of ``score_aggregates`` and implement ``score_case`` instead.
 See :class:`evalutils.Evaluation` for more possibilities.
 
-Build, Test and Deploy
+Build, Test and Export
 ^^^^^^^^^^^^^^^^^^^^^^
 
 When you're ready to test your evaluation you can simply invoke
@@ -150,11 +150,11 @@ When you're ready to test your evaluation you can simply invoke
 This will build your docker container, add the test data as a temporary volume, run the evaluation, and then ``cat /output/metrics.json``.
 If the output looks ok, then you're ready to go.
 
-You can deploy the evaluation container with
+You can export the evaluation container with
 
 .. code-block:: console
 
-    $ ./deploy.sh
+    $ ./export.sh
 
 which will create myproject.tar in the folder.
 You can then upload this directly to `Grand Challenge`_ on your evaluation methods page.
