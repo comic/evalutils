@@ -144,6 +144,7 @@ Build, Test and Deploy
 When you're ready to test your evaluation you can simply invoke
 
 .. code-block:: console
+
     $ ./test.sh
 
 This will build your docker container, add the test data as a temporary volume, run the evaluation, and then ``cat /output/metrics.json``.
@@ -152,6 +153,7 @@ If the output looks ok, then you're ready to go.
 You can deploy the evaluation container with
 
 .. code-block:: console
+
     $ ./deploy.sh
 
 which will create myproject.tar in the folder.
