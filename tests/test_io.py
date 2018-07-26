@@ -35,7 +35,7 @@ def test_first_int_in_filename_key():
 
 def test_image_io_loader():
     fname = Path(__file__).parent / 'resources' / 'images' / '1_mask.png'
-    o = ImageIOLoader.load(fname=fname)
+    o = ImageIOLoader.load(fname=fname)[0]
     assert o['path'] == fname
     assert o['img'].shape == (584, 565)
 
@@ -60,7 +60,7 @@ def test_csv_loader():
 
     for record in records:
         assert set(record.keys()) == {'file_id', 'label'}
-        
+
     assert len(records) == 13201
 
     with pytest.raises(FileLoaderError):
@@ -77,7 +77,7 @@ def test_itk_loader():
         'itk' /
         '1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd'
     )
-    o = SimpleITKLoader.load(fname=fname)
+    o = SimpleITKLoader.load(fname=fname)[0]
 
     assert o['path'] == fname
     assert GetArrayFromImage(o['img']).shape == (476, 512, 512)

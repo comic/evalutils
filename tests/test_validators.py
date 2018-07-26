@@ -61,10 +61,10 @@ def test_expected_columns_ok():
 def images():
     image1 = ImageIOLoader().load(
         fname=Path(__file__).parent / 'resources' / 'images' / '1_mask.png'
-    )
+    )[0]
     image2 = ImageIOLoader().load(
         fname=Path(__file__).parent / 'resources' / 'images' / '2_mask.png'
-    )
+    )[0]
     return [image1, image2]
 
 

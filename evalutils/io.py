@@ -3,7 +3,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Union, Dict
+from typing import Union, Dict, List
 
 from SimpleITK import ReadImage
 from imageio import imread
@@ -43,14 +43,14 @@ def first_int_in_filename_key(fname: Path) -> str:
     try:
         return f"{get_first_int_in(fname.stem):>64}"
     except AttributeError:
-        logger.warning(f"Could not find int in '{fname.stem}'.")
+        logger.warning(f"Could not find an int in the string '{fname.stem}'.")
         return fname.stem
 
 
 class FileLoader(ABC):
     @staticmethod
     @abstractmethod
-    def load(*, fname: Path) -> Dict:
+    def load(*, fname: Path) -> List[Dict]:
         """
 
         TODO
@@ -84,33 +84,33 @@ class FileLoader(ABC):
 
 class ImageIOLoader(FileLoader):
     @staticmethod
-    def load(*, fname: Path) -> Dict:
+    def load(*, fname: Path):
         try:
             img = imread(fname, as_gray=True)
         except ValueError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return {
+        return [{
             "img": img,
             "path": fname,
-        }
+        }]
 
 
 class SimpleITKLoader(FileLoader):
     @staticmethod
-    def load(*, fname: Path) -> Dict:
+    def load(*, fname: Path):
         try:
             img = ReadImage(str(fname))
         except RuntimeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return {
+        return [{
             "img": img,
             "path": fname,
-        }
+        }]
 
 
 class CSVLoader(FileLoader):
     @staticmethod
-    def load(*, fname: Path) -> Dict:
+    def load(*, fname: Path):
         try:
             return read_csv(fname, skipinitialspace=True).to_dict(
                 orient="records"

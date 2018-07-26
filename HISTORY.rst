@@ -2,6 +2,12 @@
 History
 =======
 
+0.1.13 (2018-07-26)
+-------------------
+
+* File loaders now return lists of dictionaries rather than dictionaries
+
+
 0.1.12 (2018-05-16)
 -------------------
 
