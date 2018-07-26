@@ -25,20 +25,24 @@ class BaseEvaluation(ABC):
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...],
         join_key: str = None,
-        aggregates: Set[str] = {
-            "mean",
-            "std",
-            "min",
-            "max",
-            "25%",
-            "50%",
-            "75%",
-            "count",
-            "uniq",
-            "freq",
-        },
+        aggregates: Set[str] = None,
         output_file: Path = Path("/output/metrics.json"),
     ):
+
+        if aggregates is None:
+            aggregates = {
+                "mean",
+                "std",
+                "min",
+                "max",
+                "25%",
+                "50%",
+                "75%",
+                "count",
+                "uniq",
+                "freq",
+            }
+
         self._ground_truth_path = ground_truth_path
         self._predictions_path = predictions_path
         self._file_sorter_key = file_sorter_key
@@ -55,6 +59,7 @@ class BaseEvaluation(ABC):
 
         self._case_results = DataFrame()
         self._aggregate_results = {}
+
         super().__init__()
 
         if isinstance(self._file_loader, CSVLoader) and self._join_key is None:
