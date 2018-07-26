@@ -56,10 +56,12 @@ def test_csv_loader():
         'csv' /
         'algorithm_result.csv'
     )
-    o = CSVLoader.load(fname=fname)
+    records = CSVLoader.load(fname=fname)
 
-    assert set(o.keys()) == {'file_id', 'label'}
-    assert len(o['file_id']) == len(o['label']) == 13201
+    for record in records:
+        assert set(record.keys()) == {'file_id', 'label'}
+        
+    assert len(records) == 13201
 
     with pytest.raises(FileLoaderError):
         non_csv_filename = (
