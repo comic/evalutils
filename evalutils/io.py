@@ -112,7 +112,9 @@ class CSVLoader(FileLoader):
     @staticmethod
     def load(*, fname: Path) -> Dict:
         try:
-            return read_csv(fname, skipinitialspace=True).to_dict(orient="records")
+            return read_csv(fname, skipinitialspace=True).to_dict(
+                orient="records"
+            )
         except UnicodeDecodeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
         except(ParserError, EmptyDataError):
