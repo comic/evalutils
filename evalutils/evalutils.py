@@ -104,8 +104,7 @@ class BaseEvaluation(ABC):
                 if cases is None:
                     cases = new_cases
                 else:
-                    for new_case in new_cases:
-                        cases.append(new_case)
+                    cases += new_cases
 
         if cases is None:
             raise FileLoaderError(
