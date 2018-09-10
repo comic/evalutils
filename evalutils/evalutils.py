@@ -2,6 +2,7 @@
 import json
 import logging
 from abc import ABC, abstractmethod
+from os import PathLike
 from pathlib import Path
 from typing import Tuple, Dict, Set, Callable
 from warnings import warn
@@ -26,7 +27,7 @@ class BaseEvaluation(ABC):
         validators: Tuple[DataFrameValidator, ...],
         join_key: str = None,
         aggregates: Set[str] = None,
-        output_file: Path = Path("/output/metrics.json"),
+        output_file: PathLike = Path("/output/metrics.json"),
     ):
 
         if aggregates is None:
