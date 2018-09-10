@@ -89,10 +89,7 @@ class ImageIOLoader(FileLoader):
             img = imread(fname, as_gray=True)
         except ValueError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{
-            "img": img,
-            "path": fname,
-        }]
+        return [{"img": img, "path": fname}]
 
 
 class SimpleITKLoader(FileLoader):
@@ -102,10 +99,7 @@ class SimpleITKLoader(FileLoader):
             img = ReadImage(str(fname))
         except RuntimeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{
-            "img": img,
-            "path": fname,
-        }]
+        return [{"img": img, "path": fname}]
 
 
 class CSVLoader(FileLoader):
@@ -117,7 +111,7 @@ class CSVLoader(FileLoader):
             )
         except UnicodeDecodeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        except(ParserError, EmptyDataError):
+        except (ParserError, EmptyDataError):
             raise ValueError(
                 f"CSV file could not be loaded: we could not load "
                 f"{fname.name} using `pandas.read_csv`."

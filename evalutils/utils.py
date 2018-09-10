@@ -4,7 +4,7 @@ from typing import List, Tuple
 from sklearn.neighbors import BallTree
 
 DetectionScore = namedtuple(
-    "DetectionScore", ["true_positives", "false_negatives", "false_positives"],
+    "DetectionScore", ["true_positives", "false_negatives", "false_positives"]
 )
 
 
@@ -42,7 +42,7 @@ def score_detection(
 
     """
     hits_for_targets = find_hits_for_targets(
-        targets=ground_truth, predictions=predictions, radius=radius,
+        targets=ground_truth, predictions=predictions, radius=radius
     )
 
     true_positives = 0
@@ -107,6 +107,6 @@ def find_hits_for_targets(
     """
     predictions_tree = BallTree(predictions)
     hits, _ = predictions_tree.query_radius(
-        X=targets, r=radius, return_distance=True, sort_results=True,
+        X=targets, r=radius, return_distance=True, sort_results=True
     )
     return hits

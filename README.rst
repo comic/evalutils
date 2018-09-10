@@ -24,6 +24,9 @@ evalutils
      :target: https://pyup.io/repos/github/comic/evalutils/
      :alt: Updates
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
+
 
 evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.
 

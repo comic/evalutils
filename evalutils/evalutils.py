@@ -231,16 +231,18 @@ class ClassificationEvaluation(BaseEvaluation):
         )
 
     def cross_validate(self):
-        missing = [p for _, p in self._cases.iterrows() if
-                   p["_merge"] == "left_only"]
+        missing = [
+            p for _, p in self._cases.iterrows() if p["_merge"] == "left_only"
+        ]
 
         if missing:
             if self._join_key:
                 missing = [p[self._join_key] for p in missing]
             self._raise_missing_predictions_error(missing=missing)
 
-        extra = [p for _, p in self._cases.iterrows() if
-                 p["_merge"] == "right_only"]
+        extra = [
+            p for _, p in self._cases.iterrows() if p["_merge"] == "right_only"
+        ]
 
         if extra:
             if self._join_key:
@@ -267,7 +269,7 @@ class Evaluation(ClassificationEvaluation):
                 "The Evaluation class is deprecated, "
                 "please use ClassificationEvaluation instead"
             ),
-            DeprecationWarning
+            DeprecationWarning,
         )
         super().__init__(*args, **kwargs)
 
@@ -282,7 +284,7 @@ class DetectionEvaluation(BaseEvaluation):
     def merge_ground_truth_and_predictions(self):
         self._cases = concat(
             [self._ground_truth_cases, self._predictions_cases],
-            keys=["ground_truth", "predictions"]
+            keys=["ground_truth", "predictions"],
         )
 
     def cross_validate(self):
@@ -307,7 +309,8 @@ class DetectionEvaluation(BaseEvaluation):
                 self.score_case(
                     idx=idx,
                     case=self._cases.loc[self._cases[self._join_key] == case],
-                ), ignore_index=True
+                ),
+                ignore_index=True,
             )
         self._aggregate_results = self.score_aggregates()
 

@@ -66,10 +66,7 @@ class UniqueImagesValidator(DataFrameValidator):
 
 class ExpectedColumnNamesValidator(DataFrameValidator):
     def __init__(
-        self,
-        *,
-        expected: Tuple[str, ...],
-        extra_cols_check: bool = True,
+        self, *, expected: Tuple[str, ...], extra_cols_check: bool = True
     ):
         """ Validates that the DataFrame has the expected columns
 
@@ -108,7 +105,7 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
 
         if undefined_cols:
             raise ValidationError(
-                f"We expected to find the following columns but we didn\'t: "
+                f"We expected to find the following columns but we didn't: "
                 f"{undefined_cols}. Please check the column labels, and "
                 f"note that this is case sensitive. We only found: "
                 f"{df.columns}."
