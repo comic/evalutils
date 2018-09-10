@@ -204,9 +204,6 @@ class BaseEvaluation(ABC):
         return series_summary
 
     def save(self):
-        self.write_metrics_json()
-
-    def write_metrics_json(self):
         with open(self._output_file, "w") as f:
             f.write(json.dumps(self._metrics))
 
