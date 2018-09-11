@@ -20,7 +20,7 @@ class BaseEvaluation(ABC):
     def __init__(
         self,
         *,
-        ground_truth_path: Path = Path("/usr/src/evaluation/ground-truth/"),
+        ground_truth_path: Path = Path("/opt/evaluation/ground-truth/"),
         predictions_path: Path = Path("/input/"),
         file_sorter_key: Callable = first_int_in_filename_key,
         file_loader: FileLoader,

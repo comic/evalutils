@@ -2,12 +2,15 @@
 
 ./build.sh
 
-TEMPDIR=`mktemp -d`
+docker volume create {{ cookiecutter.package_name|lower }}-output
 
-docker run -v $(pwd)/test/:/input/ \
-           -v $TEMPDIR:/output/ \
-           {{ cookiecutter.package_name|lower }}
+docker run --rm \
+        -v $(pwd)/test/:/input/ \
+        -v {{ cookiecutter.package_name|lower }}-output:/output/ \
+        {{ cookiecutter.package_name|lower }}
 
-cat $TEMPDIR/metrics.json
+docker run --rm \
+        -v {{ cookiecutter.package_name|lower }}-output:/output/ \
+        alpine:latest cat /output/metrics.json
 
-rm -rf $TEMPDIR
+docker volume rm {{ cookiecutter.package_name|lower }}-output

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sklearn.metrics import accuracy_score
 
 from evalutils import ClassificationEvaluation
@@ -6,29 +8,39 @@ from evalutils.validators import ExpectedColumnNamesValidator
 
 
 class {{ cookiecutter.package_name|capitalize }}(
+
 {%- if cookiecutter.challenge_kind == "Classification" -%}
-ClassificationEvaluation
+    ClassificationEvaluation
 {%- elif cookiecutter.challenge_kind == "Detection" -%}
-DetectionEvaluation
+    DetectionEvaluation
 {%- elif cookiecutter.challenge_kind == "Segmentation" -%}
-SegmentationEvaluation
-{%- endif -%}):
+    SegmentationEvaluation
+{%- endif -%}
+
+):
+{%- if cookiecutter.challenge_kind == "Classification" %}
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
             validators=(
                 ExpectedColumnNamesValidator(expected=("case", "class",)),
             ),
+            ground_truth_path = Path("/opt/evaluation/ground-truth/"),
             join_key="case",
         )
 
     def score_aggregates(self):
         return {
             "accuracy_score": accuracy_score(
-                self._cases["class_ground_truth"], self._cases["class_prediction"]
+                self._cases["class_ground_truth"],
+                self._cases["class_prediction"],
              ),
         }
-
+{% elif cookiecutter.challenge_kind == "Detection" %}
+    pass
+{% elif cookiecutter.challenge_kind == "Segmentation" %}
+    pass
+{% endif %}
 
 if __name__ == "__main__":
     evaluation = {{ cookiecutter.package_name|capitalize }}()
