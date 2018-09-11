@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Union, Dict, List
 
-from SimpleITK import ReadImage
+from SimpleITK import ReadImage, GetArrayFromImage
 from imageio import imread
 from pandas import read_csv
 from pandas.errors import ParserError, EmptyDataError
@@ -89,7 +89,7 @@ class ImageIOLoader(FileLoader):
             img = imread(fname, as_gray=True)
         except ValueError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{"img": img, "path": fname}]
+        return [{"hash": hash(img.tostring()), "path": fname}]
 
 
 class SimpleITKLoader(FileLoader):
@@ -99,7 +99,9 @@ class SimpleITKLoader(FileLoader):
             img = ReadImage(str(fname))
         except RuntimeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{"img": img, "path": fname}]
+        return [
+            {"hash": hash(GetArrayFromImage(img).tostring()), "path": fname}
+        ]
 
 
 class CSVLoader(FileLoader):

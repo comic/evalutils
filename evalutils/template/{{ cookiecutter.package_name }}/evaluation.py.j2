@@ -4,7 +4,7 @@ import SimpleITK
 from sklearn.metrics import accuracy_score
 from evalutils import ClassificationEvaluation, DetectionEvaluation
 from evalutils.io import CSVLoader, SimpleITKLoader
-from evalutils.validators import ExpectedColumnNamesValidator, NumberOfCasesValidator, UniquePathIndicesValidator
+from evalutils.validators import ExpectedColumnNamesValidator, NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
 
 
 class {{ cookiecutter.package_name|capitalize }}(
@@ -47,15 +47,14 @@ class {{ cookiecutter.package_name|capitalize }}(
 
     @staticmethod
     def score_case(*, idx, case):
-        gt = case["img_ground_truth"]
         gt_path = case["path_ground_truth"]
-        pred = case["img_prediction"]
         pred_path = case["path_prediction"]
 
-        caster = SimpleITK.CastImageFilter()
-        caster.SetOutputPixelType(SimpleITK.sitkUInt8)
-        gt = caster.Execute(gt)
-        pred = caster.Execute(pred)
+        gt = SimpleITK.ReadImage(str(gt_path), SimpleITK.sitkUInt8)
+        pred = SimpleITK.ReadImage(str(pred_path), SimpleITK.sitkUInt8)
+
+        assert hash(SimpleITK.GetArrayFromImage(gt).tostring()) == case["hash_ground_truth"]
+        assert hash(SimpleITK.GetArrayFromImage(pred).tostring()) == case["hash_prediction"]
 
         overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
         overlap_measures.Execute(gt, pred)
