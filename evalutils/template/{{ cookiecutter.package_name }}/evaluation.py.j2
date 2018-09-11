@@ -1,10 +1,23 @@
-from pathlib import Path
-
-import SimpleITK
+{%- if cookiecutter.challenge_kind == "Classification" -%}
 from sklearn.metrics import accuracy_score
-from evalutils import ClassificationEvaluation, DetectionEvaluation
-from evalutils.io import CSVLoader, SimpleITKLoader
-from evalutils.validators import ExpectedColumnNamesValidator, NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
+{% endif %}
+
+{%- if cookiecutter.challenge_kind == "Detection" -%}
+from evalutils import DetectionEvaluation
+{%- else -%}
+from evalutils import ClassificationEvaluation
+{% endif %}
+
+{%- if cookiecutter.challenge_kind == "Segmentation" -%}
+import SimpleITK
+from evalutils.io import SimpleITKLoader, itk_image_hash
+from evalutils.validators import (
+    NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
+)
+{%- else -%}
+from evalutils.io import CSVLoader
+from evalutils.validators import ExpectedColumnNamesValidator
+{%- endif %}
 
 
 class {{ cookiecutter.package_name|capitalize }}(
@@ -42,6 +55,7 @@ class {{ cookiecutter.package_name|capitalize }}(
             validators=(
                 NumberOfCasesValidator(num_cases=2),
                 UniquePathIndicesValidator(),
+                UniqueImagesValidator(),
             ),
         )
 
@@ -50,12 +64,21 @@ class {{ cookiecutter.package_name|capitalize }}(
         gt_path = case["path_ground_truth"]
         pred_path = case["path_prediction"]
 
-        gt = SimpleITK.ReadImage(str(gt_path), SimpleITK.sitkUInt8)
-        pred = SimpleITK.ReadImage(str(pred_path), SimpleITK.sitkUInt8)
+        # Load the images for this case
+        gt = SimpleITK.ReadImage(str(gt_path))
+        pred = SimpleITK.ReadImage(str(pred_path))
 
-        assert hash(SimpleITK.GetArrayFromImage(gt).tostring()) == case["hash_ground_truth"]
-        assert hash(SimpleITK.GetArrayFromImage(pred).tostring()) == case["hash_prediction"]
+        # Check that they're the right ones
+        assert itk_image_hash(gt) == case["hash_ground_truth"]
+        assert itk_image_hash(pred) == case["hash_prediction"]
 
+        # Cast to the same type
+        caster = SimpleITK.CastImageFilter()
+        caster.SetOutputPixelType(SimpleITK.sitkUInt8)
+        gt = caster.Execute(gt)
+        pred = caster.Execute(pred)
+
+        # Score the case
         overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
         overlap_measures.Execute(gt, pred)
 

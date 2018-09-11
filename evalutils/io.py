@@ -47,6 +47,10 @@ def first_int_in_filename_key(fname: Path) -> str:
         return fname.stem
 
 
+def itk_image_hash(image) -> int:
+    return hash(GetArrayFromImage(image).tostring())
+
+
 class FileLoader(ABC):
     @staticmethod
     @abstractmethod
@@ -99,9 +103,7 @@ class SimpleITKLoader(FileLoader):
             img = ReadImage(str(fname))
         except RuntimeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [
-            {"hash": hash(GetArrayFromImage(img).tostring()), "path": fname}
-        ]
+        return [{"hash": itk_image_hash(img), "path": fname}]
 
 
 class CSVLoader(FileLoader):
