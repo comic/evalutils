@@ -12,7 +12,8 @@ def test_cli(tmpdir):
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name], cwd=tmpdir,
+        ["evalutils", "init", project_name, "--kind=Classification"],
+        cwd=tmpdir,
     )
 
     files = os.listdir(tmpdir)
@@ -28,7 +29,7 @@ def test_cli(tmpdir):
     for line in fileinput.input(
         f"{project_dir}/requirements.txt", inplace=True
     ):
-        print(line.split('==')[0])
+        print(line.split("==")[0])
 
     out = subprocess.check_output(["./build.sh"], cwd=project_dir)
 

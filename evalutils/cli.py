@@ -7,6 +7,8 @@ from cookiecutter.main import cookiecutter
 
 from . import __version__
 
+KIND_CHOICES = ["Classification", "Segmentation", "Detection"]
+
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__, "-v", "--version")
@@ -18,8 +20,8 @@ def main():
 @click.argument("challenge_name")
 @click.option(
     "--kind",
-    type=click.Choice(["Classification", "Segmentation", "Detection"]),
-    prompt="What kind of challenge is this? [Classification|Segmentation|Detection]",
+    type=click.Choice(KIND_CHOICES),
+    prompt=f"What kind of challenge is this? [{'|'.join(KIND_CHOICES)}]",
 )
 def init(challenge_name, kind):
     template_dir = Path(__file__).parent / "template"
