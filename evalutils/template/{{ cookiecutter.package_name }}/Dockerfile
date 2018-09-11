@@ -1,5 +1,9 @@
 FROM {{ cookiecutter.docker_base_container }}
 
+{% if cookiecutter.dev_build|int -%}
+RUN apt-get update && apt-get install -y git
+{%- endif %}
+
 RUN groupadd -r evaluator && useradd -m --no-log-init -r -g evaluator evaluator
 
 RUN mkdir -p /opt/evaluation /input /output \

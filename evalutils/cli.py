@@ -23,7 +23,8 @@ def main():
     type=click.Choice(KIND_CHOICES),
     prompt=f"What kind of challenge is this? [{'|'.join(KIND_CHOICES)}]",
 )
-def init(challenge_name, kind):
+@click.option("--dev", is_flag=True)
+def init(challenge_name, kind, dev):
     template_dir = Path(__file__).parent / "template"
 
     try:
@@ -35,6 +36,7 @@ def init(challenge_name, kind):
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
                 "challenge_kind": kind,
+                "dev_build": 1 if dev else 0,
             },
         )
         click.echo(f"Created project {challenge_name}")

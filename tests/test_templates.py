@@ -12,7 +12,7 @@ def test_cli(tmpdir):
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, "--kind=Classification"],
+        ["evalutils", "init", project_name, "--kind=Detection", "--dev"],
         cwd=tmpdir,
     )
 
@@ -21,15 +21,6 @@ def test_cli(tmpdir):
     assert f"Created project {project_name}" in out.decode()
 
     project_dir = os.path.join(tmpdir, project_name)
-
-    # Chicken and egg, the generated requirements.txt with fixed versions does
-    # not work if the latest version of the package is not yet on pypi, and
-    # we cannot get the latest version there unless all the tests pass. So,
-    # remove the version pinning
-    for line in fileinput.input(
-        f"{project_dir}/requirements.txt", inplace=True
-    ):
-        print(line.split("==")[0])
 
     out = subprocess.check_output(["./build.sh"], cwd=project_dir)
 
