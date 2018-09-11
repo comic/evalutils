@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sklearn.metrics import accuracy_score
 
-from evalutils import ClassificationEvaluation, SegmentationEvaluation
+from evalutils import ClassificationEvaluation, SegmentationEvaluation, DetectionEvaluation
 from evalutils.io import CSVLoader, SimpleITKLoader
 from evalutils.validators import ExpectedColumnNamesValidator, UniqueImagesValidator, NumberOfCasesValidator, UniquePathIndicesValidator
 
@@ -25,7 +25,6 @@ class {{ cookiecutter.package_name|capitalize }}(
             validators=(
                 ExpectedColumnNamesValidator(expected=("case", "class",)),
             ),
-            ground_truth_path = Path("/opt/evaluation/ground-truth/"),
             join_key="case",
         )
 
@@ -44,19 +43,13 @@ class {{ cookiecutter.package_name|capitalize }}(
             file_loader=SimpleITKLoader(),
             validators=(
                 UniqueImagesValidator(),
-                NumberOfCasesValidator(2),
+                NumberOfCasesValidator(num_cases=2),
                 UniquePathIndicesValidator(),
             ),
-            ground_truth_path = Path("/opt/evaluation/ground-truth/"),
         )
 
     def score_aggregates(self):
-        return {
-            "accuracy_score": accuracy_score(
-                self._cases["class_ground_truth"],
-                self._cases["class_prediction"],
-             ),
-        }
+        return {}
 {% endif %}
 
 if __name__ == "__main__":

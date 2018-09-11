@@ -5,14 +5,13 @@ import subprocess
 
 
 def test_cli(tmpdir):
-    # TODO: build the whl and install it in the container to test?
     project_name = "testeval"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, "--kind=Detection", "--dev"],
+        ["evalutils", "init", project_name, "--kind=Classification", "--dev"],
         cwd=tmpdir,
     )
 
