@@ -16,7 +16,12 @@ def main():
 
 @main.command(short_help="Initialise an evalutils project.")
 @click.argument("challenge_name")
-def init(challenge_name):
+@click.option(
+    "--kind",
+    type=click.Choice(["Classification", "Segmentation", "Detection"]),
+    prompt="What kind of challenge is this? [Classification|Segmentation|Detection]",
+)
+def init(challenge_name, kind):
     template_dir = Path(__file__).parent / "template"
 
     try:
@@ -27,6 +32,7 @@ def init(challenge_name):
                 "challenge_name": challenge_name,
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
+                "challenge_kind": kind,
             },
         )
         click.echo(f"Created project {challenge_name}")
