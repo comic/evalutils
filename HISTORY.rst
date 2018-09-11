@@ -6,6 +6,7 @@ History
 -------------------
 
 * File loaders now return lists of dictionaries rather than dictionaries
+* Renamed `intersection_over_union` to `jaccard_index`
 
 
 0.1.12 (2018-05-16)

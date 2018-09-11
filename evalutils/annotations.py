@@ -122,7 +122,7 @@ class BoundingBox:
         """
         return self.area + other.area - self.intersection(other=other)
 
-    def intersection_over_union(self, *, other: "BoundingBox") -> float:
+    def jaccard_index(self, *, other: "BoundingBox") -> float:
         """
         Calculates the intersection over union between this bounding box and a
         second, axis aligned, bounding box.
