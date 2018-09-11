@@ -258,10 +258,6 @@ class ClassificationEvaluation(BaseEvaluation):
         self._aggregate_results = self.score_aggregates()
 
 
-class SegmentationEvaluation(ClassificationEvaluation):
-    pass
-
-
 class Evaluation(ClassificationEvaluation):
     """
     Legacy class, you should use ClassificationEvaluation instead.

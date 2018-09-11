@@ -1,20 +1,18 @@
 from pathlib import Path
 
+import SimpleITK
 from sklearn.metrics import accuracy_score
-
-from evalutils import ClassificationEvaluation, SegmentationEvaluation, DetectionEvaluation
+from evalutils import ClassificationEvaluation, DetectionEvaluation
 from evalutils.io import CSVLoader, SimpleITKLoader
-from evalutils.validators import ExpectedColumnNamesValidator, UniqueImagesValidator, NumberOfCasesValidator, UniquePathIndicesValidator
+from evalutils.validators import ExpectedColumnNamesValidator, NumberOfCasesValidator, UniquePathIndicesValidator
 
 
 class {{ cookiecutter.package_name|capitalize }}(
 
-{%- if cookiecutter.challenge_kind == "Classification" -%}
-    ClassificationEvaluation
-{%- elif cookiecutter.challenge_kind == "Detection" -%}
+{%- if cookiecutter.challenge_kind == "Detection" -%}
     DetectionEvaluation
-{%- elif cookiecutter.challenge_kind == "Segmentation" -%}
-    SegmentationEvaluation
+{%- else -%}
+    ClassificationEvaluation
 {%- endif -%}
 
 ):
@@ -42,14 +40,38 @@ class {{ cookiecutter.package_name|capitalize }}(
         super().__init__(
             file_loader=SimpleITKLoader(),
             validators=(
-                UniqueImagesValidator(),
                 NumberOfCasesValidator(num_cases=2),
                 UniquePathIndicesValidator(),
             ),
         )
 
-    def score_aggregates(self):
-        return {}
+    @staticmethod
+    def score_case(*, idx, case):
+        gt = case["img_ground_truth"]
+        gt_path = case["path_ground_truth"]
+        pred = case["img_prediction"]
+        pred_path = case["path_prediction"]
+
+        caster = SimpleITK.CastImageFilter()
+        caster.SetOutputPixelType(SimpleITK.sitkUInt8)
+        gt = caster.Execute(gt)
+        pred = caster.Execute(pred)
+
+        overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
+        overlap_measures.Execute(gt, pred)
+
+        return {
+            'FalseNegativeError': overlap_measures.GetFalseNegativeError(),
+            'FalsePositiveError': overlap_measures.GetFalsePositiveError(),
+            'MeanOverlap': overlap_measures.GetMeanOverlap(),
+            'UnionOverlap': overlap_measures.GetUnionOverlap(),
+            'VolumeSimilarity': overlap_measures.GetVolumeSimilarity(),
+            'JaccardCoefficient': overlap_measures.GetJaccardCoefficient(),
+            'DiceCoefficient': overlap_measures.GetDiceCoefficient(),
+            'pred_fname': pred_path.name,
+            'gt_fname': gt_path.name,
+        }
+
 {% endif %}
 
 if __name__ == "__main__":
