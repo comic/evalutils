@@ -232,7 +232,7 @@ Detection Tasks
                 detection_threshold=0.5,
             )
 
-        def get_points(self, *, case, key: str):
+        def get_points(self, *, case, key):
             """
             Converts the set of ground truth or predictions for this case, into
             points that represent true positives or predictions
