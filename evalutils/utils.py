@@ -41,6 +41,20 @@ def score_detection(
     false negatives.
 
     """
+
+    if len(ground_truth) == 0:
+        return DetectionScore(
+            true_positives=0,
+            false_negatives=0,
+            false_positives=len(predictions),
+        )
+    elif len(predictions) == 0:
+        return DetectionScore(
+            true_positives=0,
+            false_negatives=len(ground_truth),
+            false_positives=0,
+        )
+
     hits_for_targets = find_hits_for_targets(
         targets=ground_truth, predictions=predictions, radius=radius
     )

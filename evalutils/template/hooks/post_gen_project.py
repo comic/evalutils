@@ -9,9 +9,11 @@ for f in templated_python_files:
 
 challenge_kind = "{{ cookiecutter.challenge_kind }}"
 
+
 def remove_classification_files():
     os.remove(Path("ground-truth") / "reference.csv")
     os.remove(Path("test") / "submission.csv")
+
 
 def remove_segmentation_files():
     files = []
@@ -19,10 +21,13 @@ def remove_segmentation_files():
         files.extend(Path(".").glob(f"**/*.{ext}"))
 
     for file in files:
-        os.remove(file)
+        os.remove(str(file))
+
 
 def remove_detection_files():
-    pass
+    os.remove(Path("ground-truth") / "detection-reference.csv")
+    os.remove(Path("test") / "detection-submission.csv")
+
 
 if challenge_kind.lower() != "segmentation":
     remove_segmentation_files()
