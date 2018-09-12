@@ -23,7 +23,20 @@ def check_dict(check, expected):
             "Segmentation",
             {"aggregates": {"DiceCoefficient": {"mean": 0.9557903761508626}}},
         ),
-        ("Detection", {}),
+        (
+            "Detection",
+            {
+                "aggregates": {
+                    "false_negatives": {"sum": 5},
+                    "false_positives": {"sum": 7},
+                    "true_positives": {"sum": 2},
+                    "image_id": {"count": 5},
+                    "precision": 2 / 9,
+                    "recall": 2 / 7,
+                    "f1_score": (2 * 2) / ((2 * 2) + 5 + 7),
+                }
+            },
+        ),
     ],
 )
 def test_cli(tmpdir, kind, expected):
