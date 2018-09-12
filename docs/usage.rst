@@ -165,6 +165,8 @@ In this example we are only getting one number per submission, the accuracy scor
 This number is calculated using ``sklearn.metrics.accuracy_score``.
 The ``self._cases`` data frame will contain all of the columns that you expect, and for those that have not been joined they will be available as ``"<column_name>_ground_truth"`` and ``"<column_name>_prediction"``.
 
+If you need to score cases individually before aggregating them, you should remove the implementation of ``score_aggregates`` and implement ``score_case`` instead.
+
 Segmentation Tasks
 ~~~~~~~~~~~~~~~~~~
 
@@ -235,6 +237,8 @@ By default, this will calculate the mean, quartile ranges and counts of each ind
 Detection Tasks
 ~~~~~~~~~~~~~~~
 
+The generated boilerplate for detection tasks is:
+
 .. code-block:: python
 
     class Myproject(DetectionEvaluation):
@@ -268,13 +272,24 @@ Detection Tasks
                 if p["score"] > self._detection_threshold
             ]
 
+In this case, we are loading a CSV file with ``CSVLoader``, but do not validate the number of rows as they can be different between the ground truth and submissions.
+We validate the column headers in both files.
+In this case, we identify the cases with ``image_id``, and both files contain ``x`` and ``y`` locations, with a confidence score of ``score``.
+In the ground truth dataset the score should be set to 1.
 
+By default, The predictions will be thresholded at ``detection_threshold``.
+The detection evaluation will count the closest prediction that lies within distance ``detection_radius`` from the ground truth point as a true positive.
+See :mod:`evalutils.scorers` for more information on the algorithm.
 
+The only function that needs to be implemented is ``get_points``, which converts a case row to a list of points which are later matched.
+In this case, we're acting on 2D images, but you could extend ``(p["x"], p["y"])`` to say ``(p["x"], p["y"], p["z"])`` if you have 3D data.
+
+By default, the f1 score, precision and accuracy are calculated for each case, see the ``DetectionEvaluation`` class for more information.
 
 Add The Ground Truth and Test Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The next step is to add the ground truth and test data (an example submission) to the repo.
+The next step is to add your ground truth and test data (an example submission) to the repo.
 If using CSV data simply update the ``ground-truth/reference.csv`` file, and then update the expected column names and join key in evaluate.py.
 Otherwise, see :mod:`evalutils.io` for other loaders such as the ones for ITK files or images.
 You can also add your own loader by extending the ``FileLoader`` class.
@@ -282,9 +297,7 @@ You can also add your own loader by extending the ``FileLoader`` class.
 Adapt The Evaluation
 ^^^^^^^^^^^^^^^^^^^^
 
-Change the function in ``score_aggregates`` to fit your needs.
-The only requirement here is that it returns a dictionary.
-If you need to score cases individually before aggregating them, you should remove the implementation of ``score_aggregates`` and implement ``score_case`` instead.
+Change the function in the boilerplate to fit your needs, refer to the superclass methods for more information on return types.
 See :class:`evalutils.Evaluation` for more possibilities.
 
 Build, Test and Export
