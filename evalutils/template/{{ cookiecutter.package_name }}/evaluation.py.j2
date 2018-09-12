@@ -1,16 +1,16 @@
 {%- if cookiecutter.challenge_kind == "Classification" -%}
 from sklearn.metrics import accuracy_score
-{% endif %}
+{%- elif cookiecutter.challenge_kind == "Segmentation" -%}
+import SimpleITK
+{%- endif %}
 
-{%- if cookiecutter.challenge_kind == "Detection" -%}
+{% if cookiecutter.challenge_kind == "Detection" -%}
 from evalutils import DetectionEvaluation
 {%- else -%}
 from evalutils import ClassificationEvaluation
-{% endif %}
-
-{%- if cookiecutter.challenge_kind == "Segmentation" -%}
-import SimpleITK
-from evalutils.io import SimpleITKLoader, itk_image_hash
+{%- endif %}
+{% if cookiecutter.challenge_kind == "Segmentation" -%}
+from evalutils.io import SimpleITKLoader
 from evalutils.validators import (
     NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
 )
@@ -65,12 +65,12 @@ class {{ cookiecutter.package_name|capitalize }}(
         pred_path = case["path_prediction"]
 
         # Load the images for this case
-        gt = SimpleITK.ReadImage(str(gt_path))
-        pred = SimpleITK.ReadImage(str(pred_path))
+        gt = self._file_loader.load_image(gt_path)
+        pred = self._file_loader.load_image(pred_path)
 
         # Check that they're the right ones
-        assert itk_image_hash(gt) == case["hash_ground_truth"]
-        assert itk_image_hash(pred) == case["hash_prediction"]
+        assert self._file_loader.hash_image(gt) == case["hash_ground_truth"]
+        assert self._file_loader.hash_image(pred) == case["hash_prediction"]
 
         # Cast to the same type
         caster = SimpleITK.CastImageFilter()
