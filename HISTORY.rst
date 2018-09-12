@@ -5,6 +5,7 @@ History
 0.1.13 (2018-09-12)
 -------------------
 
+* Adds Segmentation and Detection challenges to the project generator
 * File loaders now return lists of dictionaries rather than dictionaries
 * Renamed `intersection_over_union` to `jaccard_index`
 * Improved image memory management. Added `io.ImageLoader` and separate `load_image` and `hash_image` functions.
