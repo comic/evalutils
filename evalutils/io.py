@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Union, Dict, List
 
-from SimpleITK import ReadImage
+from SimpleITK import ReadImage, GetArrayFromImage
 from imageio import imread
 from pandas import read_csv
 from pandas.errors import ParserError, EmptyDataError
@@ -48,9 +48,8 @@ def first_int_in_filename_key(fname: Path) -> str:
 
 
 class FileLoader(ABC):
-    @staticmethod
     @abstractmethod
-    def load(*, fname: Path) -> List[Dict]:
+    def load(self, *, fname: Path) -> List[Dict]:
         """
 
         TODO
@@ -59,7 +58,7 @@ class FileLoader(ABC):
         -----
         For this to work with the validators you must:
 
-            If you load an image it must be saved in the `img` column
+            If you load an image it must save the hash in the `hash` column
 
             If you reference a Path it must be saved in the `path` column
 
@@ -82,29 +81,47 @@ class FileLoader(ABC):
         raise FileLoaderError
 
 
-class ImageIOLoader(FileLoader):
-    @staticmethod
-    def load(*, fname: Path):
+class ImageLoader(FileLoader):
+    def load(self, *, fname: Path):
         try:
-            img = imread(fname, as_gray=True)
-        except ValueError:
-            raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{"img": img, "path": fname}]
+            img = self.load_image(fname)
+        except (ValueError, RuntimeError):
+            raise FileLoaderError(
+                f"Could not load {fname} using {self.__class__.__qualname__}."
+            )
+        return [{"hash": self.hash_image(img), "path": fname}]
+
+    @staticmethod
+    def load_image(fname: Path):
+        raise NotImplementedError
+
+    @staticmethod
+    def hash_image(image):
+        raise NotImplementedError
 
 
-class SimpleITKLoader(FileLoader):
+class ImageIOLoader(ImageLoader):
     @staticmethod
-    def load(*, fname: Path):
-        try:
-            img = ReadImage(str(fname))
-        except RuntimeError:
-            raise FileLoaderError(f"Could not load {fname} using {__name__}.")
-        return [{"img": img, "path": fname}]
+    def load_image(fname):
+        return imread(fname, as_gray=True)
+
+    @staticmethod
+    def hash_image(image):
+        return hash(image.tostring())
+
+
+class SimpleITKLoader(ImageLoader):
+    @staticmethod
+    def load_image(fname):
+        return ReadImage(str(fname))
+
+    @staticmethod
+    def hash_image(image):
+        return hash(GetArrayFromImage(image).tostring())
 
 
 class CSVLoader(FileLoader):
-    @staticmethod
-    def load(*, fname: Path):
+    def load(self, *, fname: Path):
         try:
             return read_csv(fname, skipinitialspace=True).to_dict(
                 orient="records"

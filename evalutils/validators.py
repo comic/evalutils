@@ -51,13 +51,11 @@ class UniquePathIndicesValidator(DataFrameValidator):
 class UniqueImagesValidator(DataFrameValidator):
     def validate(self, *, df: DataFrame):
         try:
-            images = df["img"]
+            hashes = df["hash"]
         except KeyError:
-            raise ValidationError("Column `img` not found in DataFrame.")
+            raise ValidationError("Column `hash` not found in DataFrame.")
 
-        hashes = [hash(img.tostring()) for img in images]
-
-        if len(set(hashes)) != len(images):
+        if len(set(hashes)) != len(hashes):
             raise ValidationError(
                 "The images are not unique, please submit a unique image for "
                 "each case."

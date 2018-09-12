@@ -1,23 +1,42 @@
+{%- if cookiecutter.challenge_kind == "Classification" -%}
 from sklearn.metrics import accuracy_score
 
 from evalutils import ClassificationEvaluation
 from evalutils.io import CSVLoader
+from evalutils.validators import (
+    NumberOfCasesValidator, ExpectedColumnNamesValidator
+)
+{%- elif cookiecutter.challenge_kind == "Segmentation" -%}
+import SimpleITK
+
+from evalutils import ClassificationEvaluation
+from evalutils.io import SimpleITKLoader
+from evalutils.validators import (
+    NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
+)
+{%- elif cookiecutter.challenge_kind == "Detection" -%}
+from evalutils import DetectionEvaluation
+from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
+{%- endif %}
 
 
 class {{ cookiecutter.package_name|capitalize }}(
-{%- if cookiecutter.challenge_kind == "Classification" -%}
-ClassificationEvaluation
-{%- elif cookiecutter.challenge_kind == "Detection" -%}
-DetectionEvaluation
-{%- elif cookiecutter.challenge_kind == "Segmentation" -%}
-SegmentationEvaluation
-{%- endif -%}):
+
+{%- if cookiecutter.challenge_kind == "Detection" -%}
+    DetectionEvaluation
+{%- else -%}
+    ClassificationEvaluation
+{%- endif -%}
+
+):
+{%- if cookiecutter.challenge_kind == "Classification" %}
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
             validators=(
                 ExpectedColumnNamesValidator(expected=("case", "class",)),
+                NumberOfCasesValidator(num_cases=8),
             ),
             join_key="case",
         )
@@ -25,10 +44,85 @@ SegmentationEvaluation
     def score_aggregates(self):
         return {
             "accuracy_score": accuracy_score(
-                self._cases["class_ground_truth"], self._cases["class_prediction"]
+                self._cases["class_ground_truth"],
+                self._cases["class_prediction"],
              ),
         }
+{% elif cookiecutter.challenge_kind == "Detection" %}
+    def __init__(self):
+        super().__init__(
+            file_loader=CSVLoader(),
+            validators=(
+                ExpectedColumnNamesValidator(
+                    expected=("image_id", "x", "y", "score")
+                ),
+            ),
+            join_key="image_id",
+            detection_radius=1.0,
+            detection_threshold=0.5,
+        )
 
+    def get_points(self, *, case, key: str):
+        """
+        Converts the set of ground truth or predictions for this case, into
+        points that represent true positives or predictions
+        """
+        try:
+            points = case.loc[key]
+        except KeyError:
+            # There are no ground truth/prediction points for this case
+            return []
+
+        return [
+            (p["x"], p["y"])
+            for _, p in points.iterrows()
+            if p["score"] > self._detection_threshold
+        ]
+{% elif cookiecutter.challenge_kind == "Segmentation" %}
+    def __init__(self):
+        super().__init__(
+            file_loader=SimpleITKLoader(),
+            validators=(
+                NumberOfCasesValidator(num_cases=2),
+                UniquePathIndicesValidator(),
+                UniqueImagesValidator(),
+            ),
+        )
+
+    def score_case(self, *, idx, case):
+        gt_path = case["path_ground_truth"]
+        pred_path = case["path_prediction"]
+
+        # Load the images for this case
+        gt = self._file_loader.load_image(gt_path)
+        pred = self._file_loader.load_image(pred_path)
+
+        # Check that they're the right images
+        assert self._file_loader.hash_image(gt) == case["hash_ground_truth"]
+        assert self._file_loader.hash_image(pred) == case["hash_prediction"]
+
+        # Cast to the same type
+        caster = SimpleITK.CastImageFilter()
+        caster.SetOutputPixelType(SimpleITK.sitkUInt8)
+        gt = caster.Execute(gt)
+        pred = caster.Execute(pred)
+
+        # Score the case
+        overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
+        overlap_measures.Execute(gt, pred)
+
+        return {
+            'FalseNegativeError': overlap_measures.GetFalseNegativeError(),
+            'FalsePositiveError': overlap_measures.GetFalsePositiveError(),
+            'MeanOverlap': overlap_measures.GetMeanOverlap(),
+            'UnionOverlap': overlap_measures.GetUnionOverlap(),
+            'VolumeSimilarity': overlap_measures.GetVolumeSimilarity(),
+            'JaccardCoefficient': overlap_measures.GetJaccardCoefficient(),
+            'DiceCoefficient': overlap_measures.GetDiceCoefficient(),
+            'pred_fname': pred_path.name,
+            'gt_fname': gt_path.name,
+        }
+{% endif %}
 
 if __name__ == "__main__":
     evaluation = {{ cookiecutter.package_name|capitalize }}()

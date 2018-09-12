@@ -10,7 +10,7 @@ from evalutils.io import (
     ImageIOLoader,
     CSVLoader,
     SimpleITKLoader,
-    first_int_in_filename_key
+    first_int_in_filename_key,
 )
 
 
@@ -35,9 +35,12 @@ def test_first_int_in_filename_key():
 
 def test_image_io_loader():
     fname = Path(__file__).parent / 'resources' / 'images' / '1_mask.png'
-    o = ImageIOLoader.load(fname=fname)[0]
+    loader = ImageIOLoader()
+    o = loader.load(fname=fname)[0]
+    img = loader.load_image(fname)
     assert o['path'] == fname
-    assert o['img'].shape == (584, 565)
+    assert o['hash'] == loader.hash_image(img)
+    assert img.shape == (584, 565)
 
     with pytest.raises(FileLoaderError):
         non_image_fname = (
@@ -46,7 +49,7 @@ def test_image_io_loader():
             'csv' /
             'algorithm_result.csv'
         )
-        ImageIOLoader.load(fname=non_image_fname)
+        ImageIOLoader().load(fname=non_image_fname)
 
 
 def test_csv_loader():
@@ -56,7 +59,7 @@ def test_csv_loader():
         'csv' /
         'algorithm_result.csv'
     )
-    records = CSVLoader.load(fname=fname)
+    records = CSVLoader().load(fname=fname)
 
     for record in records:
         assert set(record.keys()) == {'file_id', 'label'}
@@ -67,7 +70,7 @@ def test_csv_loader():
         non_csv_filename = (
             Path(__file__).parent / 'resources' / 'images' / '1_mask.png'
         )
-        CSVLoader.load(fname=non_csv_filename)
+        CSVLoader().load(fname=non_csv_filename)
 
 
 def test_itk_loader():
@@ -77,10 +80,13 @@ def test_itk_loader():
         'itk' /
         '1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd'
     )
-    o = SimpleITKLoader.load(fname=fname)[0]
+    loader = SimpleITKLoader()
+    o = loader.load(fname=fname)[0]
+    img = loader.load_image(fname)
 
     assert o['path'] == fname
-    assert GetArrayFromImage(o['img']).shape == (476, 512, 512)
+    assert o['hash'] == loader.hash_image(img)
+    assert GetArrayFromImage(img).shape == (476, 512, 512)
 
     with pytest.raises(FileLoaderError):
-        SimpleITKLoader.load(fname=fname.with_name(f'{fname.stem}.zraw'))
+        SimpleITKLoader().load(fname=fname.with_name(f'{fname.stem}.zraw'))

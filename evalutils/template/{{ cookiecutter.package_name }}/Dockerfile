@@ -1,19 +1,26 @@
 FROM {{ cookiecutter.docker_base_container }}
 
-RUN mkdir -p /usr/src/evaluation \
-    && mkdir /input \
-    && mkdir /output
+{% if cookiecutter.dev_build|int -%}
+RUN apt-get update && apt-get install -y git
+{%- endif %}
 
-WORKDIR /usr/src/evaluation
+RUN groupadd -r evaluator && useradd -m --no-log-init -r -g evaluator evaluator
 
-COPY ground-truth /usr/src/evaluation/ground-truth
+RUN mkdir -p /opt/evaluation /input /output \
+    && chown evaluator:evaluator /opt/evaluation /input /output
 
-RUN python -m pip install -U pip
+USER evaluator
+WORKDIR /opt/evaluation
 
-COPY requirements.txt /usr/src/evaluation/
+ENV PATH="/home/evaluator/.local/bin:${PATH}"
 
-RUN python -m pip install -rrequirements.txt
+RUN python -m pip install --user -U pip
 
-COPY evaluation.py /usr/src/evaluation/
+COPY --chown=evaluator:evaluator ground-truth /opt/evaluation/ground-truth
+
+COPY --chown=evaluator:evaluator requirements.txt /opt/evaluation/
+RUN python -m pip install --user -rrequirements.txt
+
+COPY --chown=evaluator:evaluator evaluation.py /opt/evaluation/
 
 ENTRYPOINT "python" "-m" "evaluation"

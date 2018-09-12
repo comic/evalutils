@@ -74,8 +74,7 @@ def test_wrong_loader():
 
 def test_series_aggregation():
     class C(ClassificationTestEval):
-        @staticmethod
-        def score_case(*, idx: int, case: Series):
+        def score_case(self, *, idx: int, case: Series):
             return {
                 "accuracy": 1.0 if case["class_ground_truth"] == case[
                     "class_prediction"] else 0.0,

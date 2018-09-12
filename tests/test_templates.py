@@ -1,18 +1,56 @@
 # -*- coding: utf-8 -*-
-import fileinput
+import json
+
+import pytest
 import os
 import subprocess
 
 
-def test_cli(tmpdir):
-    # TODO: build the whl and install it in the container to test?
+def check_dict(check, expected):
+    """ Recursively check a dictionary of dictionaries """
+    for key, val in expected.items():
+        if isinstance(val, dict):
+            check_dict(check[key], val)
+        else:
+            assert check[key] == val
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        ("Classification", {"aggregates": {"accuracy_score": 0.5}}),
+        (
+            "Segmentation",
+            {"aggregates": {"DiceCoefficient": {"mean": 0.9557903761508626}}},
+        ),
+        (
+            "Detection",
+            {
+                "aggregates": {
+                    "false_negatives": {"sum": 5},
+                    "false_positives": {"sum": 7},
+                    "true_positives": {"sum": 2},
+                    "image_id": {"count": 5},
+                    "precision": 2 / 9,
+                    "recall": 2 / 7,
+                    "f1_score": (2 * 2) / ((2 * 2) + 5 + 7),
+                }
+            },
+        ),
+    ],
+)
+def test_cli(tmpdir, kind, expected):
+    """
+    WARNING: This tests against the github dev branch! We need a better way
+    than this to get the library into the templated docker file
+    """
     project_name = "testeval"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, "--kind=Classification"],
+        ["evalutils", "init", project_name, f"--kind={kind}", "--dev"],
         cwd=tmpdir,
     )
 
@@ -22,15 +60,6 @@ def test_cli(tmpdir):
 
     project_dir = os.path.join(tmpdir, project_name)
 
-    # Chicken and egg, the generated requirements.txt with fixed versions does
-    # not work if the latest version of the package is not yet on pypi, and
-    # we cannot get the latest version there unless all the tests pass. So,
-    # remove the version pinning
-    for line in fileinput.input(
-        f"{project_dir}/requirements.txt", inplace=True
-    ):
-        print(line.split("==")[0])
-
     out = subprocess.check_output(["./build.sh"], cwd=project_dir)
 
     assert "Successfully built" in out.decode()
@@ -38,7 +67,13 @@ def test_cli(tmpdir):
 
     out = subprocess.check_output(["./test.sh"], cwd=project_dir)
 
-    assert '"accuracy_score": 0.5' in out.decode()
+    # Grab the results json
+    out = out.decode().splitlines()
+    start = [i for i, ln in enumerate(out) if ln == "{"]
+    end = [i for i, ln in enumerate(out) if ln == "}"]
+    result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
+
+    check_dict(result, expected)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" not in files
