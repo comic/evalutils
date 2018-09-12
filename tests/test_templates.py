@@ -1,17 +1,43 @@
 # -*- coding: utf-8 -*-
-import fileinput
+import json
+
+import pytest
 import os
 import subprocess
 
 
-def test_cli(tmpdir):
+def check_dict(check, expected):
+    """ Recursively check a dictionary of dictionaries """
+    for key, val in expected.items():
+        if isinstance(val, dict):
+            check_dict(check[key], val)
+        else:
+            assert check[key] == val
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        ("Classification", {"aggregates": {"accuracy_score": 0.5}}),
+        (
+            "Segmentation",
+            {"aggregates": {"DiceCoefficient": {"mean": 0.9557903761508626}}},
+        ),
+        ("Detection", {}),
+    ],
+)
+def test_cli(tmpdir, kind, expected):
+    """
+    WARNING: This tests against the github dev branch! We need a better way
+    than this to get the library into the templated docker file
+    """
     project_name = "testeval"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, "--kind=Classification", "--dev"],
+        ["evalutils", "init", project_name, f"--kind={kind}", "--dev"],
         cwd=tmpdir,
     )
 
@@ -28,7 +54,13 @@ def test_cli(tmpdir):
 
     out = subprocess.check_output(["./test.sh"], cwd=project_dir)
 
-    assert '"accuracy_score": 0.5' in out.decode()
+    # Grab the results json
+    out = out.decode().splitlines()
+    start = [i for i, ln in enumerate(out) if ln == "{"]
+    end = [i for i, ln in enumerate(out) if ln == "}"]
+    result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
+
+    check_dict(result, expected)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" not in files
