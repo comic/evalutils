@@ -8,8 +8,8 @@ Evalutils
 
 .. py:module:: evalutils
 
-.. autoclass:: ClassificationEvaluation()
-    :members:
+.. automodule:: evalutils.evalutils
+   :members:
 
 IO
 --
@@ -25,6 +25,14 @@ Validators
 .. py:module:: evalutils.validators
 
 .. automodule:: evalutils.validators
+   :members:
+
+Scorers
+-------
+
+.. py:module:: evalutils.scorers
+
+.. automodule:: evalutils.scorers
    :members:
 
 Annotations

@@ -15,17 +15,18 @@ from .exceptions import FileLoaderError
 logger = logging.getLogger(__name__)
 
 
-def get_first_int_in(s: str) -> Union[int, None]:
-    """ TODO
+def get_first_int_in(s: str) -> Union[int, str]:
+    """
+    Gets the first integer in a string.
 
     Parameters
     ----------
     s
-        TODO
+        The string to search for an int
 
     Returns
     -------
-        TODO
+        The first integer found in the string
 
     Raises
     ------
@@ -51,8 +52,7 @@ class FileLoader(ABC):
     @abstractmethod
     def load(self, *, fname: Path) -> List[Dict]:
         """
-
-        TODO
+        Tries to load the file given by the path fname.
 
         Notes
         -----
@@ -66,11 +66,11 @@ class FileLoader(ABC):
         Parameters
         ----------
         fname
-            TODO
+            The file that the loader will try to load
 
         Returns
         -------
-            TODO
+            A list containing all of the cases in this file
 
         Raises
         ------
@@ -82,6 +82,11 @@ class FileLoader(ABC):
 
 
 class ImageLoader(FileLoader):
+    """
+    A specialised file loader for images. As images are large they will not
+    all be loaded into memory, so score_case needs to load them again later
+    via load_image.
+    """
     def load(self, *, fname: Path):
         try:
             img = self.load_image(fname)
@@ -93,10 +98,35 @@ class ImageLoader(FileLoader):
 
     @staticmethod
     def load_image(fname: Path):
+        """
+        Loads the image
+
+        Parameters
+        ----------
+        fname
+            The path that the loader will try to load
+
+        Returns
+        -------
+            The image
+        """
         raise NotImplementedError
 
     @staticmethod
-    def hash_image(image):
+    def hash_image(image) -> int:
+        """
+        Generates a hash of the image
+
+        Parameters
+        ----------
+        image
+            The image to hash
+
+        Returns
+        -------
+            The hash of the image
+
+        """
         raise NotImplementedError
 
 
