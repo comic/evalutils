@@ -9,9 +9,9 @@ from warnings import warn
 
 from pandas import DataFrame, merge, Series, concat
 
-from evalutils.utils import score_detection
 from .exceptions import FileLoaderError, ValidationError, ConfigurationError
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
+from .scorers import score_detection
 from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
