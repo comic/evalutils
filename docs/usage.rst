@@ -53,7 +53,7 @@ The different challenge types that you can select are:
 - **Segmentation**:
     A special case of a classification task, the difference is that the submission and ground truth are image files (eg, ITK images or a collection of PNGs).
     For instance, this evaluation could be used for scoring structure segmentation in 3D images.
-    There are the same number images in the ground truth and each submission.
+    There are the same number images in the ground truth dataset as there are in each submission.
     By default, the results per case are also reported.
 - **Detection**:
     The submission and ground truth are csv files, but with differing number of rows.
@@ -113,8 +113,7 @@ In this file, a new class has been created for you, and it is instantiated and r
 .. code-block:: python
 
     if __name__ == "__main__":
-        evaluation = Myproject()
-        evaluation.evaluate()
+        Myproject().evaluate()
 
 
 This is all that is needed for ``evalutils`` to perform the evaluation and generate the output for each new submission.
@@ -123,7 +122,7 @@ The superclass of ``Evaluation`` is what you need to adapt to your specific chal
 Classification Tasks
 ~~~~~~~~~~~~~~~~~~~~
 
-The boiler plate for segmentation challenges looks like this:
+The boilerplate for classification challenges looks like this:
 
 .. code-block:: python
 
@@ -149,6 +148,7 @@ The boiler plate for segmentation challenges looks like this:
 In this case the evaluation is loading csv files, so uses an instance ``CSVLoader`` which will do the loading of the data.
 In this example, both the ground truth and the prediction CSV files will contain the columns `case` (an index) and `class` (the predicted class of this case).
 We want to validate that the correct columns appear in both the ground truth and submitted predictions, so we use the ``ExpectedColumnNamesValidator`` with the names of the columns we expect to find.
+We also use the ``NumberOfCasesValidator`` to check that the correct number of cases has been submitted by the challenge participant.
 See :mod:`evalutils.validators` for a list of other validators that you can use.
 
 The ground truth and predictions will be loaded into two DataFrames.
@@ -157,6 +157,9 @@ The ``join_key`` is manditory when you use a ``CSVLoader``.
 This should be set to some sort of common index, such as a `case` identifier.
 When loading in files they are first going to be sorted so you might not need a ``join_key``, but you could also write a function that matches the cases based on filename.
 
+.. warning:: It is best practice to include an integer in the (file) name that uniquely defines each case.
+    For instance, name your testing set files case_001, case_002, ... etc.
+
 The last part is performing the actual evaluation.
 In this example we are only getting one number per submission, the accuracy score.
 This number is calculated using ``sklearn.metrics.accuracy_score``.
@@ -164,6 +167,8 @@ The ``self._cases`` data frame will contain all of the columns that you expect, 
 
 Segmentation Tasks
 ~~~~~~~~~~~~~~~~~~
+
+For segmentation tasks, the generated code will look like this:
 
 .. code-block:: python
 
@@ -212,6 +217,20 @@ Segmentation Tasks
                 'gt_fname': gt_path.name,
             }
 
+Here, we are loading ITK files in the ground-truth and test folders using ``SimpleITKLoader``.
+See :mod:`evalutils.io` for the other image loaders you could use.
+By default, the files will be matched together based on the first integer found in the filename, so name your ground truth files, for example, case_001.mha, case_002.mha, etc.
+Have the participants for your challenge do the same.
+
+The loader will try to load all of the files in the ground-truth and submission folders.
+To check that the correct number of images were submitted by the participant and loaded we use ``NumberOfCasesValidator``, and check that the images are unique by using ``UniquePathIndicesValidator`` and ``UniqueImagesValidator``
+
+The ``score_case`` function will calculate the score for each case, in this case we're calculating some overlap measures using ``SimpleITK``.
+The images are not stored in the case dataframe to save memory, so first they are loaded using the file loader, and are then checked that they are the valid images by calculating the hash.
+The filenames are also stored for the case for matching later on grand-challenge.
+
+The aggregate results are automatically calculated using ``score_aggregates``, which calls ``DataFrame.describe()``.
+By default, this will calculate the mean, quartile ranges and counts of each individual metric.
 
 Detection Tasks
 ~~~~~~~~~~~~~~~

@@ -125,5 +125,4 @@ class {{ cookiecutter.package_name|capitalize }}(
 {% endif %}
 
 if __name__ == "__main__":
-    evaluation = {{ cookiecutter.package_name|capitalize }}()
-    evaluation.evaluate()
+    {{ cookiecutter.package_name|capitalize }}().evaluate()
