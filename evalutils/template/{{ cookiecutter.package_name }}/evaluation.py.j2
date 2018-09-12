@@ -59,8 +59,7 @@ class {{ cookiecutter.package_name|capitalize }}(
             ),
         )
 
-    @staticmethod
-    def score_case(*, idx, case):
+    def score_case(self, *, idx, case):
         gt_path = case["path_ground_truth"]
         pred_path = case["path_prediction"]
 

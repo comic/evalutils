@@ -2,11 +2,13 @@
 History
 =======
 
-0.1.13 (2018-07-26)
+0.1.13 (2018-09-12)
 -------------------
 
 * File loaders now return lists of dictionaries rather than dictionaries
 * Renamed `intersection_over_union` to `jaccard_index`
+* Improved image memory management. Added `io.ImageLoader` and separate `load_image` and `hash_image` functions.
+* `score_case` is no longer a static method
 
 
 0.1.12 (2018-05-16)

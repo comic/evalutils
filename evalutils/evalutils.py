@@ -164,8 +164,7 @@ class BaseEvaluation(ABC):
         pass
 
     # noinspection PyUnusedLocal
-    @staticmethod
-    def score_case(*, idx: int, case: DataFrame) -> Dict:
+    def score_case(self, *, idx: int, case: DataFrame) -> Dict:
         return {}
 
     def score_aggregates(self) -> Dict:
