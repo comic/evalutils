@@ -33,6 +33,9 @@ class DataFrameValidator(ABC):
 
 
 class UniquePathIndicesValidator(DataFrameValidator):
+    """
+    Validates that the indicies from the filenames are unique
+    """
     def validate(self, *, df: DataFrame):
         try:
             paths = df["path"]
@@ -49,6 +52,9 @@ class UniquePathIndicesValidator(DataFrameValidator):
 
 
 class UniqueImagesValidator(DataFrameValidator):
+    """
+    Validates that each image in the set is unique
+    """
     def validate(self, *, df: DataFrame):
         try:
             hashes = df["hash"]
@@ -66,11 +72,8 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
     def __init__(
         self, *, expected: Tuple[str, ...], extra_cols_check: bool = True
     ):
-        """ Validates that the DataFrame has the expected columns
-
-        Examples
-        --------
-        TODO
+        """
+        Validates that the DataFrame has the expected columns
 
         Parameters
         ----------
@@ -121,6 +124,14 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
 
 class NumberOfCasesValidator(DataFrameValidator):
     def __init__(self, *, num_cases: int):
+        """
+        Validates that there are the correct number of cases in the set.
+
+        Parameters
+        ----------
+        num_cases
+            The number of cases that we expect to find.
+        """
         if num_cases <= 0:
             raise ValueError(
                 "The expected number of cases must be greater than zero in "

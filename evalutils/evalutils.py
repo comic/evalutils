@@ -30,7 +30,35 @@ class BaseEvaluation(ABC):
         aggregates: Set[str] = None,
         output_file: PathLike = Path("/output/metrics.json"),
     ):
+        """
+        The base class for all evaluations. Sets the environment and controls
+        the flow of the evaluation once `evaluate` is called.
 
+
+        Parameters
+        ----------
+        ground_truth_path
+            The path in the container where the ground truth will be loaded
+            from
+        predictions_path
+            The path in the container where the submission will be loaded from
+        file_sorter_key
+            A function that determines how files are sorted and matched
+            together
+        file_loader
+            The loader that will be used to get all files
+        validators
+            A tuple containing all the validators that will be used on the
+            loaded data
+        join_key
+            The column that will be used to join the predictions and ground
+            truth tables
+        aggregates
+            The set of aggregates that will be calculated by
+            `pandas.DataFrame.describe`
+        output_file
+            The path to the location where the results will be written
+        """
         if aggregates is None:
             aggregates = {
                 "mean",
@@ -70,7 +98,8 @@ class BaseEvaluation(ABC):
             )
 
     @property
-    def _metrics(self):
+    def _metrics(self) -> Dict:
+        """ Returns the calculated case and aggregate results """
         return {
             "case": self._case_results.to_dict(),
             "aggregates": self._aggregate_results,
@@ -117,6 +146,7 @@ class BaseEvaluation(ABC):
         return DataFrame(cases)
 
     def validate(self):
+        """ Validates each dataframe separately """
         self._validate_data_frame(df=self._ground_truth_cases)
         self._validate_data_frame(df=self._predictions_cases)
 
@@ -130,6 +160,7 @@ class BaseEvaluation(ABC):
 
     @abstractmethod
     def cross_validate(self):
+        """ Validates both dataframes """
         pass
 
     def _raise_missing_predictions_error(self, *, missing=None):
