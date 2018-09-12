@@ -22,21 +22,51 @@ Before you start you will need to have:
 Generate The Project Structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once you have installed evalutils you can generate your project structure
-by using the command line:
+Evalutils contains a project generator based on `CookieCutter`_ that you can
+use to generate the boilerplate for your evaluation.
+Once you have installed evalutils you can see the options with:
+
+.. code-block:: console
+
+    $ evalutils --help
+
+Say that you want to create an evaluation for ``myproject``, you can initialize
+it with:
 
 .. code-block:: console
 
     $ evalutils init myproject
 
-If you do not have a local python 3.6+ environment you can also
-do this with docker, and then change the permissions of the generated folder
-to your own ``USER`` and ``GROUP`` afterwards:
+You will then be prompted to choose a challenge type:
 
 .. code-block:: console
 
-    $ docker run -it --rm -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init myproject"
-    $ sudo chown -R <USER>:<GROUP> myproject/
+    $ What kind of challenge is this? [Classification|Segmentation|Detection]:
+
+so type in your challenge type and press <enter>.
+The different challenge types that you can select are:
+
+- **Classification**:
+    The submission and ground truth are csv files with the same number of rows.
+    For instance, this evaluation could be used for scoring classification of whole images into 1 or multiple classes.
+    The result of the evaluation is not reported on the case level to prevent leaking of the ground truth data.
+- **Segmentation**:
+    The submission and ground truth are image files (eg, ITK images or a collection of PNGs).
+    For instance, this evaluation could be used for scoring structure segmentation in 3D images.
+    There are the same number images in the ground truth and each submission.
+    By default, the results per case are also reported.
+- **Detection**:
+    The submission and ground truth are csv files, but with differing number of rows.
+    For instance, this evaluation could be used for scoring detection of tumours in images.
+    For this sort of challenge, you may have many candidate points and many ground truth points per case.
+    By default, the results per case are also reported.
+
+If you do not have a local python 3.6+ environment you can also
+generate your project with docker by running a container and sharing your current user id:
+
+.. code-block:: console
+
+    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init myproject"
 
 Either of these commands will generate a folder called ``myproject``
 with everything you need to get started.
@@ -65,6 +95,7 @@ The structure of the project will be:
         ├── Dockerfile          # Defines how to build your evaluation container
         ├── evaluation.py       # Contains your evaluation code - this is where you will extend the Evaluation class
         ├── export.sh           # Exports your container to a .tar file for use on grand-challenge.org
+        ├── .gitignore          # Define which files git should ignore
         ├── ground-truth        # A folder that contains your ground truth annotations
         │   └── reference.csv   # In this example the ground truth is a csv file
         ├── README.md           # For describing your evaluation to others
@@ -72,6 +103,8 @@ The structure of the project will be:
         ├── test                # A folder that contains an example submission for testing
         │   └── submission.csv  # In this example the participants will submit a csv file
         └── test.sh             # A script that runs your evaluation container on the test submission
+
+For Segmentation tasks, some example mhd/zraw files will be in the ground-truth and test directories instead.
 
 The most important file is ``evaluation.py``.
 This is the file where you will extend the ``Evaluation`` class and implement the evaluation for your challenge.
@@ -87,9 +120,14 @@ In this file, a new class has been created for you, and it is instantiated and r
 This is all that is needed for ``evalutils`` to perform the evaluation and generate the output for each new submission.
 The superclass of ``Evaluation`` is what you need to adapt to your specific challenge.
 
+Segmentation Tasks
+~~~~~~~~~~~~~~~~~~
+
+The boiler plate for segmentation challenges looks like this:
+
 .. code-block:: python
 
-    class Myproject(Evaluation):
+    class Myproject(ClassificationEvaluation):
         def __init__(self):
             super().__init__(
                 file_loader=CSVLoader(),
@@ -162,3 +200,4 @@ You can then upload this directly to `Grand Challenge`_ on your evaluation metho
 .. _`Grand Challenge`: https://grand-challenge.org
 .. _docker: https://www.docker.com/
 .. _`git lfs`: https://git-lfs.github.com/
+.. _`CookieCutter`: https://github.com/audreyr/cookiecutter
