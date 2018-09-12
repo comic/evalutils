@@ -4,11 +4,12 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Tuple, Dict, Set, Callable
+from typing import Tuple, Dict, Set, Callable, List, Union
 from warnings import warn
 
 from pandas import DataFrame, merge, Series, concat
 
+from evalutils.utils import score_detection
 from .exceptions import FileLoaderError, ValidationError, ConfigurationError
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
 from .validators import DataFrameValidator
@@ -280,6 +281,11 @@ class DetectionEvaluation(BaseEvaluation):
     nodules in a CT volume, or malignant cells in a pathology slide.
     """
 
+    def __init__(self, *args, detection_radius, detection_threshold, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._detection_radius = detection_radius
+        self._detection_threshold = detection_threshold
+
     def merge_ground_truth_and_predictions(self):
         self._cases = concat(
             [self._ground_truth_cases, self._predictions_cases],
@@ -298,6 +304,14 @@ class DetectionEvaluation(BaseEvaluation):
         if extra:
             self._raise_extra_predictions_error(extra=extra)
 
+    def _raise_extra_predictions_error(self, *, extra=None):
+        """ In detection challenges extra predictions are ok """
+        warn(f"There are extra predictions for cases: {extra}.")
+
+    def _raise_missing_predictions_error(self, *, missing=None):
+        """ In detection challenges missing predictions are ok """
+        warn(f"Could not find predictions for cases: {missing}.")
+
     def score(self):
         cases = set(self._ground_truth_cases[self._join_key])
 
@@ -312,6 +326,24 @@ class DetectionEvaluation(BaseEvaluation):
                 ignore_index=True,
             )
         self._aggregate_results = self.score_aggregates()
+
+    def score_case(self, *, idx, case):
+        score = score_detection(
+            ground_truth=self.get_points(case=case, key="ground_truth"),
+            predictions=self.get_points(case=case, key="predictions"),
+            radius=self._detection_radius,
+        )
+
+        # Add the case id to the score
+        output = score._asdict()
+        output.update({self._join_key: case[self._join_key][0]})
+
+        return output
+
+    def get_points(
+        self, *, case, key: str
+    ) -> List[Tuple[Union[int, float], Union[int, float]]]:
+        raise NotImplementedError
 
     def score_aggregates(self):
         aggregate_results = super().score_aggregates()

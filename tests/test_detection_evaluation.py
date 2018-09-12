@@ -1,10 +1,7 @@
 from pathlib import Path
 
-from pandas import DataFrame
-
 from evalutils import DetectionEvaluation
 from evalutils.io import CSVLoader
-from evalutils.utils import score_detection
 from evalutils.validators import ExpectedColumnNamesValidator
 
 
@@ -28,32 +25,24 @@ class DetectionEvaluationTest(DetectionEvaluation):
                 / "submission"
             ),
             output_file=Path("/tmp/metrics.json"),
-        )
-        self.detection_threshold = 0.5
-        self.detection_radius = 1.0
-
-    def score_case(self, *, idx: int, case: DataFrame):
-        ground_truth = case.loc["ground_truth"]
-        predictions = case.loc["predictions"]
-
-        score = score_detection(
-            ground_truth=[
-                (p["x"], p["y"])
-                for _, p in ground_truth.iterrows()
-                if p["score"] > self.detection_threshold
-            ],
-            predictions=[
-                (p["x"], p["y"])
-                for _, p in predictions.iterrows()
-                if p["score"] > self.detection_threshold
-            ],
-            radius=self.detection_radius,
+            detection_threshold=0.5,
+            detection_radius=1.0,
         )
 
-        return score._asdict()
+    def get_points(self, *, case, key: str):
+        try:
+            points = case.loc[key]
+        except KeyError:
+            return []
+
+        return [
+            (p["x"], p["y"])
+            for _, p in points.iterrows()
+            if p["score"] > self._detection_threshold
+        ]
 
 
-def test_class_merging():
+def test_detection_evaluation():
     ev = DetectionEvaluationTest()
     ev.evaluate()
 

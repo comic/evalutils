@@ -15,13 +15,8 @@ from evalutils.validators import (
     NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
 )
 {%- elif cookiecutter.challenge_kind == "Detection" -%}
-from warnings import warn
-
-from pandas import DataFrame
-
 from evalutils import DetectionEvaluation
 from evalutils.io import CSVLoader
-from evalutils.utils import score_detection
 from evalutils.validators import ExpectedColumnNamesValidator
 {%- endif %}
 
@@ -63,51 +58,26 @@ class {{ cookiecutter.package_name|capitalize }}(
                 ),
             ),
             join_key="image_id",
-        )
-        # Set the hit radius and threshold
-        self.detection_threshold = 0.5
-        self.detection_radius = 1.0
-
-    def _raise_extra_predictions_error(self, *, extra=None):
-        """ In this detection challenge extra predictions are ok """
-        warn(f"There are extra predictions for cases: {extra}.")
-
-    def _raise_missing_predictions_error(self, *, missing=None):
-        """ In this detection challenge missing predictions are ok """
-        warn(f"Could not find predictions for cases: {missing}.")
-
-    def score_case(self, *, idx, case):
-        try:
-            ground_truth = case.loc["ground_truth"]
-        except KeyError:
-            # There are no ground truth annotations in this case
-            ground_truth = DataFrame()
-
-        try:
-            predictions = case.loc["predictions"]
-        except KeyError:
-            # There are no predictions for this case
-            predictions = DataFrame()
-
-        score = score_detection(
-            ground_truth=[
-                (p["x"], p["y"])
-                for _, p in ground_truth.iterrows()
-                if p["score"] > self.detection_threshold
-            ],
-            predictions=[
-                (p["x"], p["y"])
-                for _, p in predictions.iterrows()
-                if p["score"] > self.detection_threshold
-            ],
-            radius=self.detection_radius,
+            detection_radius=1.0,
+            detection_threshold=0.5,
         )
 
-        # Add the case id to the score
-        output = score._asdict()
-        output.update({self._join_key: case[self._join_key][0]})
+    def get_points(self, *, case, key: str):
+        """
+        Converts the set of ground truth or predictions for this case, into
+        points that represent true positives or predictions
+        """
+        try:
+            points = case.loc[key]
+        except KeyError:
+            # There are no ground truth/prediction points for this case
+            return []
 
-        return output
+        return [
+            (p["x"], p["y"])
+            for _, p in points.iterrows()
+            if p["score"] > self._detection_threshold
+        ]
 {% elif cookiecutter.challenge_kind == "Segmentation" %}
     def __init__(self):
         super().__init__(
