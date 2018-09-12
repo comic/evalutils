@@ -314,6 +314,7 @@ class DetectionEvaluation(BaseEvaluation):
 
     def score(self):
         cases = set(self._ground_truth_cases[self._join_key])
+        cases |= set(self._predictions_cases[self._join_key])
 
         self._case_results = DataFrame()
 
