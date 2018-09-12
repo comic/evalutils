@@ -51,7 +51,7 @@ The different challenge types that you can select are:
     For instance, this evaluation could be used for scoring classification of whole images into 1 or multiple classes.
     The result of the evaluation is not reported on the case level to prevent leaking of the ground truth data.
 - **Segmentation**:
-    The submission and ground truth are image files (eg, ITK images or a collection of PNGs).
+    A special case of a classification task, the difference is that the submission and ground truth are image files (eg, ITK images or a collection of PNGs).
     For instance, this evaluation could be used for scoring structure segmentation in 3D images.
     There are the same number images in the ground truth and each submission.
     By default, the results per case are also reported.
@@ -120,8 +120,8 @@ In this file, a new class has been created for you, and it is instantiated and r
 This is all that is needed for ``evalutils`` to perform the evaluation and generate the output for each new submission.
 The superclass of ``Evaluation`` is what you need to adapt to your specific challenge.
 
-Segmentation Tasks
-~~~~~~~~~~~~~~~~~~
+Classification Tasks
+~~~~~~~~~~~~~~~~~~~~
 
 The boiler plate for segmentation challenges looks like this:
 
@@ -133,6 +133,7 @@ The boiler plate for segmentation challenges looks like this:
                 file_loader=CSVLoader(),
                 validators=(
                     ExpectedColumnNamesValidator(expected=("case", "class",)),
+                    NumberOfCasesValidator(num_cases=8),
                 ),
                 join_key="case",
             )
@@ -140,7 +141,8 @@ The boiler plate for segmentation challenges looks like this:
         def score_aggregates(self):
             return {
                 "accuracy_score": accuracy_score(
-                    self._cases["class_ground_truth"], self._cases["class_prediction"]
+                    self._cases["class_ground_truth"],
+                    self._cases["class_prediction"],
                  ),
             }
 
@@ -159,6 +161,96 @@ The last part is performing the actual evaluation.
 In this example we are only getting one number per submission, the accuracy score.
 This number is calculated using ``sklearn.metrics.accuracy_score``.
 The ``self._cases`` data frame will contain all of the columns that you expect, and for those that have not been joined they will be available as ``"<column_name>_ground_truth"`` and ``"<column_name>_prediction"``.
+
+Segmentation Tasks
+~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    class Myproject(ClassificationEvaluation):
+        def __init__(self):
+            super().__init__(
+                file_loader=SimpleITKLoader(),
+                validators=(
+                    NumberOfCasesValidator(num_cases=2),
+                    UniquePathIndicesValidator(),
+                    UniqueImagesValidator(),
+                ),
+            )
+
+        def score_case(self, *, idx, case):
+            gt_path = case["path_ground_truth"]
+            pred_path = case["path_prediction"]
+
+            # Load the images for this case
+            gt = self._file_loader.load_image(gt_path)
+            pred = self._file_loader.load_image(pred_path)
+
+            # Check that they're the right images
+            assert self._file_loader.hash_image(gt) == case["hash_ground_truth"]
+            assert self._file_loader.hash_image(pred) == case["hash_prediction"]
+
+            # Cast to the same type
+            caster = SimpleITK.CastImageFilter()
+            caster.SetOutputPixelType(SimpleITK.sitkUInt8)
+            gt = caster.Execute(gt)
+            pred = caster.Execute(pred)
+
+            # Score the case
+            overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
+            overlap_measures.Execute(gt, pred)
+
+            return {
+                'FalseNegativeError': overlap_measures.GetFalseNegativeError(),
+                'FalsePositiveError': overlap_measures.GetFalsePositiveError(),
+                'MeanOverlap': overlap_measures.GetMeanOverlap(),
+                'UnionOverlap': overlap_measures.GetUnionOverlap(),
+                'VolumeSimilarity': overlap_measures.GetVolumeSimilarity(),
+                'JaccardCoefficient': overlap_measures.GetJaccardCoefficient(),
+                'DiceCoefficient': overlap_measures.GetDiceCoefficient(),
+                'pred_fname': pred_path.name,
+                'gt_fname': gt_path.name,
+            }
+
+
+Detection Tasks
+~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    class Myproject(DetectionEvaluation):
+        def __init__(self):
+            super().__init__(
+                file_loader=CSVLoader(),
+                validators=(
+                    ExpectedColumnNamesValidator(
+                        expected=("image_id", "x", "y", "score")
+                    ),
+                ),
+                join_key="image_id",
+                detection_radius=1.0,
+                detection_threshold=0.5,
+            )
+
+        def get_points(self, *, case, key: str):
+            """
+            Converts the set of ground truth or predictions for this case, into
+            points that represent true positives or predictions
+            """
+            try:
+                points = case.loc[key]
+            except KeyError:
+                # There are no ground truth/prediction points for this case
+                return []
+
+            return [
+                (p["x"], p["y"])
+                for _, p in points.iterrows()
+                if p["score"] > self._detection_threshold
+            ]
+
+
+
 
 Add The Ground Truth and Test Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
