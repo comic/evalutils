@@ -1,0 +1,12 @@
+version: 1.0.{build}
+
+image: Visual Studio 2017
+
+install:
+  - docker version
+
+build_script:
+  - pip install -U tox-travis
+
+test_script:
+  - tox
