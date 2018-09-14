@@ -8,6 +8,9 @@ evalutils
 .. image:: https://travis-ci.org/comic/evalutils.svg?branch=master
     :target: https://travis-ci.org/comic/evalutils
 
+.. image:: https://ci.appveyor.com/api/projects/status/jc27lltkwkxp06y1/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/jmsmkn/evalutils
+
 .. image:: https://api.codeclimate.com/v1/badges/5c3b7f45f6a476d0f21e/maintainability
    :target: https://codeclimate.com/github/comic/evalutils/maintainability
    :alt: Maintainability

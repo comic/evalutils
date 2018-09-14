@@ -6,7 +6,7 @@ install:
   - docker version
 
 build_script:
-  - pip install -U tox-travis
+  - pip install -U tox
 
 test_script:
   - tox
