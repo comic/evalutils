@@ -1,6 +1,17 @@
 import pytest
 import numpy as np
 import evalutils.stats as stats
+import sklearn
+
+
+@pytest.mark.parametrize("Y_true", [np.random.randint(0,2,(30,20,10)).astype(np.int)])
+@pytest.mark.parametrize("Y_pred", [np.random.randint(0,2,(30,20,10)).astype(np.int)])
+@pytest.mark.parametrize("labels", [[0], [0, 1], [0, 2], [0, 1, 2]])
+def test_calculate_confusion_matrix(Y_true, Y_pred, labels):
+    result = stats.calculate_confusion_matrix(Y_true, Y_pred, labels)
+    result2 = sklearn.metrics.confusion_matrix(Y_true.flatten(), Y_pred.flatten(), labels)
+    assert result.shape[0] == len(labels) and result.shape[1] == len(labels)
+    assert np.equal(result, result2).all()
 
 
 @pytest.mark.parametrize("A", [np.random.randint(0,2,(30,20,10)).astype(np.bool)])
@@ -48,7 +59,6 @@ def test_hd_and_contour_functions(A, B, voxelspace, connectivity):
 def test_cm_functions(A, B, classes):
     cm = stats.calculate_confusion_matrix(A, B, classes)
     r1 = stats.dice_from_cm(cm)
-    print(r1)
     r2 = stats.jaccard_from_cm(cm)
     r3 = stats.jaccard_to_dice(r2)
     r4 = stats.dice_to_jaccard(r1)
@@ -58,6 +68,7 @@ def test_cm_functions(A, B, classes):
         assert not np.isnan(r).any()
     assert np.allclose(r1, r3)
     assert np.allclose(r2, r4)
+    assert not np.allclose(r2, r5)
     assert not np.allclose(r1, r2)
     assert not np.allclose(r3, r4)
     assert not np.allclose(r1, r5)

@@ -69,7 +69,6 @@ def dice_to_jaccard(dice) -> Union[int, float, np.ndarray]:
 
 def accuracies_from_cm(cm) -> np.ndarray:
     """Computes accuracy scores from a confusion matrix
-    a.k.a. intersection over union (IoU)
 
     Parameters
     ----------
@@ -80,7 +79,12 @@ def accuracies_from_cm(cm) -> np.ndarray:
     -------
     1d ndarray containing accuracy scores for all N classes
     """
-    return jaccard_from_cm(cm)
+    results = np.zeros((len(cm)), dtype=np.float32)
+    for i in range(len(cm)):
+        filter = np.ones((len(cm)), dtype=np.bool)
+        filter[i] = 0
+        results[i] = (cm[i, i] + np.sum(cm[filter, filter])) / float(np.sum(cm))
+    return results
 
 
 def jaccard_from_cm(cm) -> np.ndarray:
