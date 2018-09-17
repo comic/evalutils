@@ -2,16 +2,30 @@
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion, generate_binary_structure, distance_transform_edt
 from scipy.ndimage.filters import convolve
-from typing import Union, Dict, List
+from typing import Union, Dict
 
 
 def calculate_confusion_matrix(Y_true, Y_pred, labels) -> np.ndarray:
     """Efficient confusion matrix calculation, based on sklearn interface
 
+    Parameters
+    ----------
+    Y_true : array_like
+             Target multi-object segmentation mask
+    Y_pred : array_like
+             Predicted multi-object segmentation mask
+    labels : List of integers
+             Inclusive list of N labels to compute the confusion matrix for.
+
+    Returns
+    -------
+    N x N confusion matrix for Y_pred w.r.t. Y_true
+
+    Notes
+    -----
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
     is equal to the number of observations known to be in group :math:`i` but
     predicted to be in group :math:`j`.
-
 
     """
     cm = np.zeros((len(labels), len(labels)), dtype=np.int)
@@ -22,18 +36,66 @@ def calculate_confusion_matrix(Y_true, Y_pred, labels) -> np.ndarray:
 
 
 def jaccard_to_dice(jacc) -> Union[int, float, np.ndarray]:
+    """Conversion computation from Jaccard to Dice
+
+    Parameters
+    ----------
+    jacc : array_like or float
+           1 or N Jaccard values within [0 .. 1]
+
+    Returns
+    -------
+    1 or N Dice values within [0 .. 1]
+    """
+    assert all(jacc >= 0) and all(jacc <= 1)
     return (jacc * 2.0) / (1.0 + jacc)
 
 
 def dice_to_jaccard(dice) -> Union[int, float, np.ndarray]:
+    """Conversion computation from Dice to Jaccard
+
+    Parameters
+    ----------
+    dice : array_like or float
+           1 or N Dice values within [0 .. 1]
+
+    Returns
+    -------
+    1 or N Jaccard values within [0 .. 1]
+    """
+    assert all(dice >= 0) and all(dice <= 1)
     return dice / (2.0 - dice)
 
 
 def accuracies_from_cm(cm) -> np.ndarray:
+    """Computes accuracy scores from a confusion matrix
+    a.k.a. intersection over union (IoU)
+
+    Parameters
+    ----------
+    cm : array_like (2D)
+         N x N Input confusion matrix
+
+    Returns
+    -------
+    1d ndarray containing accuracy scores for all N classes
+    """
     return jaccard_from_cm(cm)
 
 
 def jaccard_from_cm(cm) -> np.ndarray:
+    """Computes Jaccard scores from a confusion matrix
+    a.k.a. intersection over union (IoU)
+
+    Parameters
+    ----------
+    cm : array_like (2D)
+         N x N Input confusion matrix
+
+    Returns
+    -------
+    1d ndarray containing Jaccard scores for all N classes
+    """
     assert(cm.ndim == 2)
     assert(cm.shape[0] == cm.shape[1])
     jaccs = np.zeros((cm.shape[0]), dtype=np.float32)
@@ -42,34 +104,47 @@ def jaccard_from_cm(cm) -> np.ndarray:
     return jaccs
 
 
-def dice_from_cm(cm):
+def dice_from_cm(cm) -> np.ndarray:
+    """Computes Dice scores from a confusion matrix
+
+    Parameters
+    ----------
+    cm : array_like (2D)
+         N x N Input confusion matrix
+
+    Returns
+    -------
+    1d ndarray containing Dice scores for all N classes
+    """
     assert(cm.ndim == 2)
     assert(cm.shape[0] == cm.shape[1])
-    dices = np.zeros((cm.shape[0]))
+    dices = np.zeros((cm.shape[0]), dtype=np.float32)
     for i in range(cm.shape[0]):
         dices[i] = 2 * cm[i, i] / float(np.sum(cm[i, :]) + np.sum(cm[:, i]))
     return dices
 
 
-def icc(M):
+def icc(M) -> float:
     """
     Computes intra class correlation
 
     Parameters
     ----------
     M : array_like (2D, observations x classes)
-        Input data. Should be numerical. First dimension contains observations, second dimension contains classes.
+        Input data represents a design matrix. Should be numerical.
+        First dimension contains observations, second dimension contains classes.
 
     Returns
     -------
-    icc : scalar
+    icc : float
         Returns the intra class correlation between classes over the observations.
     """
+    assert M.ndims == 2
     result = 1.0 / (len(M) * np.var(M)) * np.sum(np.prod(M - np.mean(M), axis=1))
     return result
 
 
-def __surface_distances(A, B, voxelspacing=None, connectivity=1):
+def __surface_distances(A, B, voxelspacing=None, connectivity=1) -> np.ndarray:
     """
     Computes set of surface distances.
 
@@ -115,7 +190,7 @@ def __surface_distances(A, B, voxelspacing=None, connectivity=1):
     return distance_transform_edt(~Bb, sampling=voxelspacing)[Ab]
 
 
-def hd(A, B, voxelspacing=None, connectivity=1):
+def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     """
     Hausdorff Distance.
 
@@ -158,7 +233,7 @@ def hd(A, B, voxelspacing=None, connectivity=1):
     return max(dA.max(), dB.max())
 
 
-def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1):
+def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1) -> float:
     """
     Nth Percentile Hausdorff Distance.
 
@@ -208,7 +283,7 @@ def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1):
     return max(dA[int((len(dA)-1) * percentile)], dB[int((len(dB)-1) * percentile)])
 
 
-def modified_hd(A, B, voxelspacing=None, connectivity=1):
+def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
     """
     Hausdorff Distance.
 
@@ -249,7 +324,7 @@ def modified_hd(A, B, voxelspacing=None, connectivity=1):
     return max(dA.mean(), dB.mean())
 
 
-def ravd(A, B):
+def ravd(A, B) -> float:
     """
     Calculate relative absolute volume difference from B to A
 
@@ -278,7 +353,7 @@ def ravd(A, B):
     return abs(np.sum(B) - np.sum(A)) / float(np.sum(A))
 
 
-def avd(A, B, voxelspacing):
+def avd(A, B, voxelspacing) -> float:
     """
     Calculate absolute volume difference from B to A
 
@@ -319,7 +394,7 @@ def avd(A, B, voxelspacing):
     return np.abs(np.sum(B) - np.sum(A)) * volume_per_voxel
 
 
-def __directed_contour_distances(A, B, voxelspacing=None):
+def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
     """
     Computes set of surface contour distances.
     This function always explicitly calculates the contour-set of A.
@@ -371,7 +446,7 @@ def __directed_contour_distances(A, B, voxelspacing=None):
     return df[mask & Ab]
 
 
-def mean_contour_distance(A, B, voxelspacing=None):
+def mean_contour_distance(A, B, voxelspacing=None) -> float:
     """
     Mean Contour Distance.
 
@@ -402,14 +477,13 @@ def mean_contour_distance(A, B, voxelspacing=None):
     Notes
     -----
     This is a real metric that mimics the ITK MeanContourDistanceFilter.
-
     """
     dA = __directed_contour_distances(A, B, voxelspacing)
     dB = __directed_contour_distances(B, A, voxelspacing)
     return max(dA.mean(), dB.mean())
 
 
-def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95):
+def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95) -> Dict:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
     Since measures share common calculations,
