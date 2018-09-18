@@ -3,6 +3,7 @@ version: 1.0.{build}
 image: Visual Studio 2017
 
 install:
+  - docker-switch-linux
   - docker version
 
 build_script:
