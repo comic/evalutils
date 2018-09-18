@@ -12,38 +12,38 @@ from evalutils.validators import ExpectedColumnNamesValidator
 
 
 class ClassificationTestEval(ClassificationEvaluation):
-    def __init__(self):
+    def __init__(self, outdir):
         super().__init__(
             file_loader=CSVLoader(),
             ground_truth_path=(
-                Path(__file__).parent /
-                'resources' /
-                'classification' /
-                'reference'
+                Path(__file__).parent
+                / "resources"
+                / "classification"
+                / "reference"
             ),
             predictions_path=(
-                Path(__file__).parent /
-                'resources' /
-                'classification' /
-                'submission'
+                Path(__file__).parent
+                / "resources"
+                / "classification"
+                / "submission"
             ),
-            output_file=Path('/tmp/metrics.json'),
-            join_key='case',
+            output_file=Path(outdir) / "metrics.json",
+            join_key="case",
             validators=(
-                ExpectedColumnNamesValidator(expected=('case', 'class',)),
+                ExpectedColumnNamesValidator(expected=("case", "class")),
             ),
         )
 
 
-def test_class_creation():
-    ClassificationTestEval().evaluate()
+def test_class_creation(tmpdir):
+    ClassificationTestEval(outdir=tmpdir).evaluate()
 
 
 def test_csv_with_no_join():
     class C(ClassificationEvaluation):
         def __init__(self, **kwargs):
             super().__init__(
-                ground_truth_path=Path('/tmp'),
+                ground_truth_path=Path("/tmp"),
                 validators=(),
                 file_loader=CSVLoader(),
                 **kwargs,
@@ -53,7 +53,7 @@ def test_csv_with_no_join():
         C()
 
     # Check that it's ok when we define it
-    C(join_key='test')
+    C(join_key="test")
 
 
 def test_wrong_loader():
@@ -62,9 +62,9 @@ def test_wrong_loader():
             super().__init__(
                 file_loader=CSVLoader(),
                 ground_truth_path=(
-                    Path(__file__).parent / 'resources' / 'itk'
+                    Path(__file__).parent / "resources" / "itk"
                 ),
-                join_key='test',
+                join_key="test",
                 validators=(),
             )
 
@@ -72,16 +72,17 @@ def test_wrong_loader():
         C().evaluate()
 
 
-def test_series_aggregation():
+def test_series_aggregation(tmpdir):
     class C(ClassificationTestEval):
         def score_case(self, *, idx: int, case: Series):
             return {
-                "accuracy": 1.0 if case["class_ground_truth"] == case[
-                    "class_prediction"] else 0.0,
+                "accuracy": 1.0
+                if case["class_ground_truth"] == case["class_prediction"]
+                else 0.0,
                 "case_id": str(idx),
             }
 
-    e = C()
+    e = C(outdir=tmpdir)
     e.evaluate()
 
     assert e._metrics["aggregates"]["accuracy"]["mean"] == 0.5
