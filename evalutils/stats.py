@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-from scipy.ndimage.morphology import binary_erosion, generate_binary_structure, distance_transform_edt
-from scipy.ndimage.filters import convolve
 from typing import Union, Dict
+
+import numpy as np
+from scipy.ndimage.filters import convolve
+from scipy.ndimage.morphology import (
+    binary_erosion,
+    generate_binary_structure,
+    distance_transform_edt,
+)
 
 
 def calculate_confusion_matrix(Y_true, Y_pred, labels) -> np.ndarray:
@@ -100,11 +105,13 @@ def jaccard_from_cm(cm) -> np.ndarray:
     -------
     1d ndarray containing Jaccard scores for all N classes
     """
-    assert(cm.ndim == 2)
-    assert(cm.shape[0] == cm.shape[1])
+    assert cm.ndim == 2
+    assert cm.shape[0] == cm.shape[1]
     jaccs = np.zeros((cm.shape[0]), dtype=np.float32)
     for i in range(cm.shape[0]):
-        jaccs[i] = cm[i, i] / float(np.sum(cm[i, :]) + np.sum(cm[:, i]) - cm[i, i])
+        jaccs[i] = cm[i, i] / float(
+            np.sum(cm[i, :]) + np.sum(cm[:, i]) - cm[i, i]
+        )
     return jaccs
 
 
@@ -120,8 +127,8 @@ def dice_from_cm(cm) -> np.ndarray:
     -------
     1d ndarray containing Dice scores for all N classes
     """
-    assert(cm.ndim == 2)
-    assert(cm.shape[0] == cm.shape[1])
+    assert cm.ndim == 2
+    assert cm.shape[0] == cm.shape[1]
     dices = np.zeros((cm.shape[0]), dtype=np.float32)
     for i in range(cm.shape[0]):
         dices[i] = 2 * cm[i, i] / float(np.sum(cm[i, :]) + np.sum(cm[:, i]))
@@ -152,13 +159,15 @@ def __surface_distances(A, B, voxelspacing=None, connectivity=1) -> np.ndarray:
     connectivity : int, optional
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually be :math:`> 1`.
+        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        be :math:`> 1`.
 
     Returns
     -------
     distances : 1d ndarray
         The distances from all non-zero object(s) in ```A``` to the nearest
-        non zero object(s) in ```B```. The distance unit is the same as for the spacing of
+        non zero object(s) in ```B```. The distance unit is the same as for the
+        spacing of
         elements along each dimension, which is usually given in mm.
 
     Notes
@@ -178,8 +187,9 @@ def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     """
     Hausdorff Distance.
 
-    Computes the (symmetric) Hausdorff Distance (HD) between the binary objects in two
-    images. It is defined as the maximum surface distance between the objects.
+    Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
+    in two images. It is defined as the maximum surface distance between the
+    objects.
 
     Parameters
     ----------
@@ -197,14 +207,15 @@ def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     connectivity : int, optional
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually be :math:`> 1`.
+        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        be :math:`> 1`.
 
     Returns
     -------
     hd : float
-        The symmetric Hausdorff Distance between the object(s) in ```A``` and the
-        object(s) in ```B```. The distance unit is the same as for the spacing of
-        elements along each dimension, which is usually given in mm.
+        The symmetric Hausdorff Distance between the object(s) in ```A``` and
+        the object(s) in ```B```. The distance unit is the same as for the
+        spacing of elements along each dimension, which is usually given in mm.
 
     Notes
     -----
@@ -217,12 +228,15 @@ def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     return max(dA.max(), dB.max())
 
 
-def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1) -> float:
+def percentile_hd(
+    A, B, percentile=0.95, voxelspacing=None, connectivity=1
+) -> float:
     """
     Nth Percentile Hausdorff Distance.
 
-    Computes a percentile for the (symmetric) Hausdorff Distance between the binary objects in two
-    images. It is defined as the maximum surface distance between the objects at the nth percentile.
+    Computes a percentile for the (symmetric) Hausdorff Distance between the
+    binary objects in two images. It is defined as the maximum surface distance
+    between the objects at the nth percentile.
 
     Parameters
     ----------
@@ -233,7 +247,8 @@ def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1) -> f
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     percentile : float between 0 and 1
-        The percentile to perform the comparison on the two sorted distance sets
+        The percentile to perform the comparison on the two sorted distance
+        sets
     voxelspacing : float or sequence of floats, optional
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
@@ -242,15 +257,17 @@ def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1) -> f
     connectivity : int, optional
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually be :math:`> 1`.
+        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        be :math:`> 1`.
 
     Returns
     -------
     hd : float
-        The maximum Percentile Hausdorff Distance between the object(s) in ```A``` and the
-        object(s) in ```B``` at the ```percentile``` percentile.
-        The distance unit is the same as for the spacing of elements along each dimension,
-        which is usually given in mm.
+        The maximum Percentile Hausdorff Distance between the object(s) in
+        ```A``` and the object(s) in ```B``` at the ```percentile```
+        percentile.
+        The distance unit is the same as for the spacing of elements along each
+        dimension, which is usually given in mm.
 
     See also
     --------
@@ -264,15 +281,19 @@ def percentile_hd(A, B, percentile=0.95, voxelspacing=None, connectivity=1) -> f
     dB = __surface_distances(B, A, voxelspacing, connectivity)
     dA.sort()
     dB.sort()
-    return max(dA[int((len(dA)-1) * percentile)], dB[int((len(dB)-1) * percentile)])
+    return max(
+        dA[int((len(dA) - 1) * percentile)],
+        dB[int((len(dB) - 1) * percentile)],
+    )
 
 
 def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
     """
     Hausdorff Distance.
 
-    Computes the (symmetric) Modified Hausdorff Distance (MHD) between the binary objects in two
-    images. It is defined as the maximum average surface distance between the objects.
+    Computes the (symmetric) Modified Hausdorff Distance (MHD) between the
+    binary objects in two images. It is defined as the maximum average surface
+    distance between the objects.
 
     Parameters
     ----------
@@ -290,13 +311,15 @@ def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
     connectivity : int, optional
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually be :math:`> 1`.
+        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        be :math:`> 1`.
 
     Returns
     -------
     hd : float
-        The symmetric Modified Hausdorff Distance between the object(s) in ```A```
-        and the object(s) in ```B```. The distance unit is the same as for the spacing of
+        The symmetric Modified Hausdorff Distance between the object(s) in
+        ```A``` and the object(s) in ```B```. The distance unit is the same as
+        for the spacing of
         elements along each dimension, which is usually given in mm.
 
     Notes
@@ -325,9 +348,10 @@ def ravd(A, B) -> float:
     Returns
     -------
     ravd : float
-        The relative absolute volume difference between the object(s) in ``input1``
-        and the object(s) in ``input2``. This is a percentage value in the range
-        :math:`[0, +inf]` for which a :math:`0` denotes an ideal score.
+        The relative absolute volume difference between the object(s) in
+        ``input1`` and the object(s) in ``input2``. This is a percentage value
+        in the range :math:`[0, +inf]` for which a :math:`0` denotes an ideal
+        score.
 
     Notes
     -----
@@ -360,8 +384,8 @@ def avd(A, B, voxelspacing) -> float:
     -------
     avd : float
         The absolute volume difference between the object(s) in ``input1``
-        and the object(s) in ``input2``. This is a percentage value in the range
-        :math:`[0, +inf]` for which a :math:`0` denotes an ideal score.
+        and the object(s) in ``input2``. This is a percentage value in the
+        range :math:`[0, +inf]` for which a :math:`0` denotes an ideal score.
 
     Notes
     -----
@@ -372,8 +396,8 @@ def avd(A, B, voxelspacing) -> float:
         voxelspacing = [1] * A.ndim
     if isinstance(voxelspacing, float) or isinstance(voxelspacing, int):
         voxelspacing = [voxelspacing] * A.ndim
-    assert(len(voxelspacing) == A.ndim)
-    assert(A.ndim == B.ndim)
+    assert len(voxelspacing) == A.ndim
+    assert A.ndim == B.ndim
     volume_per_voxel = np.prod(voxelspacing)
     return np.abs(np.sum(B) - np.sum(A)) * volume_per_voxel
 
@@ -407,8 +431,8 @@ def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
     -------
     distances : 1d ndarray
         The distances from all non-zero object(s) in ```A``` to the nearest
-        non zero object(s) in ```B```. The distance unit is the same as for the spacing of
-        elements along each dimension, which is usually given in mm.
+        non zero object(s) in ```B```. The distance unit is the same as for the
+        spacing of elements along each dimension, which is usually given in mm.
 
     Notes
     -----
@@ -420,12 +444,16 @@ def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
     """
     Ab = np.atleast_1d(A.astype(np.bool))
     Bb = np.atleast_1d(B.astype(np.bool))
-    # all elements in neighborhood are fully checked! equals np.ones((3,3,3)) for A.ndim == 3
+    # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
+    # for A.ndim == 3
     footprint = generate_binary_structure(A.ndim, A.ndim)
     df = distance_transform_edt(~Bb, sampling=voxelspacing)
-    # generate mask for elements not entirly enclosed by mask Ab (contours & non-zero elements)
+    # generate mask for elements not entirly enclosed by mask Ab
+    # (contours & non-zero elements)
     # convolve mode ITK relies on ZeroFluxNeumannBoundaryCondition == nearest
-    mask = convolve(Ab.astype(np.int), footprint, mode='nearest') < np.sum(footprint)
+    mask = convolve(Ab.astype(np.int), footprint, mode="nearest") < np.sum(
+        footprint
+    )
     # return distance to contours only
     return df[mask & Ab]
 
@@ -434,8 +462,9 @@ def mean_contour_distance(A, B, voxelspacing=None) -> float:
     """
     Mean Contour Distance.
 
-    Computes the (symmetric) Mean Contour Distance between the binary objects in two
-    images. It is defined as the maximum average surface distance between the objects.
+    Computes the (symmetric) Mean Contour Distance between the binary objects
+    in two images. It is defined as the maximum average surface distance
+    between the objects.
 
     Parameters
     ----------
@@ -455,8 +484,8 @@ def mean_contour_distance(A, B, voxelspacing=None) -> float:
     -------
     hd : float
         The symmetric Mean Contour Distance between the object(s) in ```A```
-        and the object(s) in ```B```. The distance unit is the same as for the spacing of
-        elements along each dimension, which is usually given in mm.
+        and the object(s) in ```B```. The distance unit is the same as for the
+        spacing of elements along each dimension, which is usually given in mm.
 
     Notes
     -----
@@ -467,7 +496,9 @@ def mean_contour_distance(A, B, voxelspacing=None) -> float:
     return max(dA.mean(), dB.mean())
 
 
-def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95) -> Dict:
+def hd_measures(
+    A, B, voxelspacing=None, connectivity=1, percentile=0.95
+) -> Dict:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
     Since measures share common calculations,
@@ -489,14 +520,16 @@ def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95) -> Dic
     connectivity : int, optional
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually be :math:`> 1`.
+        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        be :math:`> 1`.
 
     Returns
     -------
     hd : dict
-        The symmetric Modified Hausdorff Distance between the object(s) in ```A```
-        and the object(s) in ```B```. The distance unit is the same as for the spacing of
-        elements along each dimension, which is usually given in mm.
+        The symmetric Modified Hausdorff Distance between the object(s) in
+        ```A``` and the object(s) in ```B```. The distance unit is the same as
+        for the spacing of elements along each dimension, which is usually
+        given in mm.
 
     Notes
     -----
@@ -518,7 +551,9 @@ def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95) -> Dic
     # calculate all hausdorff statistics
     hdv = max(dA.max(), dB.max())
     modified_hdv = max(dA.mean(), dB.mean())
-    percentile_hdv = max(dA[int((len(dA) - 1) * percentile)],
-                         dB[int((len(dB) - 1) * percentile)])
+    percentile_hdv = max(
+        dA[int((len(dA) - 1) * percentile)],
+        dB[int((len(dB) - 1) * percentile)],
+    )
 
     return dict(hd=hdv, modified_hd=modified_hdv, percentile_hd=percentile_hdv)
