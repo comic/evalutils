@@ -64,9 +64,12 @@ def test_cli(tmpdir, kind, expected):
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output(
-        [str(project_dir / f"build.{file_ext}")], cwd=project_dir
-    )
+    try:
+        out = subprocess.check_output(
+            [str(project_dir / f"build.{file_ext}")], cwd=project_dir
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(e.output)
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
