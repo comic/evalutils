@@ -81,10 +81,10 @@ def accuracies_from_cm(cm) -> np.ndarray:
     """
     results = np.zeros((len(cm)), dtype=np.float32)
     for i in range(len(cm)):
-        filter = np.ones((len(cm)), dtype=np.bool)
-        filter[i] = 0
-        results[i] = (cm[i, i] + np.sum(cm[filter, filter])) / float(np.sum(cm))
-    return results
+        mask = np.ones((len(cm)), dtype=np.bool)
+        mask[i] = False
+        results[i] = cm[i, i] + np.sum(cm[mask, :][:, mask])
+    return results // float(np.sum(cm))
 
 
 def jaccard_from_cm(cm) -> np.ndarray:
@@ -126,26 +126,6 @@ def dice_from_cm(cm) -> np.ndarray:
     for i in range(cm.shape[0]):
         dices[i] = 2 * cm[i, i] / float(np.sum(cm[i, :]) + np.sum(cm[:, i]))
     return dices
-
-
-def icc(M) -> float:
-    """
-    Computes intra class correlation
-
-    Parameters
-    ----------
-    M : array_like (2D, observations x classes)
-        Input data represents a design matrix. Should be numerical.
-        First dimension contains observations, second dimension contains classes.
-
-    Returns
-    -------
-    icc : float
-        Returns the intra class correlation between classes over the observations.
-    """
-    assert M.ndims == 2
-    result = 1.0 / (len(M) * np.var(M)) * np.sum(np.prod(M - np.mean(M), axis=1))
-    return result
 
 
 def __surface_distances(A, B, voxelspacing=None, connectivity=1) -> np.ndarray:
@@ -323,8 +303,8 @@ def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
     -----
     This is a real metric.
     """
-    dA = __surface_distances(A, B, voxelspacing, connectivity).mean()
-    dB = __surface_distances(B, A, voxelspacing, connectivity).mean()
+    dA = __surface_distances(A, B, voxelspacing, connectivity)
+    dB = __surface_distances(B, A, voxelspacing, connectivity)
     return max(dA.mean(), dB.mean())
 
 
@@ -538,6 +518,7 @@ def hd_measures(A, B, voxelspacing=None, connectivity=1, percentile=0.95) -> Dic
     # calculate all hausdorff statistics
     hdv = max(dA.max(), dB.max())
     modified_hdv = max(dA.mean(), dB.mean())
-    percentile_hdv = max(dA[int((len(dA) - 1) * percentile)], dB[int((len(dB) - 1) * percentile)])
+    percentile_hdv = max(dA[int((len(dA) - 1) * percentile)],
+                         dB[int((len(dB) - 1) * percentile)])
 
     return dict(hd=hdv, modified_hd=modified_hdv, percentile_hd=percentile_hdv)
