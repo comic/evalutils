@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -61,14 +62,18 @@ def test_cli(tmpdir, kind, expected):
     assert "testeval" in files
     assert f"Created project {project_name}" in out.decode()
 
-    project_dir = os.path.join(tmpdir, project_name)
+    project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output([f"./build.{file_ext}"], cwd=project_dir)
+    out = subprocess.check_output(
+        [project_dir / f"build.{file_ext}"], cwd=project_dir
+    )
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
 
-    out = subprocess.check_output([f"./test.{file_ext}"], cwd=project_dir)
+    out = subprocess.check_output(
+        [project_dir / f"test.{file_ext}"], cwd=project_dir
+    )
 
     # Grab the results json
     out = out.decode().splitlines()
