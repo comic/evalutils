@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
+import os
+import platform
+import subprocess
 
 import pytest
-import os
-import subprocess
 
 
 def check_dict(check, expected):
@@ -46,6 +47,8 @@ def test_cli(tmpdir, kind, expected):
     """
     project_name = "testeval"
 
+    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
+
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
@@ -60,12 +63,12 @@ def test_cli(tmpdir, kind, expected):
 
     project_dir = os.path.join(tmpdir, project_name)
 
-    out = subprocess.check_output(["./build.sh"], cwd=project_dir)
+    out = subprocess.check_output([f"./build.{file_ext}"], cwd=project_dir)
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
 
-    out = subprocess.check_output(["./test.sh"], cwd=project_dir)
+    out = subprocess.check_output([f"./test.{file_ext}"], cwd=project_dir)
 
     # Grab the results json
     out = out.decode().splitlines()
