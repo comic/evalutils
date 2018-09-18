@@ -86,7 +86,7 @@ def test_cli(tmpdir, kind, expected):
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" not in files
 
-    subprocess.call(["./export.sh"], cwd=project_dir)
+    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" in files
