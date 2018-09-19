@@ -2,6 +2,11 @@
 History
 =======
 
+0.1.14 (YYYY-MM-DD)
+-------------------
+
+* Adds `evalutils.stats` for calculating common metrics in medical imaging
+
 0.1.13 (2018-09-12)
 -------------------
 
