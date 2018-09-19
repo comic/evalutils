@@ -22,6 +22,7 @@ requirements = [
     "click",
     "scipy",
     "scikit-learn",
+    "numpy",
 ]
 
 setup_requirements = ["pytest-runner"]
