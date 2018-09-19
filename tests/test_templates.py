@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
+import os
+import platform
+import subprocess
+from distutils.util import strtobool
+from pathlib import Path
 
 import pytest
-import os
-import subprocess
 
 
 def check_dict(check, expected):
@@ -15,6 +18,10 @@ def check_dict(check, expected):
             assert check[key] == val
 
 
+@pytest.mark.skipif(
+    strtobool(os.environ.get("APPVEYOR", "False").lower()),
+    reason="This test is not supported by standard appveyor",
+)
 @pytest.mark.parametrize(
     ("kind", "expected"),
     [
@@ -44,7 +51,10 @@ def test_cli(tmpdir, kind, expected):
     WARNING: This tests against the github dev branch! We need a better way
     than this to get the library into the templated docker file
     """
+    print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
+
+    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
@@ -58,14 +68,18 @@ def test_cli(tmpdir, kind, expected):
     assert "testeval" in files
     assert f"Created project {project_name}" in out.decode()
 
-    project_dir = os.path.join(tmpdir, project_name)
+    project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output(["./build.sh"], cwd=project_dir)
+    out = subprocess.check_output(
+        [str(project_dir / f"build.{file_ext}")], cwd=project_dir
+    )
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
 
-    out = subprocess.check_output(["./test.sh"], cwd=project_dir)
+    out = subprocess.check_output(
+        [str(project_dir / f"test.{file_ext}")], cwd=project_dir
+    )
 
     # Grab the results json
     out = out.decode().splitlines()
@@ -78,7 +92,7 @@ def test_cli(tmpdir, kind, expected):
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" not in files
 
-    subprocess.call(["./export.sh"], cwd=project_dir)
+    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar" in files

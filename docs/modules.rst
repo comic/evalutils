@@ -42,3 +42,11 @@ Annotations
 
 .. autoclass:: BoundingBox()
    :members:
+
+Statistics
+----------
+
+.. py:module:: evalutils.stats
+
+.. automodule:: evalutils.stats
+   :members:

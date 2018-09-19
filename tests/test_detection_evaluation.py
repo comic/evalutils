@@ -6,7 +6,7 @@ from evalutils.validators import ExpectedColumnNamesValidator
 
 
 class DetectionEvaluationTest(DetectionEvaluation):
-    def __init__(self):
+    def __init__(self, outdir):
         super().__init__(
             file_loader=CSVLoader(),
             validators=(
@@ -24,7 +24,7 @@ class DetectionEvaluationTest(DetectionEvaluation):
                 / "detection"
                 / "submission"
             ),
-            output_file=Path("/tmp/metrics.json"),
+            output_file=Path(outdir) / "metrics.json",
             detection_threshold=0.5,
             detection_radius=1.0,
         )
@@ -42,8 +42,8 @@ class DetectionEvaluationTest(DetectionEvaluation):
         ]
 
 
-def test_detection_evaluation():
-    ev = DetectionEvaluationTest()
+def test_detection_evaluation(tmpdir):
+    ev = DetectionEvaluationTest(outdir=tmpdir)
     ev.evaluate()
 
     assert len(ev._cases) == 21
