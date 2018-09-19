@@ -10,14 +10,14 @@ from scipy.ndimage.morphology import (
 )
 
 
-def calculate_confusion_matrix(Y_true, Y_pred, labels) -> np.ndarray:
+def calculate_confusion_matrix(y_true, y_pred, labels) -> np.ndarray:
     """Efficient confusion matrix calculation, based on sklearn interface
 
     Parameters
     ----------
-    Y_true : array_like
+    y_true : array_like
              Target multi-object segmentation mask
-    Y_pred : array_like
+    y_pred : array_like
              Predicted multi-object segmentation mask
     labels : List of integers
              Inclusive list of N labels to compute the confusion matrix for.
@@ -34,9 +34,11 @@ def calculate_confusion_matrix(Y_true, Y_pred, labels) -> np.ndarray:
 
     """
     cm = np.zeros((len(labels), len(labels)), dtype=np.int)
+
     for i, x in enumerate(labels):
         for j, y in enumerate(labels):
-            cm[i, j] = np.sum((Y_true == x) & (Y_pred == y))
+            cm[i, j] = np.sum((y_true == x) & (y_pred == y))
+
     return cm
 
 
@@ -69,10 +71,11 @@ def dice_to_jaccard(dice) -> Union[int, float, np.ndarray]:
     1 or N Jaccard values within [0 .. 1]
     """
     assert all(dice >= 0) and all(dice <= 1)
+
     return dice / (2.0 - dice)
 
 
-def accuracies_from_cm(cm) -> np.ndarray:
+def accuracies_from_confusion_matrix(cm) -> np.ndarray:
     """Computes accuracy scores from a confusion matrix
 
     Parameters
@@ -85,14 +88,16 @@ def accuracies_from_cm(cm) -> np.ndarray:
     1d ndarray containing accuracy scores for all N classes
     """
     results = np.zeros((len(cm)), dtype=np.float32)
+
     for i in range(len(cm)):
         mask = np.ones((len(cm)), dtype=np.bool)
         mask[i] = False
         results[i] = cm[i, i] + np.sum(cm[mask, :][:, mask])
+
     return results // float(np.sum(cm))
 
 
-def jaccard_from_cm(cm) -> np.ndarray:
+def jaccard_from_confusion_matrix(cm) -> np.ndarray:
     """Computes Jaccard scores from a confusion matrix
     a.k.a. intersection over union (IoU)
 
@@ -107,15 +112,18 @@ def jaccard_from_cm(cm) -> np.ndarray:
     """
     assert cm.ndim == 2
     assert cm.shape[0] == cm.shape[1]
+
     jaccs = np.zeros((cm.shape[0]), dtype=np.float32)
+
     for i in range(cm.shape[0]):
         jaccs[i] = cm[i, i] / float(
             np.sum(cm[i, :]) + np.sum(cm[:, i]) - cm[i, i]
         )
+
     return jaccs
 
 
-def dice_from_cm(cm) -> np.ndarray:
+def dice_from_confusion_matrix(cm) -> np.ndarray:
     """Computes Dice scores from a confusion matrix
 
     Parameters
@@ -129,26 +137,31 @@ def dice_from_cm(cm) -> np.ndarray:
     """
     assert cm.ndim == 2
     assert cm.shape[0] == cm.shape[1]
+
     dices = np.zeros((cm.shape[0]), dtype=np.float32)
+
     for i in range(cm.shape[0]):
         dices[i] = 2 * cm[i, i] / float(np.sum(cm[i, :]) + np.sum(cm[:, i]))
+
     return dices
 
 
-def __surface_distances(A, B, voxelspacing=None, connectivity=1) -> np.ndarray:
+def __surface_distances(
+    s1, s2, voxelspacing=None, connectivity=1
+) -> np.ndarray:
     """
     Computes set of surface distances.
 
-    Retrieve set of distances for all elements from set A to B
+    Retrieve set of distances for all elements from set s1 to s2
     With a connectivity of 1 or higher only the distances between
-    the contours of A and B are used.
+    the contours of s1 and s2 are used.
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -165,38 +178,38 @@ def __surface_distances(A, B, voxelspacing=None, connectivity=1) -> np.ndarray:
     Returns
     -------
     distances : 1d ndarray
-        The distances from all non-zero object(s) in ```A``` to the nearest
-        non zero object(s) in ```B```. The distance unit is the same as for the
-        spacing of
-        elements along each dimension, which is usually given in mm.
+        The distances from all non-zero object(s) in ```s1``` to the nearest
+        non zero object(s) in ```s2```. The distance unit is the same as for
+        the spacing of elements along each dimension, which is usually given in
+        mm.
 
     Notes
     -----
     This function is not symmetric.
     """
-    Ab = np.atleast_1d(A.astype(np.bool))
-    Bb = np.atleast_1d(B.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(np.bool))
+    s2_b = np.atleast_1d(s2.astype(np.bool))
+
     if connectivity > 0:
-        footprint = generate_binary_structure(A.ndim, connectivity)
-        Bb = Bb & ~binary_erosion(Bb, structure=footprint, iterations=1)
-        Ab = Ab & ~binary_erosion(Ab, structure=footprint, iterations=1)
-    return distance_transform_edt(~Bb, sampling=voxelspacing)[Ab]
+        footprint = generate_binary_structure(s1.ndim, connectivity)
+        s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
+        s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
+
+    return distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
 
 
-def hd(A, B, voxelspacing=None, connectivity=1) -> float:
+def hausdorff_distance(s1, s2, voxelspacing=None, connectivity=1) -> float:
     """
-    Hausdorff Distance.
-
     Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
     in two images. It is defined as the maximum surface distance between the
     objects.
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -213,8 +226,8 @@ def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     Returns
     -------
     hd : float
-        The symmetric Hausdorff Distance between the object(s) in ```A``` and
-        the object(s) in ```B```. The distance unit is the same as for the
+        The symmetric Hausdorff Distance between the object(s) in ```s1``` and
+        the object(s) in ```s2```. The distance unit is the same as for the
         spacing of elements along each dimension, which is usually given in mm.
 
     Notes
@@ -223,13 +236,14 @@ def hd(A, B, voxelspacing=None, connectivity=1) -> float:
     Implementation inspired by medpy.metric.binary
     http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html
     """
-    dA = __surface_distances(A, B, voxelspacing, connectivity)
-    dB = __surface_distances(B, A, voxelspacing, connectivity)
-    return max(dA.max(), dB.max())
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
+
+    return max(s1_dist.max(), s2_dist.max())
 
 
-def percentile_hd(
-    A, B, percentile=0.95, voxelspacing=None, connectivity=1
+def percentile_hausdorff_distance(
+    s1, s2, percentile=0.95, voxelspacing=None, connectivity=1
 ) -> float:
     """
     Nth Percentile Hausdorff Distance.
@@ -240,10 +254,10 @@ def percentile_hd(
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     percentile : float between 0 and 1
@@ -264,7 +278,7 @@ def percentile_hd(
     -------
     hd : float
         The maximum Percentile Hausdorff Distance between the object(s) in
-        ```A``` and the object(s) in ```B``` at the ```percentile```
+        ```s1``` and the object(s) in ```s2``` at the ```percentile```
         percentile.
         The distance unit is the same as for the spacing of elements along each
         dimension, which is usually given in mm.
@@ -277,17 +291,21 @@ def percentile_hd(
     -----
     This is a real metric.
     """
-    dA = __surface_distances(A, B, voxelspacing, connectivity)
-    dB = __surface_distances(B, A, voxelspacing, connectivity)
-    dA.sort()
-    dB.sort()
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
+
+    s1_dist.sort()
+    s2_dist.sort()
+
     return max(
-        dA[int((len(dA) - 1) * percentile)],
-        dB[int((len(dB) - 1) * percentile)],
+        s1_dist[int((len(s1_dist) - 1) * percentile)],
+        s2_dist[int((len(s2_dist) - 1) * percentile)],
     )
 
 
-def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
+def modified_hausdorff_distance(
+    s1, s2, voxelspacing=None, connectivity=1
+) -> float:
     """
     Hausdorff Distance.
 
@@ -297,10 +315,10 @@ def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -318,30 +336,31 @@ def modified_hd(A, B, voxelspacing=None, connectivity=1) -> float:
     -------
     hd : float
         The symmetric Modified Hausdorff Distance between the object(s) in
-        ```A``` and the object(s) in ```B```. The distance unit is the same as
-        for the spacing of
-        elements along each dimension, which is usually given in mm.
+        ```s1``` and the object(s) in ```s2```. The distance unit is the same
+        as for the spacing of elements along each dimension, which is usually
+        given in mm.
 
     Notes
     -----
     This is a real metric.
     """
-    dA = __surface_distances(A, B, voxelspacing, connectivity)
-    dB = __surface_distances(B, A, voxelspacing, connectivity)
-    return max(dA.mean(), dB.mean())
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
+
+    return max(s1_dist.mean(), s2_dist.mean())
 
 
-def ravd(A, B) -> float:
+def relative_absolute_volume_distance(s1, s2) -> float:
     """
-    Calculate relative absolute volume difference from B to A
+    Calculate relative absolute volume difference from s2 to s1
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
-        into binary: background where 0, object everywhere else. A is taken
+        into binary: background where 0, object everywhere else. s1 is taken
         to be the reference.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
 
@@ -357,21 +376,22 @@ def ravd(A, B) -> float:
     -----
     This is not a real metric! it is asymmetric.
     """
-    A, B = A != 0, B != 0
-    return abs(np.sum(B) - np.sum(A)) / float(np.sum(A))
+    s1, s2 = s1 != 0, s2 != 0
+
+    return abs(np.sum(s2) - np.sum(s1)) / float(np.sum(s1))
 
 
-def avd(A, B, voxelspacing) -> float:
+def absolute_volume_distance(s1, s2, voxelspacing) -> float:
     """
-    Calculate absolute volume difference from B to A
+    Calculate absolute volume difference from s2 to s1
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
-        into binary: background where 0, object everywhere else. A is taken
+        into binary: background where 0, object everywhere else. s1 is taken
         to be the reference.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -391,34 +411,39 @@ def avd(A, B, voxelspacing) -> float:
     -----
     This is a real metric
     """
-    A, B = A != 0, B != 0
+    s1, s2 = s1 != 0, s2 != 0
+
     if voxelspacing is None:
-        voxelspacing = [1] * A.ndim
+        voxelspacing = [1] * s1.ndim
+
     if isinstance(voxelspacing, float) or isinstance(voxelspacing, int):
-        voxelspacing = [voxelspacing] * A.ndim
-    assert len(voxelspacing) == A.ndim
-    assert A.ndim == B.ndim
+        voxelspacing = [voxelspacing] * s1.ndim
+
+    assert len(voxelspacing) == s1.ndim
+    assert s1.ndim == s2.ndim
+
     volume_per_voxel = np.prod(voxelspacing)
-    return np.abs(np.sum(B) - np.sum(A)) * volume_per_voxel
+
+    return np.abs(np.sum(s2) - np.sum(s1)) * volume_per_voxel
 
 
-def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
+def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
     """
     Computes set of surface contour distances.
-    This function always explicitly calculates the contour-set of A.
+    This function always explicitly calculates the contour-set of s1.
 
-    Retrieve set of distances for all elements from set A to B
-    The elements of the contour of A are determined by:
-    1) whether elements in A are fully enclosed by other voxels.
+    Retrieve set of distances for all elements from set s1 to s2
+    The elements of the contour of s1 are determined by:
+    1) whether elements in s1 are fully enclosed by other voxels.
           (in a 3x3x3 neighborhood)
-    2) whether elements in A are ON.
+    2) whether elements in s1 are ON.
 
      Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -430,9 +455,10 @@ def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
     Returns
     -------
     distances : 1d ndarray
-        The distances from all non-zero object(s) in ```A``` to the nearest
-        non zero object(s) in ```B```. The distance unit is the same as for the
-        spacing of elements along each dimension, which is usually given in mm.
+        The distances from all non-zero object(s) in ```s1``` to the nearest
+        non zero object(s) in ```s2```. The distance unit is the same as for
+        the spacing of elements along each dimension, which is usually given in
+        mm.
 
     Notes
     -----
@@ -442,23 +468,26 @@ def __directed_contour_distances(A, B, voxelspacing=None) -> np.ndarray:
     `ZeroFluxNeumannBoundaryCondition`, which equals `nearest` mode in scipy.
 
     """
-    Ab = np.atleast_1d(A.astype(np.bool))
-    Bb = np.atleast_1d(B.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(np.bool))
+    s2_b = np.atleast_1d(s2.astype(np.bool))
+
     # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
-    # for A.ndim == 3
-    footprint = generate_binary_structure(A.ndim, A.ndim)
-    df = distance_transform_edt(~Bb, sampling=voxelspacing)
-    # generate mask for elements not entirly enclosed by mask Ab
+    # for s1.ndim == 3
+    footprint = generate_binary_structure(s1.ndim, s1.ndim)
+    df = distance_transform_edt(~s2_b, sampling=voxelspacing)
+
+    # generate mask for elements not entirly enclosed by mask s1_b
     # (contours & non-zero elements)
     # convolve mode ITK relies on ZeroFluxNeumannBoundaryCondition == nearest
-    mask = convolve(Ab.astype(np.int), footprint, mode="nearest") < np.sum(
+    mask = convolve(s1_b.astype(np.int), footprint, mode="nearest") < np.sum(
         footprint
     )
+
     # return distance to contours only
-    return df[mask & Ab]
+    return df[mask & s1_b]
 
 
-def mean_contour_distance(A, B, voxelspacing=None) -> float:
+def mean_contour_distance(s1, s2, voxelspacing=None) -> float:
     """
     Mean Contour Distance.
 
@@ -468,10 +497,10 @@ def mean_contour_distance(A, B, voxelspacing=None) -> float:
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -483,21 +512,22 @@ def mean_contour_distance(A, B, voxelspacing=None) -> float:
     Returns
     -------
     hd : float
-        The symmetric Mean Contour Distance between the object(s) in ```A```
-        and the object(s) in ```B```. The distance unit is the same as for the
+        The symmetric Mean Contour Distance between the object(s) in ```s1```
+        and the object(s) in ```s2```. The distance unit is the same as for the
         spacing of elements along each dimension, which is usually given in mm.
 
     Notes
     -----
     This is a real metric that mimics the ITK MeanContourDistanceFilter.
     """
-    dA = __directed_contour_distances(A, B, voxelspacing)
-    dB = __directed_contour_distances(B, A, voxelspacing)
-    return max(dA.mean(), dB.mean())
+    s1_c_dist = __directed_contour_distances(s1, s2, voxelspacing)
+    s2_c_dist = __directed_contour_distances(s2, s1, voxelspacing)
+
+    return max(s1_c_dist.mean(), s2_c_dist.mean())
 
 
-def hd_measures(
-    A, B, voxelspacing=None, connectivity=1, percentile=0.95
+def hausdorff_distance_measures(
+    s1, s2, voxelspacing=None, connectivity=1, percentile=0.95
 ) -> Dict:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
@@ -506,10 +536,10 @@ def hd_measures(
 
     Parameters
     ----------
-    A : array_like
+    s1 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    B : array_like
+    s2 : array_like
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
     voxelspacing : float or sequence of floats, optional
@@ -522,38 +552,41 @@ def hd_measures(
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
+    percentile
+        The percentile at which to calculate the Hausdorff Distance
 
     Returns
     -------
     hd : dict
         The symmetric Modified Hausdorff Distance between the object(s) in
-        ```A``` and the object(s) in ```B```. The distance unit is the same as
-        for the spacing of elements along each dimension, which is usually
+        ```s1``` and the object(s) in ```s2```. The distance unit is the same
+        as for the spacing of elements along each dimension, which is usually
         given in mm.
 
     Notes
     -----
     This returns real metrics.
     """
-    Ab = np.atleast_1d(A.astype(np.bool))
-    Bb = np.atleast_1d(B.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(np.bool))
+    s2_b = np.atleast_1d(s2.astype(np.bool))
 
     if connectivity > 0:
-        footprint = generate_binary_structure(A.ndim, connectivity)
-        Bb = Bb & ~binary_erosion(Bb, structure=footprint, iterations=1)
-        Ab = Ab & ~binary_erosion(Ab, structure=footprint, iterations=1)
+        footprint = generate_binary_structure(s1.ndim, connectivity)
+        s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
+        s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    dA = distance_transform_edt(~Bb, sampling=voxelspacing)[Ab]
-    dB = distance_transform_edt(~Ab, sampling=voxelspacing)[Bb]
-    dA.sort()
-    dB.sort()
+    s1_dist = distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
+    s2_dist = distance_transform_edt(~s1_b, sampling=voxelspacing)[s2_b]
+
+    s1_dist.sort()
+    s2_dist.sort()
 
     # calculate all hausdorff statistics
-    hdv = max(dA.max(), dB.max())
-    modified_hdv = max(dA.mean(), dB.mean())
+    hdv = max(s1_dist.max(), s2_dist.max())
+    modified_hdv = max(s1_dist.mean(), s2_dist.mean())
     percentile_hdv = max(
-        dA[int((len(dA) - 1) * percentile)],
-        dB[int((len(dB) - 1) * percentile)],
+        s1_dist[int((len(s1_dist) - 1) * percentile)],
+        s2_dist[int((len(s2_dist) - 1) * percentile)],
     )
 
     return dict(hd=hdv, modified_hd=modified_hdv, percentile_hd=percentile_hdv)

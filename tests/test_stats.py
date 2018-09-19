@@ -28,7 +28,7 @@ def test_accuracies_from_cm():
     expected = np.array(
         [5 + 2 + 1 + 4, 2 + 5 + 4 + 1 + 1, 4 + 2 + 1 + 2 + 5], dtype=np.float
     ) // float(np.sum(cm))
-    accs = stats.accuracies_from_cm(cm)
+    accs = stats.accuracies_from_confusion_matrix(cm)
     assert np.equal(expected, accs).all()
 
 
@@ -37,7 +37,7 @@ def test_jaccard_from_cm():
     expected = np.array([5, 2, 4], dtype=np.float) / np.array(
         [2 + 1 + 1 + 1 + 5, 2 + 1 + 1 + 2, 4 + 1 + 1 + 1], dtype=np.float
     )
-    accs = stats.jaccard_from_cm(cm)
+    accs = stats.jaccard_from_confusion_matrix(cm)
     assert np.allclose(expected, accs)
 
 
@@ -51,15 +51,15 @@ def test_dice_from_cm():
             dtype=np.float,
         )
     )
-    accs = stats.dice_from_cm(cm)
+    accs = stats.dice_from_confusion_matrix(cm)
     assert np.allclose(expected, accs)
 
 
 def test_ravd():
     A = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
     B = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
-    r1 = stats.ravd(A, B)
-    r2 = stats.ravd(B, A)
+    r1 = stats.relative_absolute_volume_distance(A, B)
+    r2 = stats.relative_absolute_volume_distance(B, A)
     assert r1 != r2
     assert r1 == (6.0 - 5.0) / 6.0
     assert r2 == (6.0 - 5.0) / 5.0
@@ -69,8 +69,8 @@ def test_ravd():
 def test_avd(voxelspace):
     A = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
     B = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
-    r1 = stats.avd(A, B, voxelspace)
-    r2 = stats.avd(B, A, voxelspace)
+    r1 = stats.absolute_volume_distance(A, B, voxelspace)
+    r2 = stats.absolute_volume_distance(B, A, voxelspace)
     assert r1 == r2
     assert r1 == (6.0 - 5.0) * (
         1 if voxelspace is None else np.prod(voxelspace)
@@ -90,8 +90,8 @@ def test_avd(voxelspace):
 @pytest.mark.parametrize("voxelspace", [None, (0.3, 0.8), (12.0, 4.0)])
 @pytest.mark.parametrize("connectivity", [0, 1, 2])
 def test_hd(A, B, voxelspace, connectivity):
-    hd = stats.hd(A, B, voxelspace, connectivity=connectivity)
-    hd2 = stats.hd(B, A, voxelspace, connectivity=connectivity)
+    hd = stats.hausdorff_distance(A, B, voxelspace, connectivity=connectivity)
+    hd2 = stats.hausdorff_distance(B, A, voxelspace, connectivity=connectivity)
 
     assert hd == hd2
 
@@ -128,8 +128,8 @@ def test_modified_hd(A, B, voxelspace, connectivity):
     dB = sitk_surface_distance(B, A, voxelspace, connectivity)
     mhd = max(dA.mean(), dB.mean())
 
-    mhd2 = stats.modified_hd(A, B, voxelspace, connectivity)
-    mhd3 = stats.modified_hd(B, A, voxelspace, connectivity)
+    mhd2 = stats.modified_hausdorff_distance(A, B, voxelspace, connectivity)
+    mhd3 = stats.modified_hausdorff_distance(B, A, voxelspace, connectivity)
 
     assert np.isclose(mhd, mhd2)
     assert np.isclose(mhd, mhd3)
@@ -159,8 +159,12 @@ def test_percentile_hd(A, B, voxelspace, connectivity, percentile):
         dB[int((len(dB) - 1) * percentile)],
     )
 
-    phd2 = stats.percentile_hd(A, B, percentile, voxelspace, connectivity)
-    phd3 = stats.percentile_hd(B, A, percentile, voxelspace, connectivity)
+    phd2 = stats.percentile_hausdorff_distance(
+        A, B, percentile, voxelspace, connectivity
+    )
+    phd3 = stats.percentile_hausdorff_distance(
+        B, A, percentile, voxelspace, connectivity
+    )
 
     assert np.isclose(phd, phd2)
     assert np.isclose(phd, phd3)
@@ -326,15 +330,19 @@ def test_surface_distance(A, B, voxelspace, connectivity):
 @pytest.mark.parametrize("voxelspace", [None])  # , (0.3, 0.8, 1.2)])
 @pytest.mark.parametrize("connectivity", [0, 1, 2])
 def test_hd_and_contour_functions(A, B, voxelspace, connectivity):
-    r1 = stats.hd(A, B, voxelspace, connectivity)
-    r2 = stats.percentile_hd(A, B, 1, voxelspace, connectivity)
-    r3 = stats.modified_hd(A, B, voxelspace, connectivity)
-    r4 = stats.percentile_hd(A, B, 0.95, voxelspace, connectivity)
-    r5 = stats.ravd(A, B)
-    r6 = stats.ravd(B, A)
+    r1 = stats.hausdorff_distance(A, B, voxelspace, connectivity)
+    r2 = stats.percentile_hausdorff_distance(A, B, 1, voxelspace, connectivity)
+    r3 = stats.modified_hausdorff_distance(A, B, voxelspace, connectivity)
+    r4 = stats.percentile_hausdorff_distance(
+        A, B, 0.95, voxelspace, connectivity
+    )
+    r5 = stats.relative_absolute_volume_distance(A, B)
+    r6 = stats.relative_absolute_volume_distance(B, A)
     r7 = stats.mean_contour_distance(A, B, voxelspace)
     r8 = stats.mean_contour_distance(B, A, voxelspace)
-    r = stats.hd_measures(A, B, voxelspace, connectivity, percentile=0.95)
+    r = stats.hausdorff_distance_measures(
+        A, B, voxelspace, connectivity, percentile=0.95
+    )
     r9 = r["hd"]
     r10 = r["percentile_hd"]
     r11 = r["modified_hd"]
@@ -356,11 +364,11 @@ def test_hd_and_contour_functions(A, B, voxelspace, connectivity):
 @pytest.mark.parametrize("classes", [[0, 1, 2]])
 def test_cm_functions(A, B, classes):
     cm = stats.calculate_confusion_matrix(A, B, classes)
-    r1 = stats.dice_from_cm(cm)
-    r2 = stats.jaccard_from_cm(cm)
+    r1 = stats.dice_from_confusion_matrix(cm)
+    r2 = stats.jaccard_from_confusion_matrix(cm)
     r3 = stats.jaccard_to_dice(r2)
     r4 = stats.dice_to_jaccard(r1)
-    r5 = stats.accuracies_from_cm(cm)
+    r5 = stats.accuracies_from_confusion_matrix(cm)
     for r in [r1, r2, r3, r4, r5]:
         assert len(r) == len(classes)
         assert not np.isnan(r).any()
