@@ -51,6 +51,7 @@ def test_cli(tmpdir, kind, expected):
     WARNING: This tests against the github dev branch! We need a better way
     than this to get the library into the templated docker file
     """
+    print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
     file_ext = "bat" if platform.system().lower() == "windows" else "sh"
