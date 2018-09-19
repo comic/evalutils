@@ -6,11 +6,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from numpy import ndarray
 from scipy.ndimage.filters import convolve
-from scipy.ndimage.morphology import (
-    binary_erosion,
-    generate_binary_structure,
-    distance_transform_edt,
-)
+from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
 def distance_transform_edt_float32(
@@ -663,7 +659,7 @@ def __directed_contour_distances(
     # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
     # for s1.ndim == 3
     footprint = generate_binary_structure(s1.ndim, s1.ndim)
-    df = distance_transform_edt(~s2_b, sampling=voxelspacing)
+    df = distance_transform_edt_float32(~s2_b, sampling=voxelspacing)
 
     # generate mask for elements not entirly enclosed by mask s1_b
     # (contours & non-zero elements)
@@ -772,8 +768,12 @@ def hausdorff_distance_measures(
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    s1_dist = distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
-    s2_dist = distance_transform_edt(~s1_b, sampling=voxelspacing)[s2_b]
+    s1_dist = distance_transform_edt_float32(~s2_b, sampling=voxelspacing)[
+        s1_b
+    ]
+    s2_dist = distance_transform_edt_float32(~s1_b, sampling=voxelspacing)[
+        s2_b
+    ]
 
     s1_dist.sort()
     s2_dist.sort()
