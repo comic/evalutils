@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import gc
 from collections import namedtuple
 from typing import List, Optional, Tuple, Union
 
@@ -10,6 +11,172 @@ from scipy.ndimage.morphology import (
     generate_binary_structure,
     distance_transform_edt,
 )
+
+
+def distance_transform_edt_float32(
+    input,
+    sampling=None,
+    return_distances=True,
+    return_indices=False,
+    distances=None,
+    indices=None,
+):
+    """
+    The same as scipy.ndimage.morphology.distance_transform_edt but
+    using float32 and better memory cleaning internally.
+
+    In addition to the distance transform, the feature transform can
+    be calculated. In this case the index of the closest background
+    element is returned along the first axis of the result.
+    Parameters
+    ----------
+    input : array_like
+        Input data to transform. Can be any type but will be converted
+        into binary: 1 wherever input equates to True, 0 elsewhere.
+    sampling : float or int, or sequence of same, optional
+        Spacing of elements along each dimension. If a sequence, must be of
+        length equal to the input rank; if a single number, this is used for
+        all axes. If not specified, a grid spacing of unity is implied.
+    return_distances : bool, optional
+        Whether to return distance matrix. At least one of
+        return_distances/return_indices must be True. Default is True.
+    return_indices : bool, optional
+        Whether to return indices matrix. Default is False.
+    distances : ndarray, optional
+        Used for output of distance array, must be of type float64.
+    indices : ndarray, optional
+        Used for output of indices, must be of type int32.
+    Returns
+    -------
+    distance_transform_edt : ndarray or list of ndarrays
+        Either distance matrix, index matrix, or a list of the two,
+        depending on `return_x` flags and `distance` and `indices`
+        input parameters.
+    Notes
+    -----
+    The euclidean distance transform gives values of the euclidean
+    distance::
+                    n
+      y_i = sqrt(sum (x[i]-b[i])**2)
+                    i
+    where b[i] is the background point (value 0) with the smallest
+    Euclidean distance to input points x[i], and n is the
+    number of dimensions.
+
+    ---
+
+     Copyright (C) 2003-2005 Peter J. Verveer
+
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions
+     are met:
+
+     1. Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+     2. Redistributions in binary form must reproduce the above
+        copyright notice, this list of conditions and the following
+        disclaimer in the documentation and/or other materials provided
+        with the distribution.
+
+     3. The name of the author may not be used to endorse or promote
+        products derived from this software without specific prior
+        written permission.
+
+     THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+     OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+     ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+     DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+     GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+     WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    """
+    from scipy.ndimage import _nd_image, _ni_support
+
+    if (not return_distances) and (not return_indices):
+        msg = "at least one of distances/indices must be specified"
+        raise RuntimeError(msg)
+
+    ft_inplace = isinstance(indices, np.ndarray)
+    dt_inplace = isinstance(distances, np.ndarray)
+
+    # calculate the feature transform
+    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
+    gc.collect()
+
+    input = input.astype(np.int32)
+    gc.collect()
+
+    if sampling is not None:
+        sampling = _ni_support._normalize_sequence(sampling, input.ndim)
+        sampling = np.asarray(sampling, dtype=np.float64)
+        if not sampling.flags.contiguous:
+            sampling = sampling.copy()
+
+    if ft_inplace:
+        ft = indices
+        if ft.shape != (input.ndim,) + input.shape:
+            raise RuntimeError("indices has wrong shape")
+        if ft.dtype.type != np.int32:
+            raise RuntimeError("indices must be of int32 type")
+    else:
+        ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
+
+    _nd_image.euclidean_feature_transform(input, sampling, ft)
+    input_shape = input.shape
+    del input
+    gc.collect()
+
+    # if requested, calculate the distance transform
+    if return_distances:
+        # dt = ft - np.indices(input.shape, dtype=ft.dtype)
+        # Paul K. Gerke: Save a lot of memory by doing the operation
+        # column-wise and in-pace.
+
+        if return_indices:
+            dt = ft.copy()
+        else:
+            dt = ft
+            del ft
+
+        c_indices = np.indices((1,) + input_shape[1:], dtype=dt.dtype)
+        for c in range(input_shape[0]):
+            dt[:, c : (c + 1)] -= c_indices  # noqa: E203
+            c_indices[0] += 1
+
+        dt = dt.astype(np.float32, copy=False)
+        if sampling is not None:
+            for ii in range(len(sampling)):
+                dt[ii, ...] *= sampling[ii]
+        np.multiply(dt, dt, dt)
+        if dt_inplace:
+            dt = np.add.reduce(dt, axis=0)
+            if distances.shape != dt.shape:
+                raise RuntimeError("indices has wrong shape")
+            if distances.dtype.type != np.float32:
+                raise RuntimeError("indices must be of float32 type")
+            np.sqrt(dt, distances)
+        else:
+            dt = np.add.reduce(dt, axis=0)
+            dt = np.sqrt(dt)
+
+    # construct and return the result
+    result = []
+    if return_distances and not dt_inplace:
+        result.append(dt)
+    if return_indices and not ft_inplace:
+        result.append(ft)
+
+    if len(result) == 2:
+        return tuple(result)
+    elif len(result) == 1:
+        return result[0]
+    else:
+        return None
 
 
 def calculate_confusion_matrix(
