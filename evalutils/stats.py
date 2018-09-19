@@ -9,7 +9,6 @@ from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import (
     binary_erosion,
     generate_binary_structure,
-    distance_transform_edt,
 )
 
 
@@ -20,7 +19,6 @@ def distance_transform_edt_float32(
     return_indices=False,
     distances=None,
     indices=None,
-    skip_memory_check=False,
 ):
     """
     The same as scipy.ndimage.morphology.distance_transform_edt but
