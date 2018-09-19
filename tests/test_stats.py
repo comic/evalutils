@@ -343,9 +343,9 @@ def test_hd_and_contour_functions(A, B, voxelspace, connectivity):
     r = stats.hausdorff_distance_measures(
         A, B, voxelspace, connectivity, percentile=0.95
     )
-    r9 = r["hd"]
-    r10 = r["percentile_hd"]
-    r11 = r["modified_hd"]
+    r9 = r.distance
+    r10 = r.percentile_distance
+    r11 = r.modified_distance
     assert r1 == r9
     assert r4 == r10
     assert np.allclose(r3, r11)

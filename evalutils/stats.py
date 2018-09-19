@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Union, Dict
+from collections import namedtuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
+from numpy import ndarray
 from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import (
     binary_erosion,
@@ -10,16 +12,19 @@ from scipy.ndimage.morphology import (
 )
 
 
-def calculate_confusion_matrix(y_true, y_pred, labels) -> np.ndarray:
-    """Efficient confusion matrix calculation, based on sklearn interface
+def calculate_confusion_matrix(
+    y_true: ndarray, y_pred: ndarray, labels: List[int]
+) -> ndarray:
+    """
+    Efficient confusion matrix calculation, based on sklearn interface
 
     Parameters
     ----------
-    y_true : array_like
+    y_true
              Target multi-object segmentation mask
-    y_pred : array_like
+    y_pred
              Predicted multi-object segmentation mask
-    labels : List of integers
+    labels
              Inclusive list of N labels to compute the confusion matrix for.
 
     Returns
@@ -42,12 +47,13 @@ def calculate_confusion_matrix(y_true, y_pred, labels) -> np.ndarray:
     return cm
 
 
-def jaccard_to_dice(jacc) -> Union[int, float, np.ndarray]:
-    """Conversion computation from Jaccard to Dice
+def jaccard_to_dice(jacc: ndarray) -> Union[int, float, ndarray]:
+    """
+    Conversion computation from Jaccard to Dice
 
     Parameters
     ----------
-    jacc : array_like or float
+    jacc
            1 or N Jaccard values within [0 .. 1]
 
     Returns
@@ -58,12 +64,13 @@ def jaccard_to_dice(jacc) -> Union[int, float, np.ndarray]:
     return (jacc * 2.0) / (1.0 + jacc)
 
 
-def dice_to_jaccard(dice) -> Union[int, float, np.ndarray]:
-    """Conversion computation from Dice to Jaccard
+def dice_to_jaccard(dice: ndarray) -> Union[int, float, ndarray]:
+    """
+    Conversion computation from Dice to Jaccard
 
     Parameters
     ----------
-    dice : array_like or float
+    dice
            1 or N Dice values within [0 .. 1]
 
     Returns
@@ -75,12 +82,13 @@ def dice_to_jaccard(dice) -> Union[int, float, np.ndarray]:
     return dice / (2.0 - dice)
 
 
-def accuracies_from_confusion_matrix(cm) -> np.ndarray:
-    """Computes accuracy scores from a confusion matrix
+def accuracies_from_confusion_matrix(cm: ndarray) -> ndarray:
+    """
+    Computes accuracy scores from a confusion matrix
 
     Parameters
     ----------
-    cm : array_like (2D)
+    cm
          N x N Input confusion matrix
 
     Returns
@@ -97,13 +105,14 @@ def accuracies_from_confusion_matrix(cm) -> np.ndarray:
     return results // float(np.sum(cm))
 
 
-def jaccard_from_confusion_matrix(cm) -> np.ndarray:
-    """Computes Jaccard scores from a confusion matrix
-    a.k.a. intersection over union (IoU)
+def jaccard_from_confusion_matrix(cm: ndarray) -> ndarray:
+    """
+    Computes Jaccard scores from a confusion matrix a.k.a. intersection over
+    union (IoU)
 
     Parameters
     ----------
-    cm : array_like (2D)
+    cm
          N x N Input confusion matrix
 
     Returns
@@ -123,12 +132,13 @@ def jaccard_from_confusion_matrix(cm) -> np.ndarray:
     return jaccs
 
 
-def dice_from_confusion_matrix(cm) -> np.ndarray:
-    """Computes Dice scores from a confusion matrix
+def dice_from_confusion_matrix(cm: ndarray) -> ndarray:
+    """
+    Computes Dice scores from a confusion matrix
 
     Parameters
     ----------
-    cm : array_like (2D)
+    cm
          N x N Input confusion matrix
 
     Returns
@@ -147,8 +157,11 @@ def dice_from_confusion_matrix(cm) -> np.ndarray:
 
 
 def __surface_distances(
-    s1, s2, voxelspacing=None, connectivity=1
-) -> np.ndarray:
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+    connectivity: int = 1,
+) -> ndarray:
     """
     Computes set of surface distances.
 
@@ -158,18 +171,18 @@ def __surface_distances(
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    connectivity : int, optional
+    connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
@@ -177,7 +190,6 @@ def __surface_distances(
 
     Returns
     -------
-    distances : 1d ndarray
         The distances from all non-zero object(s) in ```s1``` to the nearest
         non zero object(s) in ```s2```. The distance unit is the same as for
         the spacing of elements along each dimension, which is usually given in
@@ -198,7 +210,12 @@ def __surface_distances(
     return distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
 
 
-def hausdorff_distance(s1, s2, voxelspacing=None, connectivity=1) -> float:
+def hausdorff_distance(
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+    connectivity: int = 1,
+) -> float:
     """
     Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
     in two images. It is defined as the maximum surface distance between the
@@ -206,18 +223,18 @@ def hausdorff_distance(s1, s2, voxelspacing=None, connectivity=1) -> float:
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    connectivity : int, optional
+    connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
@@ -225,7 +242,6 @@ def hausdorff_distance(s1, s2, voxelspacing=None, connectivity=1) -> float:
 
     Returns
     -------
-    hd : float
         The symmetric Hausdorff Distance between the object(s) in ```s1``` and
         the object(s) in ```s2```. The distance unit is the same as for the
         spacing of elements along each dimension, which is usually given in mm.
@@ -243,7 +259,11 @@ def hausdorff_distance(s1, s2, voxelspacing=None, connectivity=1) -> float:
 
 
 def percentile_hausdorff_distance(
-    s1, s2, percentile=0.95, voxelspacing=None, connectivity=1
+    s1: ndarray,
+    s2: ndarray,
+    percentile: Union[int, float] = 0.95,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+    connectivity: int = 1,
 ) -> float:
     """
     Nth Percentile Hausdorff Distance.
@@ -254,21 +274,21 @@ def percentile_hausdorff_distance(
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    percentile : float between 0 and 1
+    percentile
         The percentile to perform the comparison on the two sorted distance
         sets
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    connectivity : int, optional
+    connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
@@ -276,7 +296,6 @@ def percentile_hausdorff_distance(
 
     Returns
     -------
-    hd : float
         The maximum Percentile Hausdorff Distance between the object(s) in
         ```s1``` and the object(s) in ```s2``` at the ```percentile```
         percentile.
@@ -304,29 +323,30 @@ def percentile_hausdorff_distance(
 
 
 def modified_hausdorff_distance(
-    s1, s2, voxelspacing=None, connectivity=1
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+    connectivity: int = 1,
 ) -> float:
     """
-    Hausdorff Distance.
-
     Computes the (symmetric) Modified Hausdorff Distance (MHD) between the
     binary objects in two images. It is defined as the maximum average surface
     distance between the objects.
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    connectivity : int, optional
+    connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
@@ -334,7 +354,6 @@ def modified_hausdorff_distance(
 
     Returns
     -------
-    hd : float
         The symmetric Modified Hausdorff Distance between the object(s) in
         ```s1``` and the object(s) in ```s2```. The distance unit is the same
         as for the spacing of elements along each dimension, which is usually
@@ -350,23 +369,22 @@ def modified_hausdorff_distance(
     return max(s1_dist.mean(), s2_dist.mean())
 
 
-def relative_absolute_volume_distance(s1, s2) -> float:
+def relative_absolute_volume_distance(s1: ndarray, s2: ndarray) -> float:
     """
     Calculate relative absolute volume difference from s2 to s1
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else. s1 is taken
         to be the reference.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
 
     Returns
     -------
-    ravd : float
         The relative absolute volume difference between the object(s) in
         ``input1`` and the object(s) in ``input2``. This is a percentage value
         in the range :math:`[0, +inf]` for which a :math:`0` denotes an ideal
@@ -381,20 +399,22 @@ def relative_absolute_volume_distance(s1, s2) -> float:
     return abs(np.sum(s2) - np.sum(s1)) / float(np.sum(s1))
 
 
-def absolute_volume_distance(s1, s2, voxelspacing) -> float:
+def absolute_volume_distance(
+    s1: ndarray, s2: ndarray, voxelspacing: Optional[Tuple[float, float]]
+) -> float:
     """
     Calculate absolute volume difference from s2 to s1
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else. s1 is taken
         to be the reference.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
@@ -402,7 +422,6 @@ def absolute_volume_distance(s1, s2, voxelspacing) -> float:
 
     Returns
     -------
-    avd : float
         The absolute volume difference between the object(s) in ``input1``
         and the object(s) in ``input2``. This is a percentage value in the
         range :math:`[0, +inf]` for which a :math:`0` denotes an ideal score.
@@ -427,7 +446,11 @@ def absolute_volume_distance(s1, s2, voxelspacing) -> float:
     return np.abs(np.sum(s2) - np.sum(s1)) * volume_per_voxel
 
 
-def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
+def __directed_contour_distances(
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+) -> ndarray:
     """
     Computes set of surface contour distances.
     This function always explicitly calculates the contour-set of s1.
@@ -440,13 +463,13 @@ def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
 
      Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
@@ -454,7 +477,6 @@ def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
 
     Returns
     -------
-    distances : 1d ndarray
         The distances from all non-zero object(s) in ```s1``` to the nearest
         non zero object(s) in ```s2```. The distance unit is the same as for
         the spacing of elements along each dimension, which is usually given in
@@ -464,7 +486,7 @@ def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
     -----
     This function is not symmetric.
 
-    For determing the contours, the border handling from ITK relies on
+    For determining the contours, the border handling from ITK relies on
     `ZeroFluxNeumannBoundaryCondition`, which equals `nearest` mode in scipy.
 
     """
@@ -487,23 +509,25 @@ def __directed_contour_distances(s1, s2, voxelspacing=None) -> np.ndarray:
     return df[mask & s1_b]
 
 
-def mean_contour_distance(s1, s2, voxelspacing=None) -> float:
+def mean_contour_distance(
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Optional[Tuple[float, float]] = None,
+) -> float:
     """
-    Mean Contour Distance.
-
     Computes the (symmetric) Mean Contour Distance between the binary objects
     in two images. It is defined as the maximum average surface distance
     between the objects.
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
@@ -511,7 +535,6 @@ def mean_contour_distance(s1, s2, voxelspacing=None) -> float:
 
     Returns
     -------
-    hd : float
         The symmetric Mean Contour Distance between the object(s) in ```s1```
         and the object(s) in ```s2```. The distance unit is the same as for the
         spacing of elements along each dimension, which is usually given in mm.
@@ -526,9 +549,19 @@ def mean_contour_distance(s1, s2, voxelspacing=None) -> float:
     return max(s1_c_dist.mean(), s2_c_dist.mean())
 
 
+HausdorffMeasures = namedtuple(
+    "HausdorffMeasures",
+    ["distance", "modified_distance", "percentile_distance"],
+)
+
+
 def hausdorff_distance_measures(
-    s1, s2, voxelspacing=None, connectivity=1, percentile=0.95
-) -> Dict:
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: None = None,
+    connectivity: int = 1,
+    percentile: float = 0.95,
+) -> HausdorffMeasures:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
     Since measures share common calculations,
@@ -536,18 +569,18 @@ def hausdorff_distance_measures(
 
     Parameters
     ----------
-    s1 : array_like
+    s1
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    s2 : array_like
+    s2
         Input data containing objects. Can be any type but will be converted
         into binary: background where 0, object everywhere else.
-    voxelspacing : float or sequence of floats, optional
+    voxelspacing
         The voxelspacing in a distance unit i.e. spacing of elements
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    connectivity : int, optional
+    connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
@@ -557,11 +590,8 @@ def hausdorff_distance_measures(
 
     Returns
     -------
-    hd : dict
-        The symmetric Modified Hausdorff Distance between the object(s) in
-        ```s1``` and the object(s) in ```s2```. The distance unit is the same
-        as for the spacing of elements along each dimension, which is usually
-        given in mm.
+        The hausdorff distance, modified hausdorff distance and percentile
+        hausdorff distance
 
     Notes
     -----
@@ -582,11 +612,15 @@ def hausdorff_distance_measures(
     s2_dist.sort()
 
     # calculate all hausdorff statistics
-    hdv = max(s1_dist.max(), s2_dist.max())
-    modified_hdv = max(s1_dist.mean(), s2_dist.mean())
-    percentile_hdv = max(
+    distance = max(s1_dist.max(), s2_dist.max())
+    modified_distance = max(s1_dist.mean(), s2_dist.mean())
+    percentile_distance = max(
         s1_dist[int((len(s1_dist) - 1) * percentile)],
         s2_dist[int((len(s2_dist) - 1) * percentile)],
     )
 
-    return dict(hd=hdv, modified_hd=modified_hdv, percentile_hd=percentile_hdv)
+    return HausdorffMeasures(
+        distance=distance,
+        modified_distance=modified_distance,
+        percentile_distance=percentile_distance,
+    )
