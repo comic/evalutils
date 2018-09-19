@@ -6,6 +6,7 @@ History
 -------------------
 
 * Adds `evalutils.stats` for calculating common metrics in medical imaging
+* Adds **experimental**  Windows support - we do not have CI on all of the windows tests so please report any errors
 
 0.1.13 (2018-09-12)
 -------------------
