@@ -60,8 +60,8 @@ def test_dice_from_cm():
 def test_ravd():
     A = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
     B = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
-    r1 = stats.relative_absolute_volume_distance(A, B)
-    r2 = stats.relative_absolute_volume_distance(B, A)
+    r1 = stats.relative_absolute_volume_difference(A, B)
+    r2 = stats.relative_absolute_volume_difference(B, A)
     assert r1 != r2
     assert r1 == (6.0 - 5.0) / 6.0
     assert r2 == (6.0 - 5.0) / 5.0
@@ -71,8 +71,8 @@ def test_ravd():
 def test_avd(voxelspace):
     A = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
     B = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
-    r1 = stats.absolute_volume_distance(A, B, voxelspace)
-    r2 = stats.absolute_volume_distance(B, A, voxelspace)
+    r1 = stats.absolute_volume_difference(A, B, voxelspace)
+    r2 = stats.absolute_volume_difference(B, A, voxelspace)
     assert r1 == r2
     assert r1 == (6.0 - 5.0) * (
         1 if voxelspace is None else np.prod(voxelspace)
@@ -338,8 +338,8 @@ def test_hd_and_contour_functions(A, B, voxelspace, connectivity):
     r4 = stats.percentile_hausdorff_distance(
         A, B, 0.95, voxelspace, connectivity
     )
-    r5 = stats.relative_absolute_volume_distance(A, B)
-    r6 = stats.relative_absolute_volume_distance(B, A)
+    r5 = stats.relative_absolute_volume_difference(A, B)
+    r6 = stats.relative_absolute_volume_difference(B, A)
     r7 = stats.mean_contour_distance(A, B, voxelspace)
     r8 = stats.mean_contour_distance(B, A, voxelspace)
     r = stats.hausdorff_distance_measures(

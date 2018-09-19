@@ -124,6 +124,7 @@ def distance_transform_edt_float32(
 
     _nd_image.euclidean_feature_transform(input, sampling, ft)
     input_shape = input.shape
+
     del input
     gc.collect()
 
@@ -370,7 +371,7 @@ def __surface_distances(
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    return distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
+    return distance_transform_edt_float32(~s2_b, sampling=voxelspacing)[s1_b]
 
 
 def hausdorff_distance(
@@ -532,7 +533,7 @@ def modified_hausdorff_distance(
     return max(s1_dist.mean(), s2_dist.mean())
 
 
-def relative_absolute_volume_distance(s1: ndarray, s2: ndarray) -> float:
+def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
     """
     Calculate relative absolute volume difference from s2 to s1
 
@@ -562,7 +563,7 @@ def relative_absolute_volume_distance(s1: ndarray, s2: ndarray) -> float:
     return abs(np.sum(s2) - np.sum(s1)) / float(np.sum(s1))
 
 
-def absolute_volume_distance(
+def absolute_volume_difference(
     s1: ndarray, s2: ndarray, voxelspacing: Optional[Tuple[float, float]]
 ) -> float:
     """
