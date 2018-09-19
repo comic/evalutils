@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import subprocess
+from distutils.util import strtobool
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,7 @@ def check_dict(check, expected):
 
 
 @pytest.mark.skipif(
-    os.environ.get("APPVEYOR", False),
+    strtobool(os.environ.get("APPVEYOR", "False").lower()),
     reason="This test is not supported by standard appveyor",
 )
 @pytest.mark.parametrize(

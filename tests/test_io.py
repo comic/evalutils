@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+from distutils.util import strtobool
 from pathlib import Path
 
 import pytest
@@ -75,7 +76,7 @@ def test_csv_loader():
 
 
 @pytest.mark.skipif(
-    os.environ.get("APPVEYOR", False),
+    strtobool(os.environ.get("APPVEYOR", "False").lower()),
     reason="This test is not supported by standard appveyor",
 )
 def test_itk_loader():
