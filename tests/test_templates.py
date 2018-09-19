@@ -17,6 +17,10 @@ def check_dict(check, expected):
             assert check[key] == val
 
 
+@pytest.mark.skipif(
+    os.environ.get("APPVEYOR", False),
+    reason="This test is not supported by standard appveyor",
+)
 @pytest.mark.parametrize(
     ("kind", "expected"),
     [
