@@ -10,3 +10,6 @@ build_script:
 
 test_script:
   - tox
+
+on_failure:
+    - type C:\projects\evalutils\.tox\flake8\log\flake8-2.log
