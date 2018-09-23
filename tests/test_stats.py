@@ -79,18 +79,35 @@ def test_avd(voxelspace):
     )
 
 
+# A connectivity of 1 was omitted, because the HausdorffDistanceImageFilter does not support it.
+# A connectivity of 0 and 2 appear to achieve similar Hausdorff metrics, although only one is used within the
+# HausdorffDistanceImageFilter
 @pytest.mark.parametrize(
     "A,B",
     [
         [
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
+        ] for _ in range(20)
+    ] +
+    [
+        [np.array([[ True,  True, False,  True,  True, False],
+                   [False, False, True, False, False,  True],
+                   [False,  True, False,  True, False, True],
+                   [False,  True, False, False, False, True],
+                   [ True, False, False, False, False, True],
+                   [ True,  True, False, False,  True, True]]),
+         np.array([[False, False,  True, False,  True, False],
+                   [ True, False,  True, False, False,  True],
+                   [False, False, False,  True, False,  True],
+                   [ True,  True,  True,  True,  True, False],
+                   [False,  True,  True,  True, False, False],
+                   [ True, False,  True, False,  True, False]])
         ]
-        for _ in range(20)
     ],
 )
 @pytest.mark.parametrize("voxelspace", [None, (0.3, 0.8), (12.0, 4.0)])
-@pytest.mark.parametrize("connectivity", [0, 1, 2])
+@pytest.mark.parametrize("connectivity", [0, 2])
 def test_hd(A, B, voxelspace, connectivity):
     hd = stats.hausdorff_distance(A, B, voxelspace, connectivity=connectivity)
     hd2 = stats.hausdorff_distance(B, A, voxelspace, connectivity=connectivity)
@@ -180,7 +197,7 @@ def test_percentile_hd(A, B, voxelspace, connectivity, percentile):
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
         ]
-        for _ in range(2)
+        for _ in range(20)
     ],
 )
 @pytest.mark.parametrize("voxelspace", [None, (0.3, 0.8)])
