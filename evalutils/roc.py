@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
+from typing import Tuple
+
 import numpy as np
+from numpy import float64, ndarray
 from sklearn import metrics
 
 
-def get_bootstrapped_ROC_CI_curves(y_pred,
-                                   y_true,
-                                   num_bootstraps=100,
-                                   CI_to_use=0.95):
+def get_bootstrapped_roc_ci_curves(
+    y_pred: ndarray,
+    y_true: ndarray,
+    num_bootstraps: int = 100,
+    ci_to_use: float = 0.95,
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, float64, float64]:
     """
     Produces Confidence-Interval Curves to go alongside a regular ROC curve
     This is done by using boostrapping.
@@ -16,28 +21,28 @@ def get_bootstrapped_ROC_CI_curves(y_pred,
 
     Parameters
     ----------
-    y_pred : 1D array_like
+    y_pred
         The predictions (scores) produced by the system being evaluated
-    y_true : 1D array_like
+    y_true
         The true labels (1 or 0) which are the reference standard being used
-    num_bootstraps: integer
+    num_bootstraps
         How many times to make a random sample with replacement
-    CI_to_use: float
+    ci_to_use
         Which confidence interval is required.
 
     Returns
     -------
-    fpr_vals : np array
+    fpr_vals
         An equally spaced set of fpr vals between 0 and 1
-    mean_tpr_vals : np array
+    mean_tpr_vals
         The mean tpr vals (one per fpr_val) obtained by boostrapping
-    low_tpr_vals : np array
+    low_tpr_vals
         The tpr vals (one per fpr_val) representing lower curve for CI
-    high_tpr_vals : np array
+    high_tpr_vals
         The tpr vals (one per fpr_val) representing the upper curve for CI
-    low_Az_val : float
+    low_Az_val
         The lower Az (AUC) val for the given CI_to_use
-    high_Az_val : float
+    high_Az_val
         The higher Az (AUC) val for the given CI_to_use
     """
 
@@ -56,8 +61,9 @@ def get_bootstrapped_ROC_CI_curves(y_pred,
             # to be defined: reject the sample
             continue
         # get the fpr and tpr for this bootstrap
-        fpr, tpr, thresholds = metrics.roc_curve(y_true[indices],
-                                                 y_pred[indices])
+        fpr, tpr, thresholds = metrics.roc_curve(
+            y_true[indices], y_pred[indices]
+        )
         # get values at fixed fpr locations
         tpr_b = np.interp(base_fpr, fpr, tpr)
         tpr_b[0] = 0.0
@@ -73,7 +79,7 @@ def get_bootstrapped_ROC_CI_curves(y_pred,
     mean_tprs = tprs_array.mean(axis=0)
 
     # half the error margin allowed
-    one_sided_CI = (1-CI_to_use)/2
+    one_sided_ci = (1 - ci_to_use) / 2
 
     tprs_upper = []
     tprs_lower = []
@@ -82,27 +88,36 @@ def get_bootstrapped_ROC_CI_curves(y_pred,
         tprs = tprs_array[:, b_fpr]
         tprs.sort()
 
-        tpr_upper = tprs[int((1-one_sided_CI) * len(tprs))]
+        tpr_upper = tprs[int((1 - one_sided_ci) * len(tprs))]
         tprs_upper.append(tpr_upper)
-        tpr_lower = tprs[int(one_sided_CI * len(tprs))]
+        tpr_lower = tprs[int(one_sided_ci * len(tprs))]
         tprs_lower.append(tpr_lower)
 
     sorted_az_scores = np.array(bootstrapped_az_scores)
     sorted_az_scores.sort()
 
-    az_CI_lower = sorted_az_scores[int(one_sided_CI * len(sorted_az_scores))]
-    az_CI_upper = sorted_az_scores[int((1-one_sided_CI) *
-                                   len(sorted_az_scores))]
+    az_ci_lower = sorted_az_scores[int(one_sided_ci * len(sorted_az_scores))]
+    az_ci_upper = sorted_az_scores[
+        int((1 - one_sided_ci) * len(sorted_az_scores))
+    ]
 
-    return (base_fpr, mean_tprs, np.asarray(tprs_lower),
-            np.asarray(tprs_upper), az_CI_lower, az_CI_upper)
+    return (
+        base_fpr,
+        mean_tprs,
+        np.asarray(tprs_lower),
+        np.asarray(tprs_upper),
+        az_ci_lower,
+        az_ci_upper,
+    )
 
 
-def get_bootstrapped_CI_point_error(y_score,
-                                    y_true,
-                                    num_bootstraps=100,
-                                    CI_to_use=0.95,
-                                    exclude_first_last=True):
+def get_bootstrapped_ci_point_error(
+    y_score: ndarray,
+    y_true: ndarray,
+    num_bootstraps: int = 100,
+    ci_to_use: float = 0.95,
+    exclude_first_last: bool = True,
+) -> Tuple[ndarray, ndarray, ndarray, ndarray, ndarray, ndarray]:
     """
     Produces Confidence-Interval errors for individual points from ROC
     Useful when only few ROC points exist so they will be plotted individually
@@ -120,16 +135,16 @@ def get_bootstrapped_CI_point_error(y_score,
 
     Parameters
     ----------
-    y_score : 1D array_like
+    y_score
         The scores produced by the system being evaluated. A discrete set of
         possible scores must be used.
-    y_true : 1D array_like
+    y_true
         The true labels (1 or 0) which are the reference standard being used
     num_bootstraps: integer
         How many times to make a random sample with replacement
-    CI_to_use: float
+    ci_to_use
         Which confidence interval is required.
-    exclude_first_last: bool
+    exclude_first_last
         The first and last ROC point (0,0 and 1,1) are usually irrelevant
         in these scenarios where only a few ROC points will be
         individually plotted.
@@ -140,17 +155,17 @@ def get_bootstrapped_CI_point_error(y_score,
     (mean_fprs, mean_tprs, np.asarray(tprs_lower), np.asarray(tprs_upper),
                              np.asarray(fprs_lower), np.asarray(fprs_upper))
 
-    mean_fprs : np array
+    mean_fprs
         The array of mean fpr values (1 per possible ROC point)
-    mean_tprs : np array
+    mean_tprs
         The array of mean tpr values (1 per possible ROC point)
-    low_tpr_vals : np array
+    low_tpr_vals
         The tpr vals (one per ROC point) representing lowest val in CI
-    high_tpr_vals : np array
+    high_tpr_vals
         The tpr vals (one per ROC point) representing the highest val in CI
-    low_fpr_vals : np array
+    low_fpr_vals
         The fpr vals (one per ROC point) representing lowest val in CI_to_use
-    high_fpr_vals : np array
+    high_fpr_vals
         The fpr vals (one per ROC point) representing the highest val in CI
     """
     rng_seed = 40  # control reproducibility
@@ -168,8 +183,9 @@ def get_bootstrapped_CI_point_error(y_score,
             # to be defined: reject the sample
             continue
         # get ROC data this boostrap
-        fpr, tpr, thresholds = metrics.roc_curve(y_true[indices],
-                                                 y_score[indices])
+        fpr, tpr, thresholds = metrics.roc_curve(
+            y_true[indices], y_score[indices]
+        )
         if len(fpr) < num_possible_scores + 1:
             # if all scores are not represented in this selection then a
             # different number of ROC thresholds will be defined.
@@ -193,7 +209,7 @@ def get_bootstrapped_CI_point_error(y_score,
     mean_fprs = fprs_array.mean(axis=0)
 
     # half the error margin allowed
-    one_sided_CI = (1-CI_to_use)/2
+    one_sided_ci = (1 - ci_to_use) / 2
 
     tprs_upper = []
     tprs_lower = []
@@ -208,25 +224,31 @@ def get_bootstrapped_CI_point_error(y_score,
         fprs = fprs_array[:, boot_strap_point]
         fprs.sort()
 
-        tpr_upper = tprs[int((1-one_sided_CI) * len(tprs))]
+        tpr_upper = tprs[int((1 - one_sided_ci) * len(tprs))]
         tprs_upper.append(tpr_upper)
-        tpr_lower = tprs[int(one_sided_CI * len(tprs))]
+        tpr_lower = tprs[int(one_sided_ci * len(tprs))]
         tprs_lower.append(tpr_lower)
 
-        fpr_upper = fprs[int((1-one_sided_CI) * len(fprs))]
+        fpr_upper = fprs[int((1 - one_sided_ci) * len(fprs))]
         fprs_upper.append(fpr_upper)
-        fpr_lower = fprs[int(one_sided_CI * len(fprs))]
+        fpr_lower = fprs[int(one_sided_ci * len(fprs))]
         fprs_lower.append(fpr_lower)
 
     fpr_actual, tpr_actual, thresholds = metrics.roc_curve(y_true, y_score)
     if exclude_first_last:
-            fpr_actual = fpr_actual[1:-1]
-            tpr_actual = tpr_actual[1:-1]
+        fpr_actual = fpr_actual[1:-1]
+        tpr_actual = tpr_actual[1:-1]
 
     tprs_lower = np.asarray(tprs_lower)
     tprs_upper = np.asarray(tprs_upper)
     fprs_lower = np.asarray(fprs_lower)
     fprs_upper = np.asarray(fprs_upper)
 
-    return (mean_fprs, mean_tprs, tprs_lower,
-            tprs_upper, fprs_lower, fprs_upper)
+    return (
+        mean_fprs,
+        mean_tprs,
+        tprs_lower,
+        tprs_upper,
+        fprs_lower,
+        fprs_upper,
+    )
