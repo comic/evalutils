@@ -2,11 +2,12 @@
 History
 =======
 
-0.1.14 (YYYY-MM-DD)
+0.1.14 (2018-10-16)
 -------------------
 
 * Adds `evalutils.stats` for calculating common metrics in medical imaging
 * Adds **experimental**  Windows support - we do not have CI on all of the windows tests so please report any errors
+* Adds `evalutils.roc` for calculating bootstrapped roc curves
 
 0.1.13 (2018-09-12)
 -------------------
