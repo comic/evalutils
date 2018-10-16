@@ -50,3 +50,11 @@ Statistics
 
 .. automodule:: evalutils.stats
    :members:
+
+ROC
+---
+
+.. py:module:: evalutils.roc
+
+.. automodule:: evalutils.roc
+   :members:
