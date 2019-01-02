@@ -3,5 +3,5 @@ git+git://github.com/comic/evalutils@dev
 {% else %}
 {{ cookiecutter.evalutils_name }}=={{ cookiecutter.evalutils_version }}
 {% endif %}
-scikit-learn==0.20.0
+scikit-learn==0.20.2
 scipy==1.2.0
