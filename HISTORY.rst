@@ -2,6 +2,12 @@
 History
 =======
 
+0.1.15 (2019-02-01)
+-------------------
+
+* Pins Pandas version due to a bug with dataframe conversion to dictionaries in Pandas 0.24.0
+* Updates the export.sh template to gzip the docker container after creation
+
 0.1.14 (2018-10-16)
 -------------------
 
