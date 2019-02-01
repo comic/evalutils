@@ -46,6 +46,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
     description="evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.",
     install_requires=requirements,

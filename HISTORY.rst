@@ -7,6 +7,7 @@ History
 
 * Pins Pandas version due to a bug with dataframe conversion to dictionaries in Pandas 0.24.0
 * Updates the export.sh template to gzip the docker container after creation
+* Added Python 3.7 support
 
 0.1.14 (2018-10-16)
 -------------------
