@@ -70,16 +70,12 @@ def test_cli(tmpdir, kind, expected):
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output(
-        [str(project_dir / f"build.{file_ext}")], cwd=project_dir
-    )
+    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
 
-    out = subprocess.check_output(
-        [str(project_dir / f"test.{file_ext}")], cwd=project_dir
-    )
+    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
 
     # Grab the results json
     out = out.decode().splitlines()
