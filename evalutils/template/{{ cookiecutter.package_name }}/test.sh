@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+
 ./build.sh
 
 docker volume create {{ cookiecutter.package_name|lower }}-output
 
 docker run --rm \
         --memory=4g \
-        -v $(pwd)/test/:/input/ \
+        -v $SCRIPTPATH/test/:/input/ \
         -v {{ cookiecutter.package_name|lower }}-output:/output/ \
         {{ cookiecutter.package_name|lower }}
 
