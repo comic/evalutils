@@ -104,11 +104,13 @@ class {{ cookiecutter.package_name|capitalize }}(
         # Cast to the same type
         caster = SimpleITK.CastImageFilter()
         caster.SetOutputPixelType(SimpleITK.sitkUInt8)
+        caster.SetNumberOfThreads(1)
         gt = caster.Execute(gt)
         pred = caster.Execute(pred)
 
         # Score the case
         overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
+        overlap_measures.SetNumberOfThreads(1)
         overlap_measures.Execute(gt, pred)
 
         return {
