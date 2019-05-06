@@ -4,7 +4,7 @@ docker volume create {{ cookiecutter.package_name|lower }}-output
 
 docker run --rm^
  --memory=4g^
- -v %cd%/test/:/input/^
+ -v %~dp0\test\:/input/^
  -v {{ cookiecutter.package_name|lower }}-output:/output/^
  {{ cookiecutter.package_name|lower }}
 
