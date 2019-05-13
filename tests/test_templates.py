@@ -86,9 +86,9 @@ def test_cli(tmpdir, kind, expected):
     check_dict(result, expected)
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar" not in files
+    assert f"{project_name}.tar.gz" not in files
 
     subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar" in files
+    assert f"{project_name}.tar.gz" in files
