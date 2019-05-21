@@ -1,6 +1,7 @@
 from collections import namedtuple
 from typing import List, Tuple
 
+from numpy import array
 from sklearn.neighbors import BallTree
 
 DetectionScore = namedtuple(
@@ -119,7 +120,7 @@ def find_hits_for_targets(
     predictions that are considered hits.
 
     """
-    predictions_tree = BallTree(predictions)
+    predictions_tree = BallTree(array(predictions))
     hits, _ = predictions_tree.query_radius(
         X=targets, r=radius, return_distance=True, sort_results=True
     )
