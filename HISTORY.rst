@@ -2,6 +2,12 @@
 History
 =======
 
+0.1.17 (2019-05-23)
+-------------------
+
+* Fixes build and test scripts on windows
+* Fixes BallTree execution with scipy 0.21.1
+
 0.1.16 (2019-02-13)
 -------------------
 
