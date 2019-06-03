@@ -139,7 +139,7 @@ class BaseEvaluation(ABC):
 
         if cases is None:
             raise FileLoaderError(
-                f"Could not load and files in {folder} with "
+                f"Could not load any files in {folder} with "
                 f"{self._file_loader}."
             )
 
