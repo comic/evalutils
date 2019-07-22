@@ -9,6 +9,6 @@ sphinx-autodoc-typehints==1.6.0
 Sphinx==2.1.2
 twine==1.13.0
 monkeytype==19.5.0
-pytest==5.0.0
+pytest==5.0.1
 pytest-cov==2.7.1
 pytest-runner==5.1
