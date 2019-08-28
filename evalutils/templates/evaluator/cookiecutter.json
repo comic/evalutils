@@ -4,6 +4,6 @@
     "challenge_kind": ["Classification", "Segmentation", "Detection"],
     "evalutils_name": "",
     "evalutils_version": "",
-    "docker_base_container": "python:3.6-slim",
+    "docker_base_container": "python:3.7-slim",
     "dev_build": 0
 }
