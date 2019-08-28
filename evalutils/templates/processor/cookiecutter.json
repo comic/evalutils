@@ -1,0 +1,18 @@
+{
+    "author": "",
+    "trac_ticket_number": "",
+    "processor_name": "",
+    "package_name": "{{ cookiecutter.processor_name|replace(' ', '') }}",
+    "evalutils_name": "",
+    "evalutils_version": "",
+    "docker_base_container": "python:3.6-slim",
+    "dev_build": 0,
+    "requirements":  {
+        "cpus": 1,
+        "cpu_capabilities": [],
+        "memory": "1G",
+        "gpu_count": 0,
+        "gpu_compute_capability": null,
+        "gpu_memory": null
+    }
+}

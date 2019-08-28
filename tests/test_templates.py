@@ -60,7 +60,7 @@ def test_cli(tmpdir, kind, expected):
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, f"--kind={kind}", "--dev"],
+        ["evalutils", "init-evaluator", project_name, f"--kind={kind}", "--dev"],
         cwd=tmpdir,
     )
 
