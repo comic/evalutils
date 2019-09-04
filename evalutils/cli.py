@@ -54,25 +54,24 @@ def validate_non_empty_stripped_string_fn(option):
     return validate_non_empty_stripped_string
 
 
-def req_cpu_capabilities_prompt(ctx, param, req_cpu_capabilities):
-    if not req_cpu_capabilities:
+def req_cpu_capabilities_prompt(ctx, param, reqs):
+    if not reqs:
         while True:
             capability = "something"
-            req_cpu_capabilities = ()
+            reqs = ()
             while capability != "":
                 capability = click.prompt(
-                    f"Required node capability? (e.g.: avx) *{req_cpu_capabilities}*",
+                    f"Required node capability? (e.g.: avx) *{reqs}*",
                     type=click.STRING,
                     default="",
                 )
                 if capability != "":
-                    req_cpu_capabilities += (capability,)
+                    reqs += (capability,)
             if click.confirm(
-                f"Are *{req_cpu_capabilities}* all required node capabilities?",
-                True,
+                f"Are *{reqs}* all required node capabilities?", True
             ):
                 break
-    return req_cpu_capabilities
+    return reqs
 
 
 def req_gpu_prompt(ctx, param, req_gpu_count):
