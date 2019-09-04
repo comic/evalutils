@@ -1,7 +1,6 @@
 {
-    "author": "",
-    "trac_ticket_number": "",
     "processor_name": "",
+    "diag_ticket": "",
     "package_name": "{{ cookiecutter.processor_name|replace(' ', '') }}",
     "evalutils_name": "",
     "evalutils_version": "",

@@ -28,8 +28,6 @@ ENTRYPOINT python -m process $0 $@
 ## PROCESSOR LABELS ##
 
 # These labels are required
-LABEL com.radboudumc.diag.processor.author={{ cookiecutter.author_name }}
-LABEL com.radboudumc.diag.processor.ticket={{ cookiecutter.trac_ticket_number }}
 LABEL com.radboudumc.diag.processor.name={{ cookiecutter.processor_name }}
 
 # These labels are required and describe what kind of hardware your processor requires to run.
@@ -39,3 +37,8 @@ LABEL com.radboudumc.diag.processor.hardware.memory={{ cookiecutter.requirements
 LABEL com.radboudumc.diag.processor.hardware.gpu.count={{ cookiecutter.requirements.gpu_count }}
 LABEL com.radboudumc.diag.processor.hardware.gpu.cuda_compute_capability={{ cookiecutter.requirements.gpu_compute_capability }}
 LABEL com.radboudumc.diag.processor.hardware.gpu.memory={{ cookiecutter.requirements.gpu_memory }}
+
+{% if cookiecutter.diag_ticket|trim() -%}
+# Optional labels
+LABEL com.radboudumc.diag.processor.ticket={{ cookiecutter.diag_ticket|trim() }}
+{%- endif %}

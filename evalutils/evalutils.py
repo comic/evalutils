@@ -17,6 +17,120 @@ from .validators import DataFrameValidator
 logger = logging.getLogger(__name__)
 
 
+class BaseProcess(ABC):
+    def __init__(
+        self,
+        *,
+        file_loaders: Tuple[Tuple[str, FileLoader], ...],
+        input_path: Path = Path("/input/"),
+        output_path: Path = Path("/output/images/"),
+        file_sorter_key: Callable = first_int_in_filename_key,
+        validators: Tuple[DataFrameValidator, ...],
+        output_file: PathLike = Path("/output/results.json"),
+    ):
+        """
+        The base class for all processors. Sets the environment and controls
+        the flow of the processing once `process` is called.
+
+
+        Parameters
+        ----------
+        file_loaders
+            The loaders that will be used to get all files
+        input_path
+            The path in the container where the ground truth will be loaded
+            from
+        output_path
+            The path in the container where the output images will be written
+        file_sorter_key
+            A function that determines how files are sorted and matched
+            together
+        validators
+            A tuple containing all the validators that will be used on the
+            loaded data
+        output_file
+            The path to the location where the results will be written
+        """
+
+        self._input_path = input_path
+        self._output_path = output_path
+        self._file_sorter_key = file_sorter_key
+        self._file_loaders = file_loaders
+        self._validators = validators
+        self._output_file = output_file
+
+        self._ground_truth_cases = DataFrame()
+        self._predictions_cases = DataFrame()
+
+        self._cases = {}
+
+        self._case_results = DataFrame()
+
+        super().__init__()
+
+    def load(self):
+        for key, file_loader in self._file_loaders:
+            self._cases[key] = self._load_cases(
+                folder=self._input_path
+            )
+
+    def _load_cases(self, *, folder: Path) -> DataFrame:
+        cases = None
+
+        for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
+            try:
+                new_cases = self._file_loader.load(fname=f)
+            except FileLoaderError:
+                logger.warning(
+                    f"Could not load {f.name} using {self._file_loader}."
+                )
+            else:
+                if cases is None:
+                    cases = new_cases
+                else:
+                    cases += new_cases
+
+        if cases is None:
+            raise FileLoaderError(
+                f"Could not load any files in {folder} with "
+                f"{self._file_loaders}."
+            )
+
+        return DataFrame(cases)
+
+    def validate(self):
+        """ Validates each dataframe separately """
+        for df in self._cases.values():
+            self._validate_data_frame(df=df)
+
+    def _validate_data_frame(self, *, df: DataFrame):
+        for validator in self._validators:
+            validator.validate(df=df)
+
+    def process(self):
+        self.load()
+        self.validate()
+        self.process_cases()
+        self.save()
+
+    def process_cases(self, key=None):
+        if key is None:
+            key = self._file_loaders[0][0]
+        self._case_results = DataFrame()
+        for idx, case in enumerate(self._cases[key]):
+            self._case_results = self._case_results.append(
+                self.process_case(idx=idx, case=case), ignore_index=True
+            )
+
+    # noinspection PyUnusedLocal
+    def process_case(self, *, idx: int, case: DataFrame) -> Dict:
+        return {}
+
+    def save(self):
+        with open(self._output_file, "w") as f:
+            f.write(json.dumps(self._results))
+
+
 class BaseEvaluation(ABC):
     def __init__(
         self,

@@ -59,7 +59,8 @@ def req_cpu_capabilities_prompt(ctx, param, req_cpu_capabilities):
             capability = "something"
             req_cpu_capabilities = ()
             while capability != "":
-                capability = click.prompt(f"Required node capability? (e.g.: avx) *{req_cpu_capabilities}*", type=click.STRING, default="")
+                capability = click.prompt(f"Required node capability? (e.g.: avx) *{req_cpu_capabilities}*",
+                                          type=click.STRING, default="")
                 if capability != "":
                     req_cpu_capabilities += (capability,)
             if click.confirm(f"Are *{req_cpu_capabilities}* all required node capabilities?", True):
@@ -86,8 +87,11 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 
 @main.command(short_help="Initialise a processor project.")
 @click.argument("processor_name", callback=validate_non_empty_stripped_string_fn("processor_name"))
-@click.argument("author_name", callback=validate_non_empty_stripped_string_fn("author_name"))
-@click.argument("trac_ticket_number", callback=validate_non_empty_stripped_string_fn("trac_ticket_number"))
+@click.option(
+    "--diag-ticket",
+    type=click.STRING,
+    default="",
+)
 @click.option(
     "--req-cpus",
     type=click.IntRange(1, 64, True),
@@ -127,16 +131,17 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     default="",
 )
 @click.option("--dev", is_flag=True)
-def init_processor(processor_name, author_name, trac_ticket_number, req_cpus, req_cpu_capabilities, req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev):
-    print(processor_name, author_name, trac_ticket_number, req_cpus, req_cpu_capabilities, req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev)
+def init_processor(processor_name, diag_ticket, req_cpus, req_cpu_capabilities,
+                   req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev):
+    print(processor_name, diag_ticket, req_cpus, req_cpu_capabilities,
+          req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev)
     template_dir = Path(__file__).parent / "templates" / "processor"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "author": author_name,
-                "trac_ticket_number": trac_ticket_number,
+                "diag_ticket": diag_ticket,
                 "processor_name": processor_name,
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
