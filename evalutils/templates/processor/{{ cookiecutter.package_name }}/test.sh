@@ -7,7 +7,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 docker volume create {{ cookiecutter.package_name|lower }}-output
 
 docker run --rm \
-        --memory=4g \
+        --memory={{ cookiecutter.requirements.memory|lower }} \
         -v $SCRIPTPATH/test/:/input/ \
         -v {{ cookiecutter.package_name|lower }}-output:/output/ \
         {{ cookiecutter.package_name|lower }}

@@ -7,7 +7,7 @@
     "docker_base_container": "python:3.7-slim",
     "dev_build": 0,
     "requirements":  {
-        "cpus": 1,
+        "cpu_count": 1,
         "cpu_capabilities": [],
         "memory": "1G",
         "gpu_count": 0,

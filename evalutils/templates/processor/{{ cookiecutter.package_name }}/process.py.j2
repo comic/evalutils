@@ -1,25 +1,31 @@
 import SimpleITK
 
 from evalutils import BaseProcess
-from evalutils.io import SimpleITKLoader
+from evalutils.io import SimpleITKLoader, CSVLoader
 from evalutils.validators import (
-    UniquePathIndicesValidator, UniqueImagesValidator
+    UniquePathIndicesValidator,
+    UniqueImagesValidator,
+    ExpectedColumnNamesValidator,
 )
 
 
 class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
     def __init__(self):
         super().__init__(
-            file_loaders=(("lung", SimpleITKLoader()),
-                          ("nodules", CSVLoader())),
+            file_loaders=(
+                ("lung", SimpleITKLoader()),
+                ("nodules", CSVLoader()),
+            ),
             validators=(
                 UniquePathIndicesValidator(),
                 UniqueImagesValidator(),
-                ExpectedColumnNamesValidator(("seriesuid", "coordX", "coordY", "coordZ")),
+                ExpectedColumnNamesValidator(
+                    ("seriesuid", "coordX", "coordY", "coordZ")
+                ),
             ),
         )
 
-   def process_case(self, *, idx, case):
+    def process_case(self, *, idx, case):
         lung_path = case["path"]
 
         are_nodules_for_case = self._nodules["seriesuid"] == lung_path.name
@@ -38,15 +44,15 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
         self._scored_nodules = self._scored_nodules + scored_nodules
 
         return {
-            'scored_nodules': scored_nodules,
-            'lung_fname': lung_path.name,
-            'nodules_fname': self._nodules_path.name,
+            "scored_nodules": scored_nodules,
+            "lung_fname": lung_path.name,
+            "nodules_fname": self._nodules_path.name,
         }
 
     def predict(lung_image, nodules_locations):
         scores = []
         for nodule in nodules_locations:
-             scores.append(0.5)
+            scores.append(0.5)
         nodules_locations["class"] = scores
         return nodules_locations
 

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
+import os
+import shutil
 import click
 from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
@@ -9,6 +11,28 @@ from . import __version__
 
 
 EVALUATOR_CHOICES = ["Classification", "Segmentation", "Detection"]
+
+
+def bootstrap_evalutils(project_name):
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dest_dir = Path(".").absolute() / project_name.lower() / "evalutils"
+    print(src_dir)
+    print(dest_dir)
+    shutil.copytree(
+        src_dir,
+        dest_dir,
+        ignore=shutil.ignore_patterns(
+            project_name.lower(),
+            ".git",
+            "build",
+            "dist",
+            "docs",
+            ".pytest_cache",
+            ".eggs",
+            "templates",
+            "__pycache__",
+        ),
+    )
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -39,6 +63,8 @@ def init_evaluator(challenge_name, kind, dev):
                 "dev_build": 1 if dev else 0,
             },
         )
+        if dev:
+            bootstrap_evalutils(challenge_name)
         click.echo(f"Created project {challenge_name}")
     except FailedHookException:
         exit(1)
@@ -124,7 +150,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     prompt="Minimal required amount of cpu RAM?",
 )
 @click.option(
-    "--req-gpu-count",
+    "--req-gpus",
     type=click.IntRange(0, 8, True),
     default=0,
     prompt="Required number of gpus?",
@@ -144,7 +170,7 @@ def init_processor(
     req_cpus,
     req_cpu_capabilities,
     req_memory,
-    req_gpu_count,
+    req_gpus,
     req_gpu_compute_capability,
     req_gpu_memory,
     dev,
@@ -155,7 +181,7 @@ def init_processor(
         req_cpus,
         req_cpu_capabilities,
         req_memory,
-        req_gpu_count,
+        req_gpus,
         req_gpu_compute_capability,
         req_gpu_memory,
         dev,
@@ -172,15 +198,17 @@ def init_processor(
                 "evalutils_version": __version__,
                 "dev_build": 1 if dev else 0,
                 "requirements": {
-                    "cpus": req_cpus,
+                    "cpu_count": req_cpus,
                     "cpu_capabilities": req_cpu_capabilities,
                     "memory": req_memory,
-                    "gpu_count": req_gpu_count,
+                    "gpu_count": req_gpus,
                     "gpu_compute_capability": req_gpu_compute_capability,
                     "gpu_memory": req_gpu_memory,
                 },
             },
         )
+        if dev:
+            bootstrap_evalutils(processor_name)
         click.echo(f"Created project {processor_name}")
     except FailedHookException:
         exit(1)

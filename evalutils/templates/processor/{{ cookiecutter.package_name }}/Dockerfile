@@ -10,18 +10,24 @@ RUN mkdir -p /opt/processor /input /output \
     && chown processor:processor /opt/processor /input /output
 
 USER processor
+
 WORKDIR /opt/processor
 
 ENV PATH="/home/processor/.local/bin:${PATH}"
 
 RUN python -m pip install --user -U pip
 
+{% if cookiecutter.dev_build|int -%}
+COPY --chown=processor:processor evalutils /opt/processor/evalutils
+RUN python -m pip install --user /opt/processor/evalutils
+{%- endif %}
+
 COPY --chown=processor:processor ground-truth /opt/processor/ground-truth
 
 COPY --chown=processor:processor requirements.txt /opt/processor/
 RUN python -m pip install --user -rrequirements.txt
 
-COPY --chown=processor:processor evaluation.py /opt/processor/
+COPY --chown=processor:processor process.py /opt/processor/
 
 ENTRYPOINT python -m process $0 $@
 
@@ -31,7 +37,7 @@ ENTRYPOINT python -m process $0 $@
 LABEL com.radboudumc.diag.processor.name={{ cookiecutter.processor_name }}
 
 # These labels are required and describe what kind of hardware your processor requires to run.
-LABEL com.radboudumc.diag.processor.hardware.cpu.count={{ cookiecutter.requirements.cpus }}
+LABEL com.radboudumc.diag.processor.hardware.cpu.count={{ cookiecutter.requirements.cpu_count }}
 LABEL com.radboudumc.diag.processor.hardware.cpu.capabilities={{ cookiecutter.requirements.cpu_capabilities }}
 LABEL com.radboudumc.diag.processor.hardware.memory={{ cookiecutter.requirements.memory }}
 LABEL com.radboudumc.diag.processor.hardware.gpu.count={{ cookiecutter.requirements.gpu_count }}
