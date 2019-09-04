@@ -70,9 +70,7 @@ class BaseProcess(ABC):
 
     def load(self):
         for key, file_loader in self._file_loaders:
-            self._cases[key] = self._load_cases(
-                folder=self._input_path
-            )
+            self._cases[key] = self._load_cases(folder=self._input_path)
 
     def _load_cases(self, *, folder: Path) -> DataFrame:
         cases = None

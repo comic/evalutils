@@ -50,6 +50,7 @@ def validate_non_empty_stripped_string_fn(option):
             click.echo(f"{option.upper()} should be non empty. Aborting...")
             exit(1)
         return arg
+
     return validate_non_empty_stripped_string
 
 
@@ -59,11 +60,17 @@ def req_cpu_capabilities_prompt(ctx, param, req_cpu_capabilities):
             capability = "something"
             req_cpu_capabilities = ()
             while capability != "":
-                capability = click.prompt(f"Required node capability? (e.g.: avx) *{req_cpu_capabilities}*",
-                                          type=click.STRING, default="")
+                capability = click.prompt(
+                    f"Required node capability? (e.g.: avx) *{req_cpu_capabilities}*",
+                    type=click.STRING,
+                    default="",
+                )
                 if capability != "":
                     req_cpu_capabilities += (capability,)
-            if click.confirm(f"Are *{req_cpu_capabilities}* all required node capabilities?", True):
+            if click.confirm(
+                f"Are *{req_cpu_capabilities}* all required node capabilities?",
+                True,
+            ):
                 break
     return req_cpu_capabilities
 
@@ -73,10 +80,17 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     gpu_compute_capability = ctx.params.get("req_gpu_compute_capability")
     if req_gpu_count > 0:
         if not gpu_compute_capability:
-            gpu_compute_capability = click.prompt("Required gpu compute capability (version string e.g.: 1.5.0)",
-                                                  default="", type=click.STRING)
+            gpu_compute_capability = click.prompt(
+                "Required gpu compute capability (version string e.g.: 1.5.0)",
+                default="",
+                type=click.STRING,
+            )
         if not gpu_memory:
-            gpu_memory = click.prompt("Required gpu memory? (e.g.: 4G)", default="", type=click.STRING)
+            gpu_memory = click.prompt(
+                "Required gpu memory? (e.g.: 4G)",
+                default="",
+                type=click.STRING,
+            )
     else:
         gpu_memory = ""
         gpu_compute_capability = ""
@@ -86,12 +100,11 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 
 
 @main.command(short_help="Initialise a processor project.")
-@click.argument("processor_name", callback=validate_non_empty_stripped_string_fn("processor_name"))
-@click.option(
-    "--diag-ticket",
-    type=click.STRING,
-    default="",
+@click.argument(
+    "processor_name",
+    callback=validate_non_empty_stripped_string_fn("processor_name"),
 )
+@click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
     "--req-cpus",
     type=click.IntRange(1, 64, True),
@@ -116,7 +129,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     type=click.IntRange(0, 8, True),
     default=0,
     prompt="Required number of gpus?",
-    callback=req_gpu_prompt
+    callback=req_gpu_prompt,
 )
 @click.option(
     "--req-gpu-compute-capability",
@@ -124,17 +137,30 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     is_eager=True,
     default="",
 )
-@click.option(
-    "--req-gpu-memory",
-    type=click.STRING,
-    is_eager=True,
-    default="",
-)
+@click.option("--req-gpu-memory", type=click.STRING, is_eager=True, default="")
 @click.option("--dev", is_flag=True)
-def init_processor(processor_name, diag_ticket, req_cpus, req_cpu_capabilities,
-                   req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev):
-    print(processor_name, diag_ticket, req_cpus, req_cpu_capabilities,
-          req_memory, req_gpu_count, req_gpu_compute_capability, req_gpu_memory, dev)
+def init_processor(
+    processor_name,
+    diag_ticket,
+    req_cpus,
+    req_cpu_capabilities,
+    req_memory,
+    req_gpu_count,
+    req_gpu_compute_capability,
+    req_gpu_memory,
+    dev,
+):
+    print(
+        processor_name,
+        diag_ticket,
+        req_cpus,
+        req_cpu_capabilities,
+        req_memory,
+        req_gpu_count,
+        req_gpu_compute_capability,
+        req_gpu_memory,
+        dev,
+    )
     template_dir = Path(__file__).parent / "templates" / "processor"
     try:
         cookiecutter(
@@ -152,8 +178,8 @@ def init_processor(processor_name, diag_ticket, req_cpus, req_cpu_capabilities,
                     "memory": req_memory,
                     "gpu_count": req_gpu_count,
                     "gpu_compute_capability": req_gpu_compute_capability,
-                    "gpu_memory": req_gpu_memory
-                }
+                    "gpu_memory": req_gpu_memory,
+                },
             },
         )
         click.echo(f"Created project {processor_name}")
