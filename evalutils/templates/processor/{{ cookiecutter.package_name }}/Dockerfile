@@ -18,8 +18,9 @@ ENV PATH="/home/processor/.local/bin:${PATH}"
 RUN python -m pip install --user -U pip
 
 {% if cookiecutter.dev_build|int -%}
-COPY --chown=processor:processor evalutils /opt/processor/evalutils
-RUN python -m pip install --user /opt/processor/evalutils
+# Installs development distributions of evalutils
+COPY --chown=processor:processor devdist /opt/processor/devdist
+RUN python -m pip install --user /opt/processor/devdist
 {%- endif %}
 
 COPY --chown=processor:processor ground-truth /opt/processor/ground-truth

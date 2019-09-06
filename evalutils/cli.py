@@ -1,38 +1,13 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
-import os
-import shutil
 import click
 from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
 
 from . import __version__
 
-
 EVALUATOR_CHOICES = ["Classification", "Segmentation", "Detection"]
-
-
-def bootstrap_evalutils(project_name):
-    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    dest_dir = Path(".").absolute() / project_name.lower() / "evalutils"
-    print(src_dir)
-    print(dest_dir)
-    shutil.copytree(
-        src_dir,
-        dest_dir,
-        ignore=shutil.ignore_patterns(
-            project_name.lower(),
-            ".git",
-            "build",
-            "dist",
-            "docs",
-            ".pytest_cache",
-            ".eggs",
-            "templates",
-            "__pycache__",
-        ),
-    )
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -63,8 +38,6 @@ def init_evaluator(challenge_name, kind, dev):
                 "dev_build": 1 if dev else 0,
             },
         )
-        if dev:
-            bootstrap_evalutils(challenge_name)
         click.echo(f"Created project {challenge_name}")
     except FailedHookException:
         exit(1)
@@ -207,8 +180,6 @@ def init_processor(
                 },
             },
         )
-        if dev:
-            bootstrap_evalutils(processor_name)
         click.echo(f"Created project {processor_name}")
     except FailedHookException:
         exit(1)
