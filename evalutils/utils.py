@@ -8,9 +8,10 @@ EOL_MAC = b"\r"
 
 
 def bootstrap_development_distribution(project_name: str, dest_dir: Path):
-    """Bootstraps a stripped down version of the active library into a target directory
+    """Bootstraps a stripped down version of the active library
 
-    This function avoids a recursive copy of itself and ignores several unnecessary files and directories
+    This function avoids a recursive copy of itself and ignores
+    several unnecessary files and directories
     """
     src_dir = Path(__file__).parent.parent.absolute()
     print(f"Bootstrap: {src_dir} -> {dest_dir}")

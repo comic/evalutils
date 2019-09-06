@@ -9,7 +9,7 @@ from evalutils.utils import (
 
 
 PROCESSOR_NAME = "{{ cookiecutter.processor_name }}"
-IS_DEV_BUILD = {{cookiecutter.dev_build}} == 1
+IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())
 
