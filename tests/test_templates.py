@@ -158,13 +158,13 @@ def test_processor_cli(
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
     out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
-    print(out)
 
     # Grab the results json
-    # out = out.decode().splitlines()
-    # start = [i for i, ln in enumerate(out) if ln == "{"]
-    # end = [i for i, ln in enumerate(out) if ln == "}"]
-    # result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
+    out = out.decode().splitlines()
+    start = [i for i, ln in enumerate(out) if ln == "{"]
+    end = [i for i, ln in enumerate(out) if ln == "}"]
+    result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
+    print(result)
 
     # check_dict(result, expected)
     #

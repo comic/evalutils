@@ -5,11 +5,23 @@ from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
 from typing import Tuple, Dict, Set, Callable, List, Union
+
+try:
+    from typing import OrderedDict
+except ImportError:
+    from typing import MutableMapping
+
+    OrderedDict = MutableMapping
 from warnings import warn
 
 from pandas import DataFrame, merge, Series, concat
 
-from .exceptions import FileLoaderError, ValidationError, ConfigurationError
+from .exceptions import (
+    FileLoaderError,
+    ValidationError,
+    ConfigurationError,
+    FileLoaderIncludePatternError,
+)
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
 from .scorers import score_detection
 from .validators import DataFrameValidator
@@ -21,7 +33,7 @@ class BaseProcess(ABC):
     def __init__(
         self,
         *,
-        file_loaders: Tuple[Tuple[str, FileLoader], ...],
+        file_loaders: OrderedDict[str, FileLoader],
         input_path: Path = Path("/input/"),
         output_path: Path = Path("/output/images/"),
         file_sorter_key: Callable = first_int_in_filename_key,
@@ -69,7 +81,7 @@ class BaseProcess(ABC):
         super().__init__()
 
     def load(self):
-        for key, file_loader in self._file_loaders:
+        for key, file_loader in self._file_loaders.items():
             self._cases[key] = self._load_cases(
                 folder=self._input_path, file_loader=file_loader
             )
@@ -84,6 +96,8 @@ class BaseProcess(ABC):
                 new_cases = file_loader.load(fname=f)
             except FileLoaderError:
                 logger.warning(f"Could not load {f.name} using {file_loader}.")
+            except FileLoaderIncludePatternError as err:
+                logger.warning(f"Skip loading {f.name} because: {err}.")
             else:
                 if cases is None:
                     cases = new_cases
@@ -99,9 +113,9 @@ class BaseProcess(ABC):
 
     def validate(self):
         """ Validates each dataframe for each fileloader separately """
-        file_loaders_keys = [e[0] for e in self._file_loaders]
+        file_loaders_keys = [k for k in self._file_loaders.keys()]
         for key in self._validators.keys():
-            if not key in file_loaders_keys:
+            if key not in file_loaders_keys:
                 raise ValueError(
                     f"There is no file_loader associated with: {key}.\n"
                     f"Valid file loaders are: {file_loaders_keys}"
@@ -122,9 +136,9 @@ class BaseProcess(ABC):
 
     def process_cases(self, file_loader_key: str = None):
         if file_loader_key is None:
-            file_loader_key = self._file_loaders[0][0]
+            file_loader_key = [k for k in self._file_loaders.keys()][0]
         self._case_results = DataFrame()
-        for idx, case in enumerate(self._cases[file_loader_key]):
+        for idx, case in self._cases[file_loader_key].iterrows():
             self._case_results = self._case_results.append(
                 self.process_case(idx=idx, case=case), ignore_index=True
             )
@@ -135,7 +149,7 @@ class BaseProcess(ABC):
 
     def save(self):
         with open(self._output_file, "w") as f:
-            f.write(json.dumps(self._case_results))
+            json.dump(self._case_results.to_dict(), f)
 
 
 class BaseEvaluation(ABC):

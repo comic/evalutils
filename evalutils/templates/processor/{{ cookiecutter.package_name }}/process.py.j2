@@ -1,4 +1,7 @@
 import SimpleITK
+import re
+from collections import OrderedDict
+from pandas import DataFrame
 
 from evalutils import BaseProcess
 from evalutils.io import SimpleITKLoader, CSVLoader
@@ -6,53 +9,51 @@ from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
     ExpectedColumnNamesValidator,
-    NumberOfCasesValidator,
 )
 
 
 class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
     def __init__(self):
         super().__init__(
-            file_loaders=(
-                ("lung", SimpleITKLoader()),
-                ("nodules", CSVLoader()),
+            file_loaders=OrderedDict(
+                lung = SimpleITKLoader(include_pattern=re.compile("^.*\.mhd$")),
+                nodules = CSVLoader(include_pattern=re.compile("^.*\.csv$")),
             ),
-            validators={
-                "lung": (UniqueImagesValidator(), UniquePathIndicesValidator()),
-                "nodules": (
+            validators=dict(
+                lung = (UniqueImagesValidator(), UniquePathIndicesValidator()),
+                nodules = (
                     ExpectedColumnNamesValidator(
-                        expected=("seriesuid", "coordX", "coordY", "coordZ")
+                        expected=("seriesuid", "coordX", "coordY", "coordZ", "class")
                     ),
-                    NumberOfCasesValidator(num_cases=1),
                 ),
-            },
+            ),
         )
+        self._scored_nodules = DataFrame()
 
     def process_case(self, *, idx, case):
         lung_path = case["path"]
 
-        are_nodules_for_case = self._nodules["seriesuid"] == lung_path.name
-        nodules = self._cases["nodules"][0][are_nodules_for_case]
+        all_nodules = self._cases["nodules"]
+        are_nodules_for_case = all_nodules["seriesuid"] == lung_path.name
+        nodules = all_nodules[are_nodules_for_case]
 
         # Load the images and annotations for this case
         lung = self._file_loaders["lung"].load_image(lung_path)
 
         # Check that they're the expected images and annotations
         assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
-
         lung = SimpleITK.GetArrayFromImage(lung)
 
-        scored_nodules = predict(lung, nodules)
+        scored_nodules = self.predict(lung, nodules)
 
-        self._scored_nodules = self._scored_nodules + scored_nodules
+        self._scored_nodules.append(scored_nodules)
 
         return {
-            "scored_nodules": scored_nodules,
+            "scored_nodules": scored_nodules.to_dict(),
             "lung_fname": lung_path.name,
-            "nodules_fname": self._nodules_path.name,
         }
 
-    def predict(lung_image, nodules_locations):
+    def predict(self, lung_image, nodules_locations):
         scores = []
         for nodule in nodules_locations:
             scores.append(0.5)

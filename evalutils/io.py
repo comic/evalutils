@@ -3,14 +3,13 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Union, Dict, List
-
+from typing import Union, Dict, List, Pattern
 from SimpleITK import ReadImage, GetArrayFromImage
 from imageio import imread
 from pandas import read_csv
 from pandas.errors import ParserError, EmptyDataError
 
-from .exceptions import FileLoaderError
+from .exceptions import FileLoaderError, FileLoaderIncludePatternError
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +48,67 @@ def first_int_in_filename_key(fname: Path) -> str:
 
 
 class FileLoader(ABC):
-    @abstractmethod
+    def __init__(
+        self, include_pattern: Pattern = None, exclude_pattern: Pattern = None
+    ):
+        """
+        Base FileLoader object
+
+        Parameters
+        ----------
+        include_pattern (optional)
+            Regular expression for files to include
+
+        exclude_pattern (optional)
+            Regular expression for files to exclude
+
+        """
+        self._include_pattern = include_pattern
+        self._exclude_pattern = exclude_pattern
+
     def load(self, *, fname: Path) -> List[Dict]:
+        """
+        Tries to load the file given by the path fname.
+
+        Notes
+        -----
+        For this to work with the validators you must:
+
+            If you load an image it must save the hash in the `hash` column
+
+            If you reference a Path it must be saved in the `path` column
+
+
+        Parameters
+        ----------
+        fname
+            The file that the loader will try to load
+
+        Returns
+        -------
+            A list containing all of the cases in this file
+
+        Raises
+        ------
+        FileLoaderError
+            If a file cannot be loaded as the specified type
+
+        """
+        if self._include_pattern:
+            if not re.match(self._include_pattern, str(fname)):
+                raise FileLoaderIncludePatternError(
+                    f"File does not match include pattern (reg.exp.): {self._include_pattern}"
+                )
+        if self._exclude_pattern:
+            if re.match(self._exclude_pattern, str(fname)):
+                raise FileLoaderIncludePatternError(
+                    f"File matches exclude pattern (reg.exp.): {self._exclude_pattern}"
+                )
+
+        return self._load(fname=fname)
+
+    @abstractmethod
+    def _load(self, *, fname: Path) -> List[Dict]:
         """
         Tries to load the file given by the path fname.
 
@@ -87,7 +145,8 @@ class ImageLoader(FileLoader):
     all be loaded into memory, so score_case needs to load them again later
     via load_image.
     """
-    def load(self, *, fname: Path):
+
+    def _load(self, *, fname: Path):
         try:
             img = self.load_image(fname)
         except (ValueError, RuntimeError):
@@ -151,7 +210,7 @@ class SimpleITKLoader(ImageLoader):
 
 
 class CSVLoader(FileLoader):
-    def load(self, *, fname: Path):
+    def _load(self, *, fname: Path):
         try:
             return read_csv(fname, skipinitialspace=True).to_dict(
                 orient="records"

@@ -23,8 +23,6 @@ COPY --chown=processor:processor devdist /opt/processor/devdist
 RUN python -m pip install --user /opt/processor/devdist
 {%- endif %}
 
-COPY --chown=processor:processor ground-truth /opt/processor/ground-truth
-
 COPY --chown=processor:processor requirements.txt /opt/processor/
 RUN python -m pip install --user -rrequirements.txt
 

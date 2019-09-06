@@ -14,6 +14,6 @@ docker run --rm \
 
 docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output:/output/ \
-        {{ cookiecutter.docker_base_container }} cat /output/metrics.json | python -m json.tool
+        {{ cookiecutter.docker_base_container }} cat /output/results.json | python -m json.tool
 
 docker volume rm {{ cookiecutter.package_name|lower }}-output

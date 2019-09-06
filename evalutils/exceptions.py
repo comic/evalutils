@@ -9,6 +9,10 @@ class FileLoaderError(EvalUtilsException):
     pass
 
 
+class FileLoaderIncludePatternError(EvalUtilsException):
+    pass
+
+
 class ValidationError(EvalUtilsException):
     pass
 
