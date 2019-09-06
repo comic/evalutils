@@ -5,20 +5,19 @@ from evalutils.scorers import find_hits_for_targets, score_detection
 
 
 def load_points_csv(filepath):
-    with open(Path(__file__).parent / filepath, 'r') as f:
+    with open(Path(__file__).parent / filepath, "r") as f:
         positions = DictReader(f, skipinitialspace=True)
-        points = [(float(p['x']), float(p['y'])) for p in positions]
+        points = [(float(p["x"]), float(p["y"])) for p in positions]
 
     return points
 
 
 def test_point_merging():
-    predictions = load_points_csv('resources/points/predictions.csv')
-    ground_truth = load_points_csv('resources/points/reference.csv')
+    predictions = load_points_csv("resources/points/predictions.csv")
+    ground_truth = load_points_csv("resources/points/reference.csv")
 
     perfect_detection = score_detection(
-        ground_truth=ground_truth,
-        predictions=ground_truth,
+        ground_truth=ground_truth, predictions=ground_truth
     )
 
     assert perfect_detection.true_positives == len(ground_truth)
@@ -26,8 +25,7 @@ def test_point_merging():
     assert perfect_detection.false_negatives == 0
 
     detection_score = score_detection(
-        ground_truth=ground_truth,
-        predictions=predictions
+        ground_truth=ground_truth, predictions=predictions
     )
 
     assert detection_score.true_positives == 13
@@ -36,10 +34,10 @@ def test_point_merging():
 
 
 targets = [
-    (10.0, 10.0), # 1, TP+=1, FP-=1
-    (5.0, 5.0), # -, FN+=1
-    (2.0, 2.0), # 3, 2, TP+=1, FP-=1
-    (11.2, 11.2), # 1, already taken by 0
+    (10.0, 10.0),  # 1, TP+=1, FP-=1
+    (5.0, 5.0),  # -, FN+=1
+    (2.0, 2.0),  # 3, 2, TP+=1, FP-=1
+    (11.2, 11.2),  # 1, already taken by 0
 ]
 
 preds = [
@@ -52,8 +50,9 @@ preds = [
 
 
 def test_find_hits():
-    neighbours = find_hits_for_targets(targets=targets, predictions=preds,
-                                       radius=1.0)
+    neighbours = find_hits_for_targets(
+        targets=targets, predictions=preds, radius=1.0
+    )
 
     assert neighbours[0] == [1]
     assert list(neighbours[1]) == []
@@ -72,8 +71,7 @@ def test_score_detection():
 
 def test_multi_hit():
     detection_score = score_detection(
-        ground_truth=[(0, 0), (0, 0.5), (0, -0.5)],
-        predictions=[(0.0, 0.0)],
+        ground_truth=[(0, 0), (0, 0.5), (0, -0.5)], predictions=[(0.0, 0.0)]
     )
 
     assert detection_score.false_positives == 0

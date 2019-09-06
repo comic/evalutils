@@ -6,6 +6,7 @@ from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
     ExpectedColumnNamesValidator,
+    NumberOfCasesValidator,
 )
 
 
@@ -16,13 +17,15 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
                 ("lung", SimpleITKLoader()),
                 ("nodules", CSVLoader()),
             ),
-            validators=(
-                UniquePathIndicesValidator(),
-                UniqueImagesValidator(),
-                ExpectedColumnNamesValidator(
-                    ("seriesuid", "coordX", "coordY", "coordZ")
+            validators={
+                "lung": (UniqueImagesValidator(), UniquePathIndicesValidator()),
+                "nodules": (
+                    ExpectedColumnNamesValidator(
+                        expected=("seriesuid", "coordX", "coordY", "coordZ")
+                    ),
+                    NumberOfCasesValidator(num_cases=1),
                 ),
-            ),
+            },
         )
 
     def process_case(self, *, idx, case):
@@ -58,4 +61,4 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
 
 
 if __name__ == "__main__":
-    {{ cookiecutter.package_name|capitalize }}().evaluate()
+    {{ cookiecutter.package_name|capitalize }}().process()

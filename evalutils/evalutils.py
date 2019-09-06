@@ -25,7 +25,7 @@ class BaseProcess(ABC):
         input_path: Path = Path("/input/"),
         output_path: Path = Path("/output/images/"),
         file_sorter_key: Callable = first_int_in_filename_key,
-        validators: Tuple[DataFrameValidator, ...],
+        validators: Dict[str, Tuple[DataFrameValidator, ...]],
         output_file: PathLike = Path("/output/results.json"),
     ):
         """
@@ -46,8 +46,8 @@ class BaseProcess(ABC):
             A function that determines how files are sorted and matched
             together
         validators
-            A tuple containing all the validators that will be used on the
-            loaded data
+            A dictionary containing the validators that will be used on the
+            loaded data per file_loader key
         output_file
             The path to the location where the results will be written
         """
@@ -70,18 +70,20 @@ class BaseProcess(ABC):
 
     def load(self):
         for key, file_loader in self._file_loaders:
-            self._cases[key] = self._load_cases(folder=self._input_path)
+            self._cases[key] = self._load_cases(
+                folder=self._input_path, file_loader=file_loader
+            )
 
-    def _load_cases(self, *, folder: Path) -> DataFrame:
+    def _load_cases(
+        self, *, folder: Path, file_loader: FileLoader
+    ) -> DataFrame:
         cases = None
 
         for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
             try:
-                new_cases = self._file_loader.load(fname=f)
+                new_cases = file_loader.load(fname=f)
             except FileLoaderError:
-                logger.warning(
-                    f"Could not load {f.name} using {self._file_loader}."
-                )
+                logger.warning(f"Could not load {f.name} using {file_loader}.")
             else:
                 if cases is None:
                     cases = new_cases
@@ -90,19 +92,26 @@ class BaseProcess(ABC):
 
         if cases is None:
             raise FileLoaderError(
-                f"Could not load any files in {folder} with "
-                f"{self._file_loaders}."
+                f"Could not load any files in {folder} with " f"{file_loader}."
             )
 
         return DataFrame(cases)
 
     def validate(self):
-        """ Validates each dataframe separately """
-        for df in self._cases.values():
-            self._validate_data_frame(df=df)
+        """ Validates each dataframe for each fileloader separately """
+        file_loaders_keys = [e[0] for e in self._file_loaders]
+        for key in self._validators.keys():
+            if not key in file_loaders_keys:
+                raise ValueError(
+                    f"There is no file_loader associated with: {key}.\n"
+                    f"Valid file loaders are: {file_loaders_keys}"
+                )
+        for key, cases in self._cases.items():
+            if key in self._validators:
+                self._validate_data_frame(df=cases, file_loader_key=key)
 
-    def _validate_data_frame(self, *, df: DataFrame):
-        for validator in self._validators:
+    def _validate_data_frame(self, *, df: DataFrame, file_loader_key: str):
+        for validator in self._validators[file_loader_key]:
             validator.validate(df=df)
 
     def process(self):
@@ -111,11 +120,11 @@ class BaseProcess(ABC):
         self.process_cases()
         self.save()
 
-    def process_cases(self, key=None):
-        if key is None:
-            key = self._file_loaders[0][0]
+    def process_cases(self, file_loader_key: str = None):
+        if file_loader_key is None:
+            file_loader_key = self._file_loaders[0][0]
         self._case_results = DataFrame()
-        for idx, case in enumerate(self._cases[key]):
+        for idx, case in enumerate(self._cases[file_loader_key]):
             self._case_results = self._case_results.append(
                 self.process_case(idx=idx, case=case), ignore_index=True
             )
@@ -126,7 +135,7 @@ class BaseProcess(ABC):
 
     def save(self):
         with open(self._output_file, "w") as f:
-            f.write(json.dumps(self._results))
+            f.write(json.dumps(self._case_results))
 
 
 class BaseEvaluation(ABC):
