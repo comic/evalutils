@@ -110,7 +110,7 @@ def test_evaluator_cli(tmpdir, kind, expected):
         "req_gpu_compute_capability",
         "req_gpu_memory",
     ),
-    [("", 1, (), "1G", 0, "", "")],
+    [("", 1, (), "2G", 0, "", "")],
 )
 def test_processor_cli(
     tmpdir,
