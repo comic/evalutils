@@ -1,8 +1,11 @@
+from pathlib import Path
 import SimpleITK
-import re
-from collections import OrderedDict
+import shutil
 from pandas import DataFrame
-
+import re
+import os
+import json
+from collections import OrderedDict
 from evalutils import BaseProcess
 from evalutils.io import SimpleITKLoader, CSVLoader
 from evalutils.validators import (
@@ -12,21 +15,29 @@ from evalutils.validators import (
 )
 
 
-class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
-    def __init__(self):
+class BasicProcessTest(BaseProcess):
+    def __init__(self, outdir, input_path):
         super().__init__(
             file_loaders=OrderedDict(
                 lung=SimpleITKLoader(include_pattern=re.compile(r"^.*\.mhd$")),
                 nodules=CSVLoader(include_pattern=re.compile(r"^.*\.csv$")),
             ),
             validators=dict(
-                lung = (UniqueImagesValidator(), UniquePathIndicesValidator()),
-                nodules = (
+                lung=(UniqueImagesValidator(), UniquePathIndicesValidator()),
+                nodules=(
                     ExpectedColumnNamesValidator(
-                        expected=("seriesuid", "coordX", "coordY", "coordZ", "class")
+                        expected=(
+                            "seriesuid",
+                            "coordX",
+                            "coordY",
+                            "coordZ",
+                            "class",
+                        )
                     ),
                 ),
             ),
+            input_path=Path(input_path),
+            output_file=Path(outdir) / "results.json",
         )
         self._scored_nodules = DataFrame()
 
@@ -63,5 +74,26 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
         return nodules_locations
 
 
-if __name__ == "__main__":
-    {{ cookiecutter.package_name|capitalize }}().process()
+def test_detection_evaluation(tmpdir):
+    indir = tmpdir / "input"
+    outdir = tmpdir / "output"
+    resdir = Path(__file__).parent / "resources"
+
+    os.makedirs(outdir)
+    shutil.copytree(resdir / "itk", indir)
+    shutil.copy(
+        resdir / "nodules" / "candidates_001.csv", indir / "candidates_001.csv"
+    )
+
+    proc = BasicProcessTest(input_path=indir, outdir=outdir)
+
+    proc.process()
+
+    results_file = outdir / "results.json"
+
+    assert results_file.exists()
+
+    with open(results_file, "r") as f:
+        results = json.load(f)
+
+    print(results)

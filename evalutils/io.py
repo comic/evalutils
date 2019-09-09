@@ -49,7 +49,9 @@ def first_int_in_filename_key(fname: Path) -> str:
 
 class FileLoader(ABC):
     def __init__(
-        self, include_pattern: Pattern = None, exclude_pattern: Pattern = None
+        self,
+        include_pattern: Pattern[str] = None,
+        exclude_pattern: Pattern[str] = None,
     ):
         """
         Base FileLoader object
