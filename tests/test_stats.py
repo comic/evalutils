@@ -9,6 +9,12 @@ from scipy.ndimage.morphology import generate_binary_structure
 import evalutils.stats as stats
 
 
+@pytest.fixture(autouse=True)
+def reset_seeds():
+    np.random.seed(42)
+    yield
+
+
 @pytest.mark.parametrize(
     "Y_true", [np.random.randint(0, 2, (30, 20, 10)).astype(np.int)]
 )
@@ -49,9 +55,9 @@ def test_dice_from_cm():
         np.array([5, 2, 4], dtype=np.float)
         * 2
         / np.array(
-        [2 + 1 + 1 + 1 + 5 + 5, 2 + 1 + 1 + 2 + 2, 4 + 4 + 1 + 1 + 1],
-        dtype=np.float,
-    )
+            [2 + 1 + 1 + 1 + 5 + 5, 2 + 1 + 1 + 2 + 2, 4 + 4 + 1 + 1 + 1],
+            dtype=np.float,
+        )
     )
     accs = stats.dice_from_confusion_matrix(cm)
     assert np.allclose(expected, accs)
@@ -88,21 +94,31 @@ def test_avd(voxelspace):
         [
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
             np.random.randint(0, 2, (6, 6), dtype=np.bool),
-        ] for _ in range(20)
-    ] +
-    [
-        [np.array([[ True,  True, False,  True,  True, False],
-                   [False, False, True, False, False,  True],
-                   [False,  True, False,  True, False, True],
-                   [False,  True, False, False, False, True],
-                   [ True, False, False, False, False, True],
-                   [ True,  True, False, False,  True, True]]),
-         np.array([[False, False,  True, False,  True, False],
-                   [ True, False,  True, False, False,  True],
-                   [False, False, False,  True, False,  True],
-                   [ True,  True,  True,  True,  True, False],
-                   [False,  True,  True,  True, False, False],
-                   [ True, False,  True, False,  True, False]])
+        ]
+        for _ in range(20)
+    ]
+    + [
+        [
+            np.array(
+                [
+                    [True, True, False, True, True, False],
+                    [False, False, True, False, False, True],
+                    [False, True, False, True, False, True],
+                    [False, True, False, False, False, True],
+                    [True, False, False, False, False, True],
+                    [True, True, False, False, True, True],
+                ]
+            ),
+            np.array(
+                [
+                    [False, False, True, False, True, False],
+                    [True, False, True, False, False, True],
+                    [False, False, False, True, False, True],
+                    [True, True, True, True, True, False],
+                    [False, True, True, True, False, False],
+                    [True, False, True, False, True, False],
+                ]
+            ),
         ]
     ],
 )
@@ -399,6 +415,7 @@ def test_cm_functions(A, B, classes):
     assert not np.allclose(r1, r5)
     assert not np.allclose(r3, r5)
 
+
 # The following code is modified from the SciPy test suite
 #
 # Copyright (C) 2003-2005 Peter J. Verveer
@@ -581,4 +598,4 @@ def test_distance_transform_edt4(type_):
 def test_distance_transform_edt5():
     # Ticket #954 regression test
     out = stats.distance_transform_edt_float32(False)
-    assert_array_almost_equal(out, [0.])
+    assert_array_almost_equal(out, [0.0])
