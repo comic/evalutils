@@ -97,12 +97,14 @@ class FileLoader(ABC):
         if self._include_pattern:
             if not re.match(self._include_pattern, str(fname)):
                 raise FileLoaderIncludePatternError(
-                    f"File does not match include pattern (reg.exp.): {self._include_pattern}"
+                    f"File does not match include pattern "
+                    f"(reg.exp.): {self._include_pattern}"
                 )
         if self._exclude_pattern:
             if re.match(self._exclude_pattern, str(fname)):
                 raise FileLoaderIncludePatternError(
-                    f"File matches exclude pattern (reg.exp.): {self._exclude_pattern}"
+                    f"File matches exclude pattern "
+                    f"(reg.exp.): {self._exclude_pattern}"
                 )
 
         return self._load(fname=fname)
