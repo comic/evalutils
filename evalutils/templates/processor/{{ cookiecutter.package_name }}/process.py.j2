@@ -1,5 +1,4 @@
 import SimpleITK
-import re
 from collections import OrderedDict
 from pandas import DataFrame
 
@@ -16,8 +15,8 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
     def __init__(self):
         super().__init__(
             file_loaders=OrderedDict(
-                lung = SimpleITKLoader(include_pattern=re.compile("^.*\.mhd$")),
-                nodules = CSVLoader(include_pattern=re.compile("^.*\.csv$")),
+                lung = SimpleITKLoader(include_pattern="^.*\.mhd$"),
+                nodules = CSVLoader(include_pattern="^.*\.csv$"),
             ),
             validators=dict(
                 lung = (UniqueImagesValidator(), UniquePathIndicesValidator()),
