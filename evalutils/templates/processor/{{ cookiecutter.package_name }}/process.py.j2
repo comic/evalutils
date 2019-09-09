@@ -16,7 +16,7 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
     def __init__(self):
         super().__init__(
             file_loaders=OrderedDict(
-                lung=SimpleITKLoader(include_pattern=re.compile(r"^.*000\.mhd$")),
+                lung=SimpleITKLoader(include_pattern=re.compile(r"^.*\.mhd$")),
                 nodules=CSVLoader(include_pattern=re.compile(r"^.*\.csv$")),
             ),
             validators=dict(
