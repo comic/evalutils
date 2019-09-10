@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import re
 
-FORBIDDEN_NAMES = ["evalutils", "pandas", "Processor", ]
+FORBIDDEN_NAMES = ["evalutils", "pandas", "Processor"]
 
 MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
