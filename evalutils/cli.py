@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from pathlib import Path
 
 import click
@@ -53,6 +55,19 @@ def validate_non_empty_stripped_string_fn(option):
     return validate_non_empty_stripped_string
 
 
+def validate_size_format_fn(can_be_empty=False):
+    def validate_size_format(ctx, param, arg):
+        pattern = r"(^\d+[kgtpe]$)|(^$)" if can_be_empty else r"^\d+[kgtpe]$"
+        fmt = re.compile(pattern, flags=re.IGNORECASE)
+        while not re.match(fmt, arg.strip()):
+            arg = click.prompt(
+                f"Enter a valid size format ({fmt.pattern}):", default="1G"
+            )
+        return arg
+
+    return validate_size_format
+
+
 def req_cpu_capabilities_prompt(ctx, param, reqs):
     if not reqs:
         while True:
@@ -84,10 +99,14 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
                 type=click.STRING,
             )
         if not gpu_memory:
-            gpu_memory = click.prompt(
-                "Required gpu memory? (e.g.: 4G)",
-                default="",
-                type=click.STRING,
+            gpu_memory = validate_size_format_fn(can_be_empty=True)(
+                None,
+                None,
+                click.prompt(
+                    "Required gpu memory? (e.g.: 4G)",
+                    default="",
+                    type=click.STRING,
+                ),
             )
     else:
         gpu_memory = ""
@@ -121,6 +140,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     type=click.STRING,
     default="1G",
     prompt="Minimal required amount of cpu RAM?",
+    callback=validate_size_format_fn(can_be_empty=False),
 )
 @click.option(
     "--req-gpus",
@@ -135,7 +155,13 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     is_eager=True,
     default="",
 )
-@click.option("--req-gpu-memory", type=click.STRING, is_eager=True, default="")
+@click.option(
+    "--req-gpu-memory",
+    type=click.STRING,
+    is_eager=True,
+    default="",
+    callback=validate_size_format_fn(can_be_empty=True),
+)
 @click.option("--dev", is_flag=True)
 def init_processor(
     processor_name,
