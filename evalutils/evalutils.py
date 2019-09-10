@@ -108,7 +108,7 @@ class BaseProcess(ABC):
                         cases += new_cases
             else:
                 logger.info(
-                    f"Skipped loading {f.name} because it did not match {filter}."
+                    f"Skip loading {f.name} because it doesn't match {filter}."
                 )
 
         if cases is None:
