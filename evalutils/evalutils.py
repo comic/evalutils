@@ -4,24 +4,12 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Tuple, Dict, Set, Callable, List, Union
-
-try:
-    from typing import OrderedDict
-except ImportError:
-    from typing import MutableMapping
-
-    OrderedDict = MutableMapping
+from typing import Tuple, Dict, Set, Callable, List, Union, Pattern
 from warnings import warn
 
 from pandas import DataFrame, merge, Series, concat
 
-from .exceptions import (
-    FileLoaderError,
-    ValidationError,
-    ConfigurationError,
-    FileLoaderIncludePatternError,
-)
+from .exceptions import FileLoaderError, ValidationError, ConfigurationError
 from .io import first_int_in_filename_key, FileLoader, CSVLoader
 from .scorers import score_detection
 from .validators import DataFrameValidator
@@ -33,7 +21,9 @@ class BaseProcess(ABC):
     def __init__(
         self,
         *,
-        file_loaders: OrderedDict[str, FileLoader],
+        index_key: str,
+        file_loaders: Dict[str, FileLoader],
+        file_filters: Dict[str, Pattern[str]] = None,
         input_path: Path = Path("/input/"),
         output_path: Path = Path("/output/images/"),
         file_sorter_key: Callable = first_int_in_filename_key,
@@ -47,8 +37,12 @@ class BaseProcess(ABC):
 
         Parameters
         ----------
+        index_key
+            Fileloader key which must be used for the index
         file_loaders
             The loaders that will be used to get all files
+        file_filters
+            Regular expressions for filtering certain FileLoaders
         input_path
             The path in the container where the ground truth will be loaded
             from
@@ -63,10 +57,11 @@ class BaseProcess(ABC):
         output_file
             The path to the location where the results will be written
         """
-
+        self._index_key = index_key
         self._input_path = input_path
         self._output_path = output_path
         self._file_sorter_key = file_sorter_key
+        self._file_filters = file_filters
         self._file_loaders = file_loaders
         self._validators = validators
         self._output_file = output_file
@@ -82,27 +77,39 @@ class BaseProcess(ABC):
 
     def load(self):
         for key, file_loader in self._file_loaders.items():
+            filter = (
+                self._file_filters[key] if key in self._file_filters else None
+            )
             self._cases[key] = self._load_cases(
-                folder=self._input_path, file_loader=file_loader
+                folder=self._input_path, file_loader=file_loader, filter=filter
             )
 
     def _load_cases(
-        self, *, folder: Path, file_loader: FileLoader
+        self,
+        *,
+        folder: Path,
+        file_loader: FileLoader,
+        filter: Pattern[str] = None,
     ) -> DataFrame:
         cases = None
 
         for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
-            try:
-                new_cases = file_loader.load(fname=f)
-            except FileLoaderError:
-                logger.warning(f"Could not load {f.name} using {file_loader}.")
-            except FileLoaderIncludePatternError as err:
-                logger.warning(f"Skip loading {f.name} because: {err}.")
-            else:
-                if cases is None:
-                    cases = new_cases
+            if filter is None or filter.match(str(f)):
+                try:
+                    new_cases = file_loader.load(fname=f)
+                except FileLoaderError:
+                    logger.warning(
+                        f"Could not load {f.name} using {file_loader}."
+                    )
                 else:
-                    cases += new_cases
+                    if cases is None:
+                        cases = new_cases
+                    else:
+                        cases += new_cases
+            else:
+                logger.info(
+                    f"Skipped loading {f.name} because it did not match {filter}."
+                )
 
         if cases is None:
             raise FileLoaderError(
@@ -136,7 +143,7 @@ class BaseProcess(ABC):
 
     def process_cases(self, file_loader_key: str = None):
         if file_loader_key is None:
-            file_loader_key = [k for k in self._file_loaders.keys()][0]
+            file_loader_key = self._index_key
         self._case_results = DataFrame()
         for idx, case in self._cases[file_loader_key].iterrows():
             self._case_results = self._case_results.append(

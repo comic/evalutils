@@ -1,6 +1,5 @@
 import SimpleITK
 import re
-from collections import OrderedDict
 from pandas import DataFrame
 
 from evalutils import BaseProcess
@@ -15,9 +14,10 @@ from evalutils.validators import (
 class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
     def __init__(self):
         super().__init__(
-            file_loaders=OrderedDict(
-                lung=SimpleITKLoader(include_pattern=re.compile(r"^.*\.mhd$")),
-                nodules=CSVLoader(include_pattern=re.compile(r"^.*\.csv$")),
+            index_key="lung",
+            file_loaders=dict(lung=SimpleITKLoader(), nodules=CSVLoader()),
+            file_filters=dict(
+                lung=re.compile(r"^.*\.mhd$"), nodules=re.compile(r"^.*\.csv$")
             ),
             validators=dict(
                 lung = (UniqueImagesValidator(), UniquePathIndicesValidator()),

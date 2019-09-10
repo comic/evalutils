@@ -5,7 +5,6 @@ from pandas import DataFrame
 import re
 import os
 import json
-from collections import OrderedDict
 from evalutils import BaseProcess
 from evalutils.io import SimpleITKLoader, CSVLoader
 from evalutils.validators import (
@@ -18,9 +17,10 @@ from evalutils.validators import (
 class BasicProcessTest(BaseProcess):
     def __init__(self, outdir, input_path):
         super().__init__(
-            file_loaders=OrderedDict(
-                lung=SimpleITKLoader(include_pattern=re.compile(r"^.*\.mhd$")),
-                nodules=CSVLoader(include_pattern=re.compile(r"^.*\.csv$")),
+            index_key="lung",
+            file_loaders=dict(lung=SimpleITKLoader(), nodules=CSVLoader()),
+            file_filters=dict(
+                lung=re.compile(r"^.*\.mhd$"), nodules=re.compile(r"^.*\.csv$")
             ),
             validators=dict(
                 lung=(UniqueImagesValidator(), UniquePathIndicesValidator()),
