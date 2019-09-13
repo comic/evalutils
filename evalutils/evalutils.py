@@ -48,9 +48,8 @@ class BaseProcess(ABC):
             from
         output_path
             The path in the container where the output images will be written
-        file_sorter_key
-            A function that determines how files are sorted and matched
-            together
+        file_sorter_keys
+            A function that determines how files in the input_path are sorted
         validators
             A dictionary containing the validators that will be used on the
             loaded data per file_loader key
