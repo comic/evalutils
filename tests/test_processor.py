@@ -82,7 +82,7 @@ def test_detection_evaluation(tmpdir):
     os.makedirs(outdir)
     shutil.copytree(resdir / "itk", indir)
     shutil.copy(
-        resdir / "nodules" / "candidates_001.csv", indir / "candidates_001.csv"
+        resdir / "nodules" / "candidates.csv", indir / "candidates.csv"
     )
 
     proc = BasicProcessTest(input_path=indir, outdir=outdir)

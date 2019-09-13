@@ -26,7 +26,7 @@ class BaseProcess(ABC):
         file_filters: Dict[str, Pattern[str]] = None,
         input_path: Path = Path("/input/"),
         output_path: Path = Path("/output/images/"),
-        file_sorter_key: Callable = first_int_in_filename_key,
+        file_sorter_key: Callable = None,
         validators: Dict[str, Tuple[DataFrameValidator, ...]],
         output_file: PathLike = Path("/output/results.json"),
     ):
