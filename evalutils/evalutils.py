@@ -70,7 +70,7 @@ class BaseProcess(ABC):
 
         self._cases = {}
 
-        self._case_results = DataFrame()
+        self._case_results = []
 
         super().__init__()
 
@@ -143,11 +143,9 @@ class BaseProcess(ABC):
     def process_cases(self, file_loader_key: str = None):
         if file_loader_key is None:
             file_loader_key = self._index_key
-        self._case_results = DataFrame()
+        self._case_results = []
         for idx, case in self._cases[file_loader_key].iterrows():
-            self._case_results = self._case_results.append(
-                self.process_case(idx=idx, case=case), ignore_index=True
-            )
+            self._case_results.append(self.process_case(idx=idx, case=case))
 
     # noinspection PyUnusedLocal
     def process_case(self, *, idx: int, case: DataFrame) -> Dict:
@@ -155,7 +153,7 @@ class BaseProcess(ABC):
 
     def save(self):
         with open(self._output_file, "w") as f:
-            json.dump(self._case_results.to_dict(), f)
+            json.dump(self._case_results, f)
 
 
 class BaseEvaluation(ABC):

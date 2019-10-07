@@ -39,6 +39,7 @@ class BasicProcessTest(BaseProcess):
             input_path=Path(input_path),
             output_file=Path(outdir) / "results.json",
         )
+        self._nodule_files = self._input_path.glob("*.csv")
         self._scored_nodules = DataFrame()
 
     def process_case(self, *, idx, case):
@@ -55,21 +56,39 @@ class BasicProcessTest(BaseProcess):
 
         # Check that they're the expected images and annotations
         assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
-        lung = SimpleITK.GetArrayFromImage(lung)
 
         scored_nodules = self.predict(lung, nodules)
 
         self._scored_nodules.append(scored_nodules)
 
         return {
-            "scored_nodules": scored_nodules.to_dict(),
-            "lung_fname": lung_path.name,
+            "outputs": [
+                dict(
+                    data=scored_nodules[scored_nodules.keys()[1:]].to_dict(),
+                    type="nodules",
+                )
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=lung_path.name),
+                *[
+                    dict(type="csv_file", filename=nodule_file.name)
+                    for nodule_file in self._nodule_files
+                ],
+            ],
+            "error_messages": [],
         }
 
-    def predict(self, lung_image, nodules_locations):
+    def predict(
+        self, lung_image: SimpleITK.Image, nodules_locations: DataFrame
+    ) -> DataFrame:
         scores = []
-        for nodule in nodules_locations.iterrows():
-            scores.append(0.5)
+        lung_data = SimpleITK.GetArrayFromImage(lung_image)
+        for idx, nodule in nodules_locations.iterrows():
+            coord = lung_image.TransformPhysicalPointToIndex(
+                (nodule["coordX"], nodule["coordY"], nodule["coordZ"])
+            )
+            val = lung_data[coord[2], coord[1], coord[0]]
+            scores.append(val)
         nodules_locations.loc[:, "class"] = scores
         return nodules_locations
 
@@ -96,4 +115,9 @@ def test_detection_evaluation(tmpdir):
     with open(results_file, "r") as f:
         results = json.load(f)
 
-    print(results)
+    expected_results_file = resdir / "json" / "results.json"
+
+    with open(expected_results_file, "r") as f:
+        expected_result = json.load(f)
+
+    assert results == expected_result
