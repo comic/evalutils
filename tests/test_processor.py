@@ -96,13 +96,18 @@ class BasicProcessTest(BaseProcess):
 def test_detection_evaluation(tmpdir):
     indir = tmpdir / "input"
     outdir = tmpdir / "output"
-    resdir = Path(__file__).parent / "resources"
+
+    resdir = (
+        Path(__file__).parent.parent
+        / "evalutils"
+        / "templates"
+        / "processor"
+        / "{{ cookiecutter.package_name }}"
+        / "test"
+    )
 
     os.makedirs(outdir)
-    shutil.copytree(resdir / "itk", indir)
-    shutil.copy(
-        resdir / "nodules" / "candidates.csv", indir / "candidates.csv"
-    )
+    shutil.copytree(resdir, indir)
 
     proc = BasicProcessTest(input_path=indir, outdir=outdir)
 
@@ -115,7 +120,9 @@ def test_detection_evaluation(tmpdir):
     with open(results_file, "r") as f:
         results = json.load(f)
 
-    expected_results_file = resdir / "json" / "results.json"
+    expected_results_file = (
+        Path(__file__).parent / "resources" / "json" / "results.json"
+    )
 
     with open(expected_results_file, "r") as f:
         expected_result = json.load(f)

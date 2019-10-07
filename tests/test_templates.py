@@ -162,17 +162,23 @@ def test_processor_cli(
 
     # Grab the results json
     out = out.decode().splitlines()
-    start = [i for i, ln in enumerate(out) if ln == "{"]
-    end = [i for i, ln in enumerate(out) if ln == "}"]
+    start = [i for i, ln in enumerate(out) if ln == "["]
+    end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
     print(result)
 
-    # check_dict(result, expected)
-    #
-    # files = os.listdir(project_dir)
-    # assert f"{project_name}.tar.gz" not in files
-    #
-    # subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
-    #
-    # files = os.listdir(project_dir)
-    # assert f"{project_name}.tar.gz" in files
+    with open(
+        Path(__file__).parent / "resources" / "json" / "results.json"
+    ) as f:
+        expected = json.load(f)
+
+    assert len(result) == 2
+    assert result == expected
+
+    files = os.listdir(project_dir)
+    assert f"{project_name}.tar.gz" not in files
+
+    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+
+    files = os.listdir(project_dir)
+    assert f"{project_name}.tar.gz" in files
