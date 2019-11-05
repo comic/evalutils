@@ -25,7 +25,7 @@ requirements = [
     "numpy",
 ]
 
-setup_requirements = ["pytest-runner"]
+setup_requirements = []
 
 test_requirements = ["pytest"]
 
