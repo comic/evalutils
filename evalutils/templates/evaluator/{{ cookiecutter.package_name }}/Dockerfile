@@ -16,6 +16,12 @@ ENV PATH="/home/evaluator/.local/bin:${PATH}"
 
 RUN python -m pip install --user -U pip
 
+{% if cookiecutter.dev_build|int -%}
+# Installs development distributions of evalutils
+COPY --chown=evaluator:evaluator devdist /opt/evaluation/devdist
+RUN python -m pip install --user /opt/evaluation/devdist
+{%- endif %}
+
 COPY --chown=evaluator:evaluator ground-truth /opt/evaluation/ground-truth
 
 COPY --chown=evaluator:evaluator requirements.txt /opt/evaluation/
