@@ -28,7 +28,7 @@ Once you have installed evalutils you can see the options with:
 
 .. code-block:: console
 
-    $ evalutils --help
+    $ evalutils init --help
 
 Say that you want to create an evaluation for ``myproject``, you can initialize
 it with:
@@ -77,12 +77,18 @@ It is a good idea to commit your project to git right now. You can do this with:
 
     $ cd myproject
     $ git init
+    $ git lfs install   (see the warning below)
     $ git add --all
     $ git commit -m "Initial Commit"
 
 .. warning:: The test set ground truth will be stored in this repo,
     so remember to use a private repo if you're going to push this to github or gitlab,
     and use `git lfs`_ if your ground truth data are large.
+
+    By default all files in the ground truth and test directories are configured as
+    git-lfs files in their respective .gitattributes files, but they will only be registered
+    once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
+    command has been issued.
 
 
 The structure of the project will be:
