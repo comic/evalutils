@@ -85,10 +85,11 @@ It is a good idea to commit your project to git right now. You can do this with:
     so remember to use a private repo if you're going to push this to github or gitlab,
     and use `git lfs`_ if your ground truth data are large.
 
-    By default all files in the ground truth and test directories are configured as
-    git-lfs files in their respective .gitattributes files, but they will only be registered
+    The .gitattributes file at the root of the repository specifies all the files which should be
+    tracked by git-lfs. By default all files in the ground truth and test directories
+    are configured to be tracked by git-lfs, but they will only be registered
     once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
-    command has been issued.
+    command has been issued inside the generated repository.
 
 
 The structure of the project will be:
@@ -101,6 +102,7 @@ The structure of the project will be:
         ├── Dockerfile          # Defines how to build your evaluation container
         ├── evaluation.py       # Contains your evaluation code - this is where you will extend the Evaluation class
         ├── export.sh           # Exports your container to a .tar file for use on grand-challenge.org
+        ├── .gitattributes      # Define which files git should put under git-lfs
         ├── .gitignore          # Define which files git should ignore
         ├── ground-truth        # A folder that contains your ground truth annotations
         │   └── reference.csv   # In this example the ground truth is a csv file
