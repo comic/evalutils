@@ -6,10 +6,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from numpy import ndarray
 from scipy.ndimage.filters import convolve
-from scipy.ndimage.morphology import (
-    binary_erosion,
-    generate_binary_structure,
-)
+from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
 def distance_transform_edt_float32(
@@ -106,7 +103,7 @@ def distance_transform_edt_float32(
     # calculate the feature transform
     input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
 
-    garbage_collect = gc.collect if input.nbytes > 100E6 else lambda: None
+    garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
     garbage_collect()
 
     input = input.astype(np.int32)
