@@ -58,7 +58,8 @@ def test_evaluator_cli(tmpdir, kind, expected):
     out = subprocess.check_output(
         [
             "evalutils",
-            "init-evaluator",
+            "init",
+            "evaluator",
             project_name,
             f"--kind={kind}",
             "--dev",
@@ -133,7 +134,8 @@ def test_processor_cli(
     out = subprocess.check_output(
         [
             "evalutils",
-            "init-processor",
+            "init",
+            "processor",
             project_name,
             f"--diag-ticket={diag_ticket}",
             f"--req-cpus={req_cpus}",

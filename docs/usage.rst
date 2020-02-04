@@ -28,14 +28,14 @@ Once you have installed evalutils you can see the options with:
 
 .. code-block:: console
 
-    $ evalutils --help
+    $ evalutils init --help
 
 Say that you want to create an evaluation for ``myproject``, you can initialize
 it with:
 
 .. code-block:: console
 
-    $ evalutils init-evaluator myproject
+    $ evalutils init evaluator myproject
 
 You will then be prompted to choose a challenge type:
 
@@ -66,7 +66,7 @@ generate your project with docker by running a container and sharing your curren
 
 .. code-block:: console
 
-    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init-evaluator myproject"
+    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init evaluator myproject"
 
 Either of these commands will generate a folder called ``myproject``
 with everything you need to get started.
@@ -77,12 +77,19 @@ It is a good idea to commit your project to git right now. You can do this with:
 
     $ cd myproject
     $ git init
+    $ git lfs install   (see the warning below)
     $ git add --all
     $ git commit -m "Initial Commit"
 
 .. warning:: The test set ground truth will be stored in this repo,
     so remember to use a private repo if you're going to push this to github or gitlab,
     and use `git lfs`_ if your ground truth data are large.
+
+    The .gitattributes file at the root of the repository specifies all the files which should be
+    tracked by git-lfs. By default all files in the ground truth and test directories
+    are configured to be tracked by git-lfs, but they will only be registered
+    once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
+    command has been issued inside the generated repository.
 
 
 The structure of the project will be:
@@ -95,6 +102,7 @@ The structure of the project will be:
         ├── Dockerfile          # Defines how to build your evaluation container
         ├── evaluation.py       # Contains your evaluation code - this is where you will extend the Evaluation class
         ├── export.sh           # Exports your container to a .tar file for use on grand-challenge.org
+        ├── .gitattributes      # Define which files git should put under git-lfs
         ├── .gitignore          # Define which files git should ignore
         ├── ground-truth        # A folder that contains your ground truth annotations
         │   └── reference.csv   # In this example the ground truth is a csv file

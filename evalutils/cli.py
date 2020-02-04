@@ -10,6 +10,8 @@ from cookiecutter.main import cookiecutter
 from . import __version__
 
 EVALUATOR_CHOICES = ["Classification", "Segmentation", "Detection"]
+FORBIDDEN_NAMES = ["evalutils", "pandas", "Evaluation"]
+MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -18,8 +20,30 @@ def main():
     pass
 
 
-@main.command(short_help="Initialise an evaluator project.")
-@click.argument("challenge_name")
+@main.group(name="init", short_help="Initialise a project.")
+def init():
+    pass
+
+
+def validate_python_module_name_fn(option):
+    def validate_python_module_name_string(ctx, param, arg):
+        if len(arg.strip()) == 0:
+            click.echo(f"{option.upper()} should be non empty. Aborting...")
+            exit(1)
+
+        if not re.match(MODULE_REGEX, arg) or arg in FORBIDDEN_NAMES:
+            click.echo(f"ERROR: '{arg}' is not a valid Python module name!")
+            exit(1)
+
+        return arg
+
+    return validate_python_module_name_string
+
+
+@init.command(name="evaluator", short_help="Initialise an evaluator project.")
+@click.argument(
+    "challenge_name", callback=validate_python_module_name_fn("challenge_name")
+)
 @click.option(
     "--kind",
     type=click.Choice(EVALUATOR_CHOICES),
@@ -43,16 +67,6 @@ def init_evaluator(challenge_name, kind, dev):
         click.echo(f"Created project {challenge_name}")
     except FailedHookException:
         exit(1)
-
-
-def validate_non_empty_stripped_string_fn(option):
-    def validate_non_empty_stripped_string(ctx, param, arg):
-        if len(arg.strip()) == 0:
-            click.echo(f"{option.upper()} should be non empty. Aborting...")
-            exit(1)
-        return arg
-
-    return validate_non_empty_stripped_string
 
 
 def validate_size_format_fn(can_be_empty=False):
@@ -116,10 +130,9 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     return req_gpu_count
 
 
-@main.command(short_help="Initialise a processor project.")
+@init.command(name="processor", short_help="Initialise a processor project.")
 @click.argument(
-    "processor_name",
-    callback=validate_non_empty_stripped_string_fn("processor_name"),
+    "processor_name", callback=validate_python_module_name_fn("processor_name")
 )
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
