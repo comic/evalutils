@@ -1,0 +1,47 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  PYTHON_VERSION: '3.8'
+
+jobs:
+
+  precommit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/checkout@v2
+      - name: Install pre-commit
+        run: |
+          python -m pip install pre-commit
+          pre-commit install
+      - name: Run static code inspections
+        run: pre-commit run --all-files
+
+  test:
+    needs: [precommit]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install Tox and any other packages
+        run: |
+          pip install -U pip
+          pip install tox codecov
+      - name: Run Tox with system python
+        run: tox -e py
+      - name: Upload coverage results
+        if: matrix.python == '3.6'
+        run: codecov
+        env:
+            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
