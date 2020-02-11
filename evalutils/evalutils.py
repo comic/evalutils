@@ -17,7 +17,7 @@ from .validators import DataFrameValidator
 logger = logging.getLogger(__name__)
 
 
-class BaseProcess(ABC):
+class BaseAlgorithm(ABC):
     def __init__(
         self,
         *,
@@ -31,7 +31,7 @@ class BaseProcess(ABC):
         output_file: PathLike = Path("/output/results.json"),
     ):
         """
-        The base class for all processors. Sets the environment and controls
+        The base class for all algorithms. Sets the environment and controls
         the flow of the processing once `process` is called.
 
 

@@ -113,7 +113,7 @@ def test_evaluator_cli(tmpdir, kind, expected):
     ),
     [("", 1, (), "2G", 0, "", "")],
 )
-def test_processor_cli(
+def test_algorithm_cli(
     tmpdir,
     diag_ticket,
     req_cpus,
@@ -135,7 +135,7 @@ def test_processor_cli(
         [
             "evalutils",
             "init",
-            "processor",
+            "algorithm",
             project_name,
             f"--diag-ticket={diag_ticket}",
             f"--req-cpus={req_cpus}",

@@ -8,5 +8,5 @@ from .evalutils import (  # noqa: F401
     ClassificationEvaluation,
     DetectionEvaluation,
     Evaluation,
-    BaseProcess,
+    BaseAlgorithm,
 )

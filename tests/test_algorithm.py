@@ -1,8 +1,11 @@
+from pathlib import Path
 import SimpleITK
-import re
+import shutil
 from pandas import DataFrame
-
-from evalutils import BaseProcess
+import re
+import os
+import json
+from evalutils import BaseAlgorithm
 from evalutils.io import SimpleITKLoader, CSVLoader
 from evalutils.validators import (
     UniquePathIndicesValidator,
@@ -11,8 +14,8 @@ from evalutils.validators import (
 )
 
 
-class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
-    def __init__(self):
+class BasicAlgorithmTest(BaseAlgorithm):
+    def __init__(self, outdir, input_path):
         super().__init__(
             index_key="lung",
             file_loaders=dict(lung=SimpleITKLoader(), nodules=CSVLoader()),
@@ -20,13 +23,21 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
                 lung=re.compile(r"^.*\.mhd$"), nodules=re.compile(r"^.*\.csv$")
             ),
             validators=dict(
-                lung = (UniqueImagesValidator(), UniquePathIndicesValidator()),
-                nodules = (
+                lung=(UniqueImagesValidator(), UniquePathIndicesValidator()),
+                nodules=(
                     ExpectedColumnNamesValidator(
-                        expected=("seriesuid", "coordX", "coordY", "coordZ", "class")
+                        expected=(
+                            "seriesuid",
+                            "coordX",
+                            "coordY",
+                            "coordZ",
+                            "class",
+                        )
                     ),
                 ),
             ),
+            input_path=Path(input_path),
+            output_file=Path(outdir) / "results.json",
         )
         self._nodule_files = self._input_path.glob("*.csv")
         self._scored_nodules = DataFrame()
@@ -82,5 +93,38 @@ class {{ cookiecutter.package_name|capitalize }}(BaseProcess):
         return nodules_locations
 
 
-if __name__ == "__main__":
-    {{ cookiecutter.package_name|capitalize }}().process()
+def test_detection_evaluation(tmpdir):
+    indir = tmpdir / "input"
+    outdir = tmpdir / "output"
+
+    resdir = (
+        Path(__file__).parent.parent
+        / "evalutils"
+        / "templates"
+        / "algorithm"
+        / "{{ cookiecutter.package_name }}"
+        / "test"
+    )
+
+    os.makedirs(outdir)
+    shutil.copytree(resdir, indir)
+
+    proc = BasicAlgorithmTest(input_path=indir, outdir=outdir)
+
+    proc.process()
+
+    results_file = outdir / "results.json"
+
+    assert results_file.exists()
+
+    with open(results_file, "r") as f:
+        results = json.load(f)
+
+    expected_results_file = (
+        Path(__file__).parent / "resources" / "json" / "results.json"
+    )
+
+    with open(expected_results_file, "r") as f:
+        expected_result = json.load(f)
+
+    assert results == expected_result

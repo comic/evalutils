@@ -10,7 +10,7 @@ from cookiecutter.main import cookiecutter
 from . import __version__
 
 EVALUATOR_CHOICES = ["Classification", "Segmentation", "Detection"]
-FORBIDDEN_NAMES = ["evalutils", "pandas", "Evaluation"]
+FORBIDDEN_NAMES = ["evalutils", "pandas", "Evaluation", "Algorithm"]
 MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
 
@@ -130,9 +130,9 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     return req_gpu_count
 
 
-@init.command(name="processor", short_help="Initialise a processor project.")
+@init.command(name="algorithm", short_help="Initialise an algorithm project.")
 @click.argument(
-    "processor_name", callback=validate_python_module_name_fn("processor_name")
+    "algorithm_name", callback=validate_python_module_name_fn("algorithm_name")
 )
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
@@ -176,8 +176,8 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     callback=validate_size_format_fn(can_be_empty=True),
 )
 @click.option("--dev", is_flag=True)
-def init_processor(
-    processor_name,
+def init_algorithm(
+    algorithm_name,
     diag_ticket,
     req_cpus,
     req_cpu_capabilities,
@@ -187,25 +187,14 @@ def init_processor(
     req_gpu_memory,
     dev,
 ):
-    print(
-        processor_name,
-        diag_ticket,
-        req_cpus,
-        req_cpu_capabilities,
-        req_memory,
-        req_gpus,
-        req_gpu_compute_capability,
-        req_gpu_memory,
-        dev,
-    )
-    template_dir = Path(__file__).parent / "templates" / "processor"
+    template_dir = Path(__file__).parent / "templates" / "algorithm"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
                 "diag_ticket": diag_ticket,
-                "processor_name": processor_name,
+                "algorithm_name": algorithm_name,
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
                 "dev_build": 1 if dev else 0,
@@ -219,6 +208,6 @@ def init_processor(
                 },
             },
         )
-        click.echo(f"Created project {processor_name}")
+        click.echo(f"Created project {algorithm_name}")
     except FailedHookException:
         exit(1)
