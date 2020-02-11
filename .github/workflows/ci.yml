@@ -21,27 +21,3 @@ jobs:
           pre-commit install
       - name: Run static code inspections
         run: pre-commit run --all-files
-
-  test:
-    needs: [precommit]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: [3.6, 3.7, 3.8]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Install Tox and any other packages
-        run: |
-          pip install -U pip
-          pip install tox codecov
-      - name: Run Tox with system python
-        run: tox -e py
-      - name: Upload coverage results
-        if: matrix.python == '3.6'
-        run: codecov
-        env:
-            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
