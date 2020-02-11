@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import gc
 from collections import namedtuple
 from typing import List, Optional, Tuple, Union
