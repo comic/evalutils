@@ -52,12 +52,9 @@ class BasicAlgorithmTest(BaseAlgorithm):
 
         # Take 10 random points with a fixed seed
         np.random.seed(42)
-        nodule_locations = lung_data > 0
-        candidates = np.arange(np.prod(lung_data.shape)).reshape(
-            lung_data.shape
-        )
-        candidates = np.random.choice(candidates[nodule_locations], 10)
-        candidates = np.unravel_index(candidates, shape=lung_data.shape)
+        candidates = [(z, y, x) for z, y, x in zip(*np.where(lung_data > 0))]
+        indices = np.random.choice(len(candidates), 10)
+        candidates = [candidates[idx] for idx in indices]
 
         return DataFrame(
             [
@@ -67,7 +64,7 @@ class BasicAlgorithmTest(BaseAlgorithm):
                     "coordZ": z_world,
                     "class": lung_data[z, y, x],
                 }
-                for z, y, x in zip(*candidates)
+                for z, y, x in candidates
                 for x_world, y_world, z_world in [
                     lung_image.TransformIndexToPhysicalPoint(
                         (int(x), int(y), int(z))
@@ -103,6 +100,8 @@ def test_nodule_detection_algorithm(tmpdir):
 
     with open(results_file, "r") as f:
         results = json.load(f)
+
+    print(results)
 
     expected_results_file = (
         Path(__file__).parent / "resources" / "json" / "results.json"
