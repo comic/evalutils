@@ -2,6 +2,13 @@
 History
 =======
 
+0.2.0 (2020-02-11)
+------------------
+
+* Added experimental support for templating algorithms
+  * Note that the `init` cli command has changed
+* Added support for Python 3.8
+
 0.1.17 (2019-05-23)
 -------------------
 

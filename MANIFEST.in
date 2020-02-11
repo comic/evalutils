@@ -3,9 +3,25 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
+include pytest.ini
+include tox.ini
+include pyproject.toml
 
 recursive-include tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
-recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+recursive-include evalutils *.bat
+recursive-include evalutils *.csv
+recursive-include evalutils *.j2
+recursive-include evalutils *.json
+recursive-include evalutils *.md
+recursive-include evalutils *.mhd
+recursive-include evalutils *.py
+recursive-include evalutils *.sh
+recursive-include evalutils *.txt
+recursive-include evalutils *.yml
+recursive-include evalutils *.zraw
+recursive-include evalutils *Dockerfile
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.yml
