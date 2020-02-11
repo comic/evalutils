@@ -7,7 +7,7 @@ from evalutils.utils import (
 )
 
 
-PROCESSOR_NAME = "{{ cookiecutter.processor_name }}"
+ALGORITHM_NAME = "{{ cookiecutter.algorithm_name }}"
 IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())
@@ -21,5 +21,5 @@ convert_line_endings()
 
 if IS_DEV_BUILD:
     bootstrap_development_distribution(
-        PROCESSOR_NAME, template_dir / "devdist"
+        ALGORITHM_NAME, template_dir / "devdist"
     )
