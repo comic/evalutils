@@ -3,29 +3,22 @@ evalutils
 =========
 
 .. image:: https://badge.fury.io/py/evalutils.svg
-    :target: https://badge.fury.io/py/evalutils
+   :target: https://badge.fury.io/py/evalutils
 
-.. image:: https://travis-ci.org/comic/evalutils.svg?branch=master
-    :target: https://travis-ci.org/comic/evalutils
+.. image:: https://github.com/comic/evalutils/workflows/CI/badge.svg
+   :target: https://github.com/comic/evalutils/actions?query=workflow%3ACI+branch%3Amaster
+   :alt: Build Status
 
-.. image:: https://api.codeclimate.com/v1/badges/5c3b7f45f6a476d0f21e/maintainability
-   :target: https://codeclimate.com/github/comic/evalutils/maintainability
-   :alt: Maintainability
-
-.. image:: https://api.codeclimate.com/v1/badges/5c3b7f45f6a476d0f21e/test_coverage
-   :target: https://codeclimate.com/github/comic/evalutils/test_coverage
-   :alt: Test Coverage
+.. image:: https://codecov.io/gh/comic/evalutils/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/comic/evalutils
+   :alt: Code Coverage Status
 
 .. image:: https://readthedocs.org/projects/evalutils/badge/?version=latest
-        :target: https://evalutils.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
-
-.. image:: https://pyup.io/repos/github/comic/evalutils/shield.svg
-     :target: https://pyup.io/repos/github/comic/evalutils/
-     :alt: Updates
+   :target: https://evalutils.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+   :target: https://github.com/ambv/black
 
 
 evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.
