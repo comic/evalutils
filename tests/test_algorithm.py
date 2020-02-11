@@ -93,7 +93,7 @@ class BasicAlgorithmTest(BaseAlgorithm):
         return nodules_locations
 
 
-def test_algorithm_run(tmpdir):
+def test_detection_evaluation(tmpdir):
     indir = tmpdir / "input"
     outdir = tmpdir / "output"
 
