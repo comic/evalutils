@@ -1,0 +1,2 @@
+# sh files should keep their line endings
+*.sh text=auto eol=lf

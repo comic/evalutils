@@ -1,0 +1,5 @@
+{% if not cookiecutter.dev_build|int %}
+{{ cookiecutter.evalutils_name }}=={{ cookiecutter.evalutils_version }}
+{% endif %}
+scikit-learn==0.20.2
+scipy==1.2.1

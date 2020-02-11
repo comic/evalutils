@@ -87,6 +87,7 @@ class ImageLoader(FileLoader):
     all be loaded into memory, so score_case needs to load them again later
     via load_image.
     """
+
     def load(self, *, fname: Path):
         try:
             img = self.load_image(fname)

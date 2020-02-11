@@ -36,6 +36,7 @@ class UniquePathIndicesValidator(DataFrameValidator):
     """
     Validates that the indicies from the filenames are unique
     """
+
     def validate(self, *, df: DataFrame):
         try:
             paths = df["path"]
@@ -55,6 +56,7 @@ class UniqueImagesValidator(DataFrameValidator):
     """
     Validates that each image in the set is unique
     """
+
     def validate(self, *, df: DataFrame):
         try:
             hashes = df["hash"]

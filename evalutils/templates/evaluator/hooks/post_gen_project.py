@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
 import os
 import shutil
 from pathlib import Path
+from evalutils.utils import (
+    bootstrap_development_distribution,
+    convert_line_endings,
+)
 
 CHALLENGE_KIND = "{{ cookiecutter.challenge_kind }}"
+CHALLENGE_NAME = "{{ cookiecutter.challenge_name }}"
+IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
-EOL_UNIX = b"\n"
-EOL_WIN = b"\r\n"
-EOL_MAC = b"\r"
+template_dir = Path(os.getcwd())
 
-templated_python_files = Path(os.getcwd()).glob("*.py.j2")
+templated_python_files = template_dir.glob("*.py.j2")
 for f in templated_python_files:
     shutil.move(f.name, f.stem)
 
@@ -43,28 +46,9 @@ if CHALLENGE_KIND.lower() != "classification":
     remove_classification_files()
 
 
-def convert_line_endings():
-    """ Enforce unix line endings for the generated files """
-    files = []
-    for ext in [
-        ".py",
-        ".sh",
-        "Dockerfile",
-        ".txt",
-        ".csv",
-        ".mhd",
-        ".gitignore",
-    ]:
-        files.extend(Path(".").glob(f"**/*{ext}"))
-
-    for file in files:
-        with open(file, "rb") as f:
-            lines = f.read()
-
-        lines = lines.replace(EOL_WIN, EOL_UNIX).replace(EOL_MAC, EOL_UNIX)
-
-        with open(file, "wb") as f:
-            f.write(lines)
-
-
 convert_line_endings()
+
+if IS_DEV_BUILD:
+    bootstrap_development_distribution(
+        CHALLENGE_NAME, template_dir / "devdist"
+    )

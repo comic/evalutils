@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Tuple, Dict, Set, Callable, List, Union
+from typing import Tuple, Dict, Set, Callable, List, Union, Pattern
 from warnings import warn
 
 from pandas import DataFrame, merge, Series, concat
@@ -15,6 +15,145 @@ from .scorers import score_detection
 from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
+
+
+class BaseAlgorithm(ABC):
+    def __init__(
+        self,
+        *,
+        index_key: str,
+        file_loaders: Dict[str, FileLoader],
+        file_filters: Dict[str, Pattern[str]] = None,
+        input_path: Path = Path("/input/"),
+        output_path: Path = Path("/output/images/"),
+        file_sorter_key: Callable = None,
+        validators: Dict[str, Tuple[DataFrameValidator, ...]],
+        output_file: PathLike = Path("/output/results.json"),
+    ):
+        """
+        The base class for all algorithms. Sets the environment and controls
+        the flow of the processing once `process` is called.
+
+
+        Parameters
+        ----------
+        index_key
+            Fileloader key which must be used for the index
+        file_loaders
+            The loaders that will be used to get all files
+        file_filters
+            Regular expressions for filtering certain FileLoaders
+        input_path
+            The path in the container where the ground truth will be loaded
+            from
+        output_path
+            The path in the container where the output images will be written
+        file_sorter_keys
+            A function that determines how files in the input_path are sorted
+        validators
+            A dictionary containing the validators that will be used on the
+            loaded data per file_loader key
+        output_file
+            The path to the location where the results will be written
+        """
+        self._index_key = index_key
+        self._input_path = input_path
+        self._output_path = output_path
+        self._file_sorter_key = file_sorter_key
+        self._file_filters = file_filters
+        self._file_loaders = file_loaders
+        self._validators = validators
+        self._output_file = output_file
+
+        self._ground_truth_cases = DataFrame()
+        self._predictions_cases = DataFrame()
+
+        self._cases = {}
+
+        self._case_results = []
+
+        super().__init__()
+
+    def load(self):
+        for key, file_loader in self._file_loaders.items():
+            filter = (
+                self._file_filters[key] if key in self._file_filters else None
+            )
+            self._cases[key] = self._load_cases(
+                folder=self._input_path, file_loader=file_loader, filter=filter
+            )
+
+    def _load_cases(
+        self,
+        *,
+        folder: Path,
+        file_loader: FileLoader,
+        filter: Pattern[str] = None,
+    ) -> DataFrame:
+        cases = None
+
+        for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
+            if filter is None or filter.match(str(f)):
+                try:
+                    new_cases = file_loader.load(fname=f)
+                except FileLoaderError:
+                    logger.warning(
+                        f"Could not load {f.name} using {file_loader}."
+                    )
+                else:
+                    if cases is None:
+                        cases = new_cases
+                    else:
+                        cases += new_cases
+            else:
+                logger.info(
+                    f"Skip loading {f.name} because it doesn't match {filter}."
+                )
+
+        if cases is None:
+            raise FileLoaderError(
+                f"Could not load any files in {folder} with " f"{file_loader}."
+            )
+
+        return DataFrame(cases)
+
+    def validate(self):
+        """ Validates each dataframe for each fileloader separately """
+        file_loaders_keys = [k for k in self._file_loaders.keys()]
+        for key in self._validators.keys():
+            if key not in file_loaders_keys:
+                raise ValueError(
+                    f"There is no file_loader associated with: {key}.\n"
+                    f"Valid file loaders are: {file_loaders_keys}"
+                )
+        for key, cases in self._cases.items():
+            if key in self._validators:
+                self._validate_data_frame(df=cases, file_loader_key=key)
+
+    def _validate_data_frame(self, *, df: DataFrame, file_loader_key: str):
+        for validator in self._validators[file_loader_key]:
+            validator.validate(df=df)
+
+    def process(self):
+        self.load()
+        self.validate()
+        self.process_cases()
+        self.save()
+
+    def process_cases(self, file_loader_key: str = None):
+        if file_loader_key is None:
+            file_loader_key = self._index_key
+        self._case_results = []
+        for idx, case in self._cases[file_loader_key].iterrows():
+            self._case_results.append(self.process_case(idx=idx, case=case))
+
+    # noinspection PyUnusedLocal
+    def process_case(self, *, idx: int, case: DataFrame) -> Dict:
+        return {}
+
+    def save(self):
+        with open(self._output_file, "w") as f:
+            json.dump(self._case_results, f)
 
 
 class BaseEvaluation(ABC):

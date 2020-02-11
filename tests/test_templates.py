@@ -46,11 +46,7 @@ def check_dict(check, expected):
         ),
     ],
 )
-def test_cli(tmpdir, kind, expected):
-    """
-    WARNING: This tests against the github dev branch! We need a better way
-    than this to get the library into the templated docker file
-    """
+def test_evaluator_cli(tmpdir, kind, expected):
     print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
@@ -60,7 +56,14 @@ def test_cli(tmpdir, kind, expected):
     assert len(files) == 0
 
     out = subprocess.check_output(
-        ["evalutils", "init", project_name, f"--kind={kind}", "--dev"],
+        [
+            "evalutils",
+            "init",
+            "evaluator",
+            project_name,
+            f"--kind={kind}",
+            "--dev",
+        ],
         cwd=tmpdir,
     )
 
@@ -84,6 +87,95 @@ def test_cli(tmpdir, kind, expected):
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
 
     check_dict(result, expected)
+
+    files = os.listdir(project_dir)
+    assert f"{project_name}.tar.gz" not in files
+
+    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+
+    files = os.listdir(project_dir)
+    assert f"{project_name}.tar.gz" in files
+
+
+@pytest.mark.skipif(
+    strtobool(os.environ.get("APPVEYOR", "False").lower()),
+    reason="This test is not supported by standard appveyor",
+)
+@pytest.mark.parametrize(
+    (
+        "diag_ticket",
+        "req_cpus",
+        "req_cpu_capabilities",
+        "req_memory",
+        "req_gpus",
+        "req_gpu_compute_capability",
+        "req_gpu_memory",
+    ),
+    [("", 1, (), "2G", 0, "", "")],
+)
+def test_algorithm_cli(
+    tmpdir,
+    diag_ticket,
+    req_cpus,
+    req_cpu_capabilities,
+    req_memory,
+    req_gpus,
+    req_gpu_compute_capability,
+    req_gpu_memory,
+):
+    print(json.dumps(dict(os.environ), indent=4))
+    project_name = "testeval"
+
+    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
+
+    files = os.listdir(tmpdir)
+    assert len(files) == 0
+
+    out = subprocess.check_output(
+        [
+            "evalutils",
+            "init",
+            "algorithm",
+            project_name,
+            f"--diag-ticket={diag_ticket}",
+            f"--req-cpus={req_cpus}",
+            f"--req-cpu-capabilities={req_cpu_capabilities}",
+            f"--req-memory={req_memory}",
+            f"--req-gpus={req_gpus}",
+            f"--req-gpu-compute-capability={req_gpu_compute_capability}",
+            f"--req-gpu-memory={req_gpu_memory}",
+            "--dev",
+        ],
+        cwd=tmpdir,
+    )
+
+    files = os.listdir(tmpdir)
+    assert "testeval" in files
+    assert f"Created project {project_name}" in out.decode()
+
+    project_dir = Path(tmpdir) / project_name
+
+    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
+
+    assert "Successfully built" in out.decode()
+    assert f"Successfully tagged {project_name}:latest" in out.decode()
+    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
+    print(out)
+
+    # Grab the results json
+    out = out.decode().splitlines()
+    start = [i for i, ln in enumerate(out) if ln == "["]
+    end = [i for i, ln in enumerate(out) if ln == "]"]
+    result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
+    print(result)
+
+    with open(
+        Path(__file__).parent / "resources" / "json" / "results.json"
+    ) as f:
+        expected = json.load(f)
+
+    assert len(result) == 2
+    assert result == expected
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" not in files

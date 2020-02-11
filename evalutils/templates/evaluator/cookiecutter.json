@@ -1,0 +1,16 @@
+{
+    "challenge_name": "",
+    "package_name": "{{ cookiecutter.challenge_name|replace(' ', '') }}",
+    "challenge_kind": [
+        "Classification",
+        "Segmentation",
+        "Detection"
+    ],
+    "evalutils_name": "",
+    "evalutils_version": "",
+    "docker_base_container": "python:3.7-slim",
+    "dev_build": 0,
+    "_copy_without_render": [
+        "*.github"
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "algorithm_name": "",
+    "diag_ticket": "",
+    "package_name": "{{ cookiecutter.algorithm_name|replace(' ', '') }}",
+    "evalutils_name": "",
+    "evalutils_version": "",
+    "docker_base_container": "python:3.7-slim",
+    "dev_build": 0,
+    "requirements": {
+        "cpu_count": 1,
+        "cpu_capabilities": [],
+        "memory": "1G",
+        "gpu_count": 0,
+        "gpu_compute_capability": null,
+        "gpu_memory": null
+    },
+    "_copy_without_render": [
+        "*.github"
+    ]
+}
