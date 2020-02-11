@@ -1,16 +1,16 @@
 from pathlib import Path
 import SimpleITK
 import shutil
+import numpy as np
 from pandas import DataFrame
 import re
 import os
 import json
 from evalutils import BaseAlgorithm
-from evalutils.io import SimpleITKLoader, CSVLoader
+from evalutils.io import SimpleITKLoader
 from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
-    ExpectedColumnNamesValidator,
 )
 
 
@@ -18,82 +18,66 @@ class BasicAlgorithmTest(BaseAlgorithm):
     def __init__(self, outdir, input_path):
         super().__init__(
             index_key="lung",
-            file_loaders=dict(lung=SimpleITKLoader(), nodules=CSVLoader()),
-            file_filters=dict(
-                lung=re.compile(r"^.*\.mhd$"), nodules=re.compile(r"^.*\.csv$")
-            ),
+            file_loaders=dict(lung=SimpleITKLoader()),
+            file_filters=dict(lung=re.compile(r"^.*\.mh[ad]$")),
             validators=dict(
-                lung=(UniqueImagesValidator(), UniquePathIndicesValidator()),
-                nodules=(
-                    ExpectedColumnNamesValidator(
-                        expected=(
-                            "seriesuid",
-                            "coordX",
-                            "coordY",
-                            "coordZ",
-                            "class",
-                        )
-                    ),
-                ),
+                lung=(UniqueImagesValidator(), UniquePathIndicesValidator())
             ),
             input_path=Path(input_path),
             output_file=Path(outdir) / "results.json",
         )
-        self._nodule_files = self._input_path.glob("*.csv")
         self._scored_nodules = DataFrame()
 
     def process_case(self, *, idx, case):
         lung_path = case["path"]
 
-        all_nodules = self._cases["nodules"]
-        are_nodules_for_case = (
-            all_nodules["seriesuid"] == lung_path.name.rsplit(".", 1)[0]
-        )
-        nodules = all_nodules[are_nodules_for_case].copy()
-
-        # Load the images and annotations for this case
+        # Load the images for this case
         lung = self._file_loaders["lung"].load_image(lung_path)
 
-        # Check that they're the expected images and annotations
+        # Check that they're the expected images
         assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
 
-        scored_nodules = self.predict(lung, nodules)
+        scored_nodules = self.predict(lung)
 
         self._scored_nodules.append(scored_nodules)
 
         return {
-            "outputs": [
-                dict(
-                    data=scored_nodules[scored_nodules.keys()[1:]].to_dict(),
-                    type="nodules",
-                )
-            ],
-            "inputs": [
-                dict(type="metaio_image", filename=lung_path.name),
-                *[
-                    dict(type="csv_file", filename=nodule_file.name)
-                    for nodule_file in self._nodule_files
-                ],
-            ],
+            "outputs": [dict(data=scored_nodules.to_dict(), type="nodules")],
+            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
             "error_messages": [],
         }
 
-    def predict(
-        self, lung_image: SimpleITK.Image, nodules_locations: DataFrame
-    ) -> DataFrame:
-        scores = []
+    def predict(self, lung_image: SimpleITK.Image) -> DataFrame:
         lung_data = SimpleITK.GetArrayFromImage(lung_image)
-        for idx, nodule in nodules_locations.iterrows():
-            coord = lung_image.TransformPhysicalPointToIndex(
-                (nodule["coordX"], nodule["coordY"], nodule["coordZ"])
-            )
-            val = lung_data[coord[2], coord[1], coord[0]]
-            scores.append(val)
-        nodules_locations.loc[:, "class"] = scores
-        return nodules_locations
+
+        # Take 10 random points with a fixed seed
+        np.random.seed(42)
+        nodule_locations = lung_data > 0
+        candidates = np.arange(np.prod(lung_data.shape)).reshape(
+            lung_data.shape
+        )
+        candidates = np.random.choice(candidates[nodule_locations], 10)
+        candidates = np.unravel_index(candidates, shape=lung_data.shape)
+
+        return DataFrame(
+            [
+                {
+                    "coordX": x_world,
+                    "coordY": y_world,
+                    "coordZ": z_world,
+                    "class": lung_data[z, y, x],
+                }
+                for z, y, x in zip(*candidates)
+                for x_world, y_world, z_world in [
+                    lung_image.TransformIndexToPhysicalPoint(
+                        (int(x), int(y), int(z))
+                    )
+                ]
+            ]
+        )
 
 
-def test_detection_evaluation(tmpdir):
+def test_nodule_detection_algorithm(tmpdir):
     indir = tmpdir / "input"
     outdir = tmpdir / "output"
 
