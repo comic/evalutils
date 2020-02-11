@@ -3,4 +3,4 @@ line-length = 79
 target-version = ['py36']
 
 [tool.check-manifest]
-ignore = [".travis.yml", ".pre-commit-config.yaml"]
+ignore = [".travis.yml", ".editorconfig", ".readthedocs.yml", ".pre-commit-config.yaml"]
