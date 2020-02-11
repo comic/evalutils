@@ -25,9 +25,7 @@ requirements = [
     "numpy",
 ]
 
-setup_requirements = []
-
-test_requirements = ["pytest"]
+test_requirements = ["pytest", "pytest-cov"]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -50,6 +48,7 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.",
+    extras_require={"test": test_requirements},
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
@@ -61,7 +60,6 @@ setup(
         "evalutils": ["template/*", "template/**/*", "template/**/**/*"]
     },
     python_requires=REQUIRES_PYTHON,
-    setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/comic/evalutils",
