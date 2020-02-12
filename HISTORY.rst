@@ -2,6 +2,11 @@
 History
 =======
 
+0.2.2 (2020-02-12)
+------------------
+
+* Updated default container labels for algorithms
+
 0.2.1 (2020-02-12)
 ------------------
 
