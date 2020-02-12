@@ -55,9 +55,6 @@ setup(
     keywords="evalutils",
     name=NAME,
     packages=find_packages(include=["evalutils"]),
-    package_data={
-        "evalutils": ["template/*", "template/**/*", "template/**/**/*"]
-    },
     python_requires=REQUIRES_PYTHON,
     test_suite="tests",
     tests_require=test_requirements,

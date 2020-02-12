@@ -35,7 +35,7 @@ it with:
 
 .. code-block:: console
 
-    $ evalutils init evaluator myproject
+    $ evalutils init evaluation myproject
 
 You will then be prompted to choose a challenge type:
 
@@ -66,7 +66,7 @@ generate your project with docker by running a container and sharing your curren
 
 .. code-block:: console
 
-    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init evaluator myproject"
+    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init evaluation myproject"
 
 Either of these commands will generate a folder called ``myproject``
 with everything you need to get started.

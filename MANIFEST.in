@@ -23,5 +23,7 @@ recursive-include evalutils *.txt
 recursive-include evalutils *.yml
 recursive-include evalutils *.zraw
 recursive-include evalutils *Dockerfile
+recursive-include evalutils *.gitignore
+recursive-include evalutils *.gitattributes
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif *.yml

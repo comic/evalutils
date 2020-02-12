@@ -45,7 +45,7 @@ def check_dict(check, expected):
         ),
     ],
 )
-def test_evaluator_cli(tmpdir, kind, expected):
+def test_evaluation_cli(tmpdir, kind, expected):
     print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
@@ -58,7 +58,7 @@ def test_evaluator_cli(tmpdir, kind, expected):
         [
             "evalutils",
             "init",
-            "evaluator",
+            "evaluation",
             project_name,
             f"--kind={kind}",
             "--dev",

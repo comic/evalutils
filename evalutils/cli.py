@@ -8,7 +8,7 @@ from cookiecutter.main import cookiecutter
 
 from . import __version__
 
-EVALUATOR_CHOICES = ["Classification", "Segmentation", "Detection"]
+EVALUATION_CHOICES = ["Classification", "Segmentation", "Detection"]
 FORBIDDEN_NAMES = ["evalutils", "pandas", "Evaluation", "Algorithm"]
 MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
@@ -39,18 +39,20 @@ def validate_python_module_name_fn(option):
     return validate_python_module_name_string
 
 
-@init.command(name="evaluator", short_help="Initialise an evaluator project.")
+@init.command(
+    name="evaluation", short_help="Initialise an evaluation project."
+)
 @click.argument(
     "challenge_name", callback=validate_python_module_name_fn("challenge_name")
 )
 @click.option(
     "--kind",
-    type=click.Choice(EVALUATOR_CHOICES),
-    prompt=f"What kind of challenge is this? [{'|'.join(EVALUATOR_CHOICES)}]",
+    type=click.Choice(EVALUATION_CHOICES),
+    prompt=f"What kind of challenge is this? [{'|'.join(EVALUATION_CHOICES)}]",
 )
 @click.option("--dev", is_flag=True)
-def init_evaluator(challenge_name, kind, dev):
-    template_dir = Path(__file__).parent / "templates" / "evaluator"
+def init_evaluation(challenge_name, kind, dev):
+    template_dir = Path(__file__).parent / "templates" / "evaluation"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
