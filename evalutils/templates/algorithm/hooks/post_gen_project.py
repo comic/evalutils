@@ -12,8 +12,8 @@ IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())
 
-templated_python_files = template_dir.glob("*.py.j2")
-for f in templated_python_files:
+templated_files = template_dir.glob("*.j2")
+for f in templated_files:
     shutil.move(f.name, f.stem)
 
 convert_line_endings()

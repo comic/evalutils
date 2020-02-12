@@ -1,3 +1,14 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:0545722467db4c29bc6d428f5786b598bf54e79937221a64264e7462b313f599
-size 408
+ObjectType = Image
+NDims = 3
+BinaryData = True
+BinaryDataByteOrderMSB = False
+CompressedData = True
+CompressedDataSize = 529641
+TransformMatrix = 1 0 0 0 1 0 0 0 1
+Offset = -161.5 -175 -276.875
+CenterOfRotation = 0 0 0
+AnatomicalOrientation = RAI
+ElementSpacing = 0.683594 0.683594 0.625
+DimSize = 512 512 476
+ElementType = MET_INT
+ElementDataFile = 1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.zraw

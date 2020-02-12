@@ -1,3 +1,8 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:0c84ac52fc607ccdfc95fb5246591c7dd0229bc73870b2d8488ee6f7252234d4
-size 154
+image_id, x, y, score
+case_001, 1, 1, 1
+case_001, 2, 1, 1
+case_001, 0, 0, 1
+case_002, 10, 10, 1
+case_002, 15, 15, 1
+case_003, 20, 20, 1
+case_004, 1, 2, 1
