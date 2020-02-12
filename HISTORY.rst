@@ -2,6 +2,11 @@
 History
 =======
 
+0.2.1 (2020-02-12)
+------------------
+
+* Added support for mha input for algorithms
+
 0.2.0 (2020-02-11)
 ------------------
 
