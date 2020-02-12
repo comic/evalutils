@@ -1,20 +1,17 @@
-from collections import namedtuple
+from typing import List, NamedTuple
 
 import numpy as np
 from numpy import ndarray
 from sklearn import metrics
 
-bootstrapped_roc_ci_curves = namedtuple(
-    "bootstrapped_roc_ci_curves",
-    [
-        "fpr_vals",
-        "mean_tpr_vals",
-        "low_tpr_vals",
-        "high_tpr_vals",
-        "low_az_val",
-        "high_az_val",
-    ],
-)
+
+class BootstrappedROCCICurves(NamedTuple):
+    fpr_vals: ndarray
+    mean_tpr_vals: ndarray
+    low_tpr_vals: ndarray
+    high_tpr_vals: ndarray
+    low_az_val: ndarray
+    high_az_val: ndarray
 
 
 def get_bootstrapped_roc_ci_curves(
@@ -22,7 +19,7 @@ def get_bootstrapped_roc_ci_curves(
     y_true: ndarray,
     num_bootstraps: int = 100,
     ci_to_use: float = 0.95,
-) -> bootstrapped_roc_ci_curves:
+) -> BootstrappedROCCICurves:
     """
     Produces Confidence-Interval Curves to go alongside a regular ROC curve
     This is done by using boostrapping.
@@ -58,9 +55,9 @@ def get_bootstrapped_roc_ci_curves(
     """
 
     rng_seed = 40  # control reproducibility
-    bootstrapped_az_scores = []
+    bootstrapped_az_scores: List[float] = []
 
-    tprs_list = []
+    tprs_list: List[ndarray] = []
     base_fpr = np.linspace(0, 1, 101)
     rng = np.random.RandomState(rng_seed)
 
@@ -112,7 +109,7 @@ def get_bootstrapped_roc_ci_curves(
         int((1 - one_sided_ci) * len(sorted_az_scores))
     ]
 
-    return bootstrapped_roc_ci_curves(
+    return BootstrappedROCCICurves(
         fpr_vals=base_fpr,
         mean_tpr_vals=mean_tprs,
         low_tpr_vals=np.asarray(tprs_lower),
@@ -122,17 +119,13 @@ def get_bootstrapped_roc_ci_curves(
     )
 
 
-bootstrapped_ci_point_error = namedtuple(
-    "bootstrapped_ci_point_error",
-    [
-        "mean_fprs",
-        "mean_tprs",
-        "low_tpr_vals",
-        "high_tpr_vals",
-        "low_fpr_vals",
-        "high_fpr_vals",
-    ],
-)
+class BootstrappedCIPointError(NamedTuple):
+    mean_fprs: ndarray
+    mean_tprs: ndarray
+    low_tpr_vals: ndarray
+    high_tpr_vals: ndarray
+    low_fpr_vals: ndarray
+    high_fpr_vals: ndarray
 
 
 def get_bootstrapped_ci_point_error(
@@ -141,7 +134,7 @@ def get_bootstrapped_ci_point_error(
     num_bootstraps: int = 100,
     ci_to_use: float = 0.95,
     exclude_first_last: bool = True,
-) -> bootstrapped_ci_point_error:
+) -> BootstrappedCIPointError:
     """
     Produces Confidence-Interval errors for individual points from ROC
     Useful when only few ROC points exist so they will be plotted individually
@@ -190,8 +183,8 @@ def get_bootstrapped_ci_point_error(
         The fpr vals (one per ROC point) representing the highest val in CI
     """
     rng_seed = 40  # control reproducibility
-    tprs_list = []
-    fprs_list = []
+    tprs_list: List[ndarray] = []
+    fprs_list: List[ndarray] = []
     rng = np.random.RandomState(rng_seed)
 
     num_possible_scores = len(np.unique(y_score))
@@ -261,7 +254,7 @@ def get_bootstrapped_ci_point_error(
     fprs_lower = np.asarray(fprs_lower)
     fprs_upper = np.asarray(fprs_upper)
 
-    return bootstrapped_ci_point_error(
+    return BootstrappedCIPointError(
         mean_fprs=mean_fprs,
         mean_tprs=mean_tprs,
         low_tpr_vals=tprs_lower,

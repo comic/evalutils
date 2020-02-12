@@ -2,7 +2,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from SimpleITK import GetArrayFromImage, ReadImage
 from imageio import imread
@@ -14,7 +14,7 @@ from .exceptions import FileLoaderError
 logger = logging.getLogger(__name__)
 
 
-def get_first_int_in(s: str) -> Union[int, str]:
+def get_first_int_in(s: str) -> int:
     """
     Gets the first integer in a string.
 
@@ -36,7 +36,10 @@ def get_first_int_in(s: str) -> Union[int, str]:
     r = re.compile(r"\D*((?:\d+\.?)+)\D*")
     m = r.search(s)
 
-    return int(m.group(1).replace(".", ""))
+    if m is not None:
+        return int(m.group(1).replace(".", ""))
+    else:
+        raise AttributeError(f"No int found in {s}")
 
 
 def first_int_in_filename_key(fname: Path) -> str:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+from typing import Dict
 
 from setuptools import find_packages, setup
 
@@ -29,7 +30,7 @@ test_requirements = ["pytest", "pytest-cov"]
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Load the package's __version__.py module as a dictionary.
-about = {}
+about: Dict[str, str] = {}
 with open(os.path.join(here, NAME, "__version__.py")) as f:
     exec(f.read(), about)
 

@@ -565,7 +565,9 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray, s2: ndarray, voxelspacing: Optional[Tuple[float, float]]
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Union[List[Union[int, float]], int, float, None] = None,
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
@@ -603,8 +605,11 @@ def absolute_volume_difference(
     if isinstance(voxelspacing, float) or isinstance(voxelspacing, int):
         voxelspacing = [voxelspacing] * s1.ndim
 
-    assert len(voxelspacing) == s1.ndim
-    assert s1.ndim == s2.ndim
+    if len(voxelspacing) != s1.ndim:
+        raise ValueError("Voxel spacing mismatch")
+
+    if s1.ndim != s2.ndim:
+        raise ValueError("Input matrices do not have the same dimensions")
 
     volume_per_voxel = np.prod(voxelspacing)
 

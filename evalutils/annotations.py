@@ -52,15 +52,16 @@ class BoundingBox:
     def __hash__(self):
         return hash((self.x_left, self.x_right, self.y_bottom, self.y_top))
 
-    def __eq__(self, other: "BoundingBox"):
-        if self.__class__ is other.__class__:
-            return (
-                self.x_left == other.x_left
-                and self.x_right == other.x_right
-                and self.y_bottom == other.y_bottom
-                and self.y_top == other.y_top
-            )
-        return NotImplemented
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BoundingBox):
+            return NotImplemented
+
+        return (
+            self.x_left == other.x_left
+            and self.x_right == other.x_right
+            and self.y_bottom == other.y_bottom
+            and self.y_top == other.y_top
+        )
 
     @property
     def area(self) -> float:

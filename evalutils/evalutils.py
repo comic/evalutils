@@ -74,9 +74,9 @@ class BaseAlgorithm(ABC):
         self._ground_truth_cases = DataFrame()
         self._predictions_cases = DataFrame()
 
-        self._cases = {}
+        self._cases: Dict[str, DataFrame] = {}
 
-        self._case_results = []
+        self._case_results: List[Dict] = []
 
         super().__init__()
 
@@ -153,7 +153,6 @@ class BaseAlgorithm(ABC):
         for idx, case in self._cases[file_loader_key].iterrows():
             self._case_results.append(self.process_case(idx=idx, case=case))
 
-    # noinspection PyUnusedLocal
     def process_case(self, *, idx: int, case: DataFrame) -> Dict:
         return {}
 
@@ -233,7 +232,7 @@ class BaseEvaluation(ABC):
         self._cases = DataFrame()
 
         self._case_results = DataFrame()
-        self._aggregate_results = {}
+        self._aggregate_results: Dict[str, Union[float, int, str, None]] = {}
 
         super().__init__()
 
