@@ -33,15 +33,15 @@ ENTRYPOINT python -m process $0 $@
 ## ALGORITHM LABELS ##
 
 # These labels are required
-LABEL com.radboudumc.diag.algorithm.name={{ cookiecutter.algorithm_name }}
+LABEL nl.diagnijmegen.rse.algorithm.name={{ cookiecutter.algorithm_name }}
 
 # These labels are required and describe what kind of hardware your algorithm requires to run.
-LABEL com.radboudumc.diag.algorithm.hardware.cpu.count={{ cookiecutter.requirements.cpu_count }}
-LABEL com.radboudumc.diag.algorithm.hardware.cpu.capabilities={{ cookiecutter.requirements.cpu_capabilities }}
-LABEL com.radboudumc.diag.algorithm.hardware.memory={{ cookiecutter.requirements.memory }}
-LABEL com.radboudumc.diag.algorithm.hardware.gpu.count={{ cookiecutter.requirements.gpu_count }}
-LABEL com.radboudumc.diag.algorithm.hardware.gpu.cuda_compute_capability={{ cookiecutter.requirements.gpu_compute_capability }}
-LABEL com.radboudumc.diag.algorithm.hardware.gpu.memory={{ cookiecutter.requirements.gpu_memory }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.count={{ cookiecutter.requirements.cpu_count }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.capabilities={{ cookiecutter.requirements.cpu_capabilities }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.memory={{ cookiecutter.requirements.memory }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.count={{ cookiecutter.requirements.gpu_count }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.cuda_compute_capability={{ cookiecutter.requirements.gpu_compute_capability }}
+LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.memory={{ cookiecutter.requirements.gpu_memory }}
 
 {% if cookiecutter.diag_ticket|trim() -%}
 # Optional labels
