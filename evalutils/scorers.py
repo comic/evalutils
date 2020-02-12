@@ -77,12 +77,16 @@ def score_detection(
 
     false_positives = prediction_hit_a_target.count(False)
 
-    assert 0 <= true_positives <= min(len(predictions), len(ground_truth))
-    assert 0 <= false_positives <= len(predictions)
-    assert 0 <= false_negatives <= len(ground_truth)
-
-    assert true_positives + false_negatives == len(ground_truth)
-    assert true_positives + false_positives == len(predictions)
+    if not all(
+        [
+            0 <= true_positives <= min(len(predictions), len(ground_truth)),
+            0 <= false_positives <= len(predictions),
+            0 <= false_negatives <= len(ground_truth),
+            true_positives + false_negatives == len(ground_truth),
+            true_positives + false_positives == len(predictions),
+        ]
+    ):
+        raise RuntimeError("Evaluation failed.")
 
     return DetectionScore(
         true_positives=true_positives,

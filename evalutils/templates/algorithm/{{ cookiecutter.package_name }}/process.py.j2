@@ -31,7 +31,8 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
         lung = self._file_loaders["lung"].load_image(lung_path)
 
         # Check that they're the expected images
-        assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
+        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
 
         scored_nodules = self.predict(lung)
 
