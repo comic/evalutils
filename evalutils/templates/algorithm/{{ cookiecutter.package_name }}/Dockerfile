@@ -45,5 +45,5 @@ LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.memory={{ cookiecutter.requirem
 
 {% if cookiecutter.diag_ticket|trim() -%}
 # Optional labels
-LABEL com.radboudumc.diag.algorithm.ticket={{ cookiecutter.diag_ticket|trim() }}
+LABEL nl.diagnijmegen.rse.algorithm.ticket={{ cookiecutter.diag_ticket|trim() }}
 {%- endif %}
