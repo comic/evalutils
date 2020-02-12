@@ -1,5 +1,5 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 EOL_UNIX = b"\n"
 EOL_WIN = b"\r\n"

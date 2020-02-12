@@ -12,6 +12,18 @@ repos:
     hooks:
       - id: black
         language: python
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+      - id: flake8
+        language: python
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-import-order
+          - pep8-naming
+          # The following is disabled due to a runtime error
+          # - flake8-docstrings
+          - mccabe
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.40"
     hooks:

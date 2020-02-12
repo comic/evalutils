@@ -6,10 +6,10 @@ from pandas import DataFrame
 from evalutils.exceptions import ValidationError
 from evalutils.io import ImageIOLoader
 from evalutils.validators import (
-    UniquePathIndicesValidator,
     ExpectedColumnNamesValidator,
-    UniqueImagesValidator,
     NumberOfCasesValidator,
+    UniqueImagesValidator,
+    UniquePathIndicesValidator,
 )
 
 

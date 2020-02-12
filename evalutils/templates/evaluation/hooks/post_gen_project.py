@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+
 from evalutils.utils import (
     bootstrap_development_distribution,
     convert_line_endings,
@@ -44,7 +45,6 @@ if CHALLENGE_KIND.lower() != "detection":
 
 if CHALLENGE_KIND.lower() != "classification":
     remove_classification_files()
-
 
 convert_line_endings()
 

@@ -2,12 +2,12 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Union, Dict, List
+from typing import Dict, List, Union
 
-from SimpleITK import ReadImage, GetArrayFromImage
+from SimpleITK import GetArrayFromImage, ReadImage
 from imageio import imread
 from pandas import read_csv
-from pandas.errors import ParserError, EmptyDataError
+from pandas.errors import EmptyDataError, ParserError
 
 from .exceptions import FileLoaderError
 
