@@ -1,9 +1,9 @@
 from .__version__ import __version__ as _version
 from .evalutils import (
+    BaseAlgorithm,
     ClassificationEvaluation,
     DetectionEvaluation,
     Evaluation,
-    BaseAlgorithm,
 )
 
 __author__ = """James Meakin"""

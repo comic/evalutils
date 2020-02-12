@@ -1,16 +1,18 @@
-from pathlib import Path
-import SimpleITK
+import json
+import os
+import re
 import shutil
+from pathlib import Path
+
+import SimpleITK
 import numpy as np
 from pandas import DataFrame
-import re
-import os
-import json
+
 from evalutils import BaseAlgorithm
 from evalutils.io import SimpleITKLoader
 from evalutils.validators import (
-    UniquePathIndicesValidator,
     UniqueImagesValidator,
+    UniquePathIndicesValidator,
 )
 
 

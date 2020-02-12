@@ -7,11 +7,11 @@ from SimpleITK import GetArrayFromImage
 
 from evalutils.exceptions import FileLoaderError
 from evalutils.io import (
-    get_first_int_in,
-    ImageIOLoader,
     CSVLoader,
+    ImageIOLoader,
     SimpleITKLoader,
     first_int_in_filename_key,
+    get_first_int_in,
 )
 
 

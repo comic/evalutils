@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-import evalutils
+import evalutils  # noqa: E402
 
 # -- General configuration ---------------------------------------------
 
@@ -82,6 +82,7 @@ pygments_style = "sphinx"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
 
 # Always document the __init__ method
 def skip(app, what, name, obj, skip, options):

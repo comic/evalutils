@@ -2,7 +2,7 @@
 
 import os
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 NAME = "evalutils"
 REQUIRES_PYTHON = ">=3.6.0"
@@ -46,7 +46,10 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    description="evalutils helps challenge administrators easily create evaluation containers for grand-challenge.org.",
+    description=(
+        "evalutils helps challenge administrators easily create evaluation "
+        "containers for grand-challenge.org."
+    ),
     extras_require={"test": test_requirements},
     install_requires=requirements,
     license="MIT license",

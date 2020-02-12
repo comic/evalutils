@@ -8,7 +8,7 @@ from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
-def distance_transform_edt_float32(
+def distance_transform_edt_float32(  # noqa: C901
     input,
     sampling=None,
     return_distances=True,

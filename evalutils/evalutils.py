@@ -3,17 +3,24 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Tuple, Dict, Set, Callable, List, Union, Pattern
+from typing import Callable, Dict, List, Pattern, Set, Tuple, Union
 from warnings import warn
 
-from pandas import DataFrame, merge, Series, concat
+from pandas import DataFrame, Series, concat, merge
 
-from .exceptions import FileLoaderError, ValidationError, ConfigurationError
-from .io import first_int_in_filename_key, FileLoader, CSVLoader
+from .exceptions import ConfigurationError, FileLoaderError, ValidationError
+from .io import CSVLoader, FileLoader, first_int_in_filename_key
 from .scorers import score_detection
 from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_INPUT_PATH = Path("/input/")
+DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH = Path("/output/images/")
+DEFAULT_ALGORITHM_OUTPUT_FILE_PATH = Path("/output/results.json")
+DEFAULT_GROUND_TRUTH_PATH = Path("/opt/evaluation/ground-truth/")
+DEFAULT_EVALUATION_OUTPUT_FILE_PATH = Path("/output/metrics.json")
 
 
 class BaseAlgorithm(ABC):
@@ -23,11 +30,11 @@ class BaseAlgorithm(ABC):
         index_key: str,
         file_loaders: Dict[str, FileLoader],
         file_filters: Dict[str, Pattern[str]] = None,
-        input_path: Path = Path("/input/"),
-        output_path: Path = Path("/output/images/"),
+        input_path: Path = DEFAULT_INPUT_PATH,
+        output_path: Path = DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH,
         file_sorter_key: Callable = None,
         validators: Dict[str, Tuple[DataFrameValidator, ...]],
-        output_file: PathLike = Path("/output/results.json"),
+        output_file: PathLike = DEFAULT_ALGORITHM_OUTPUT_FILE_PATH,
     ):
         """
         The base class for all algorithms. Sets the environment and controls
@@ -159,14 +166,14 @@ class BaseEvaluation(ABC):
     def __init__(
         self,
         *,
-        ground_truth_path: Path = Path("/opt/evaluation/ground-truth/"),
-        predictions_path: Path = Path("/input/"),
+        ground_truth_path: Path = DEFAULT_GROUND_TRUTH_PATH,
+        predictions_path: Path = DEFAULT_INPUT_PATH,
         file_sorter_key: Callable = first_int_in_filename_key,
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...],
         join_key: str = None,
         aggregates: Set[str] = None,
-        output_file: PathLike = Path("/output/metrics.json"),
+        output_file: PathLike = DEFAULT_EVALUATION_OUTPUT_FILE_PATH,
     ):
         """
         The base class for all evaluations. Sets the environment and controls
