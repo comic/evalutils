@@ -1,5 +1,7 @@
-import SimpleITK
 import re
+from typing import Any, Dict, List, Tuple
+
+import SimpleITK
 import numpy as np
 from pandas import DataFrame
 
@@ -13,7 +15,7 @@ from evalutils.validators import (
 
 
 class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
-    def __init__(self):
+    def __init__(self, outdir, input_path):
         super().__init__(
             index_key="lung",
             file_loaders=dict(lung=SimpleITKLoader()),
@@ -21,54 +23,92 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
             validators=dict(
                 lung=(UniqueImagesValidator(), UniquePathIndicesValidator())
             ),
+            input_path=Path(input_path),
+            output_file=Path(outdir) / "results.json",
         )
-        self._scored_nodules = DataFrame()
 
     def process_case(self, *, idx, case):
         lung_path = case["path"]
 
-        # Load the images for this case
+        # Load the image for this case
         lung = self._file_loaders["lung"].load_image(lung_path)
 
-        # Check that they're the expected images
-        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
-            raise RuntimeError("Image hashes do not match")
+        # Check that it is the expected image
+        assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
 
-        scored_nodules = self.predict(lung)
+        # Detect and score candidates
+        scored_candidates = self.predict(input_image=lung)
 
-        self._scored_nodules.append(scored_nodules)
-
+        # Write resulting candidates to result.json for this case
         return {
-            "outputs": [dict(data=scored_nodules.to_dict(), type="nodules")],
+            "outputs": [
+                dict(type="candidates", data=scored_candidates.to_dict())
+            ],
             "inputs": [dict(type="metaio_image", filename=lung_path.name)],
             "error_messages": [],
         }
 
-    def predict(self, lung_image: SimpleITK.Image) -> DataFrame:
-        lung_data = SimpleITK.GetArrayFromImage(lung_image)
+    def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
+        # Extract a numpy array with image data from the SimpleITK Image
+        image_data = SimpleITK.GetArrayFromImage(input_image)
 
-        # Take 10 random points with a fixed seed
-        np.random.seed(42)
-        candidates = [(z, y, x) for z, y, x in zip(*np.where(lung_data > 0))]
-        indices = np.random.choice(len(candidates), 10)
-        candidates = [candidates[idx] for idx in indices]
-
-        return DataFrame(
-            [
-                {
-                    "coordX": x_world,
-                    "coordY": y_world,
-                    "coordZ": z_world,
-                    "class": lung_data[z, y, x],
-                }
-                for z, y, x in candidates
-                for x_world, y_world, z_world in [
-                    lung_image.TransformIndexToPhysicalPoint(
-                        (int(x), int(y), int(z))
-                    )
-                ]
-            ]
+        # Detection: Select a maximum of 10 candidates (image coordinate)
+        # using a fixed random seed
+        sample_mask = image_data > 0
+        candidates = self._sample_fixed_random_candidates(
+            sample_mask=sample_mask, num_samples=10, random_seed_value=42
         )
+
+        # Scoring: Score each candidate with the value at its image coordinate
+        candidate_scores = [image_data[coord] for coord in candidates]
+
+        # Serialize candidates as a list of dictionary entries
+        data = self._serialize_candidates(
+            candidates=candidates,
+            candidate_scores=candidate_scores,
+            ref_image=input_image,
+        )
+
+        # Convert serialized candidates to a DataFrame
+        return DataFrame(data)
+
+    def _serialize_candidates(
+        self,
+        *,
+        candidates: List[Tuple[np.int, ...]],
+        candidate_scores: List[Any],
+        ref_image: SimpleITK.Image,
+    ) -> List[Dict]:
+        data = []
+        for coord, score in zip(candidates, candidate_scores):
+            world_coords = ref_image.TransformIndexToPhysicalPoint(
+                [int(c) for c in reversed(coord)]
+            )
+            coord_data = {
+                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
+            }
+            coord_data.update({"score": score})
+            data.append(coord_data)
+        return data
+
+    def _sample_fixed_random_candidates(
+        self,
+        *,
+        sample_mask: np.array,
+        num_samples: int = 10,
+        random_seed_value: int = 42,
+    ) -> List[Tuple[np.int, ...]]:
+        candidates = [e for e in zip(*np.where(sample_mask))]
+        if len(candidates) > 0:
+            np.random.seed(seed=random_seed_value)
+            indices = np.random.choice(
+                len(candidates),
+                min(num_samples, len(candidates)),
+                replace=False,
+            )
+            candidates = [candidates[idx] for idx in indices]
+        return candidates
+
 
 if __name__ == "__main__":
     {{ cookiecutter.package_name|capitalize }}().process()
