@@ -225,7 +225,9 @@ def jaccard_to_dice(jacc: ndarray) -> Union[int, float, ndarray]:
     -------
     1 or N Dice values within [0 .. 1]
     """
-    assert all(jacc >= 0) and all(jacc <= 1)
+    if any(jacc < 0) or any(jacc > 1):
+        raise RuntimeError("Invalid jaccard scores")
+
     return (jacc * 2.0) / (1.0 + jacc)
 
 
@@ -242,7 +244,8 @@ def dice_to_jaccard(dice: ndarray) -> Union[int, float, ndarray]:
     -------
     1 or N Jaccard values within [0 .. 1]
     """
-    assert all(dice >= 0) and all(dice <= 1)
+    if any(dice < 0) or any(dice > 1):
+        raise RuntimeError("Invalid dice score")
 
     return dice / (2.0 - dice)
 
@@ -284,8 +287,8 @@ def jaccard_from_confusion_matrix(cm: ndarray) -> ndarray:
     -------
     1d ndarray containing Jaccard scores for all N classes
     """
-    assert cm.ndim == 2
-    assert cm.shape[0] == cm.shape[1]
+    if cm.ndim != 2 or cm.shape[0] != cm.shape[1]:
+        raise RuntimeError("Invalid confusion matrices")
 
     jaccs = np.zeros((cm.shape[0]), dtype=np.float32)
 
@@ -310,8 +313,8 @@ def dice_from_confusion_matrix(cm: ndarray) -> ndarray:
     -------
     1d ndarray containing Dice scores for all N classes
     """
-    assert cm.ndim == 2
-    assert cm.shape[0] == cm.shape[1]
+    if cm.ndim != 2 or cm.shape[0] != cm.shape[1]:
+        raise RuntimeError("Invalid confusion matrices")
 
     dices = np.zeros((cm.shape[0]), dtype=np.float32)
 
@@ -565,7 +568,9 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray, s2: ndarray, voxelspacing: Optional[Tuple[float, float]]
+    s1: ndarray,
+    s2: ndarray,
+    voxelspacing: Union[List[Union[int, float]], int, float, None] = None,
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
@@ -603,8 +608,11 @@ def absolute_volume_difference(
     if isinstance(voxelspacing, float) or isinstance(voxelspacing, int):
         voxelspacing = [voxelspacing] * s1.ndim
 
-    assert len(voxelspacing) == s1.ndim
-    assert s1.ndim == s2.ndim
+    if len(voxelspacing) != s1.ndim:
+        raise ValueError("Voxel spacing mismatch")
+
+    if s1.ndim != s2.ndim:
+        raise ValueError("Input matrices do not have the same dimensions")
 
     volume_per_voxel = np.prod(voxelspacing)
 

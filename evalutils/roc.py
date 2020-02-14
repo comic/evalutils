@@ -1,20 +1,17 @@
-from collections import namedtuple
+from typing import List, NamedTuple, Tuple
 
 import numpy as np
 from numpy import ndarray
 from sklearn import metrics
 
-bootstrapped_roc_ci_curves = namedtuple(
-    "bootstrapped_roc_ci_curves",
-    [
-        "fpr_vals",
-        "mean_tpr_vals",
-        "low_tpr_vals",
-        "high_tpr_vals",
-        "low_az_val",
-        "high_az_val",
-    ],
-)
+
+class BootstrappedROCCICurves(NamedTuple):
+    fpr_vals: ndarray
+    mean_tpr_vals: ndarray
+    low_tpr_vals: ndarray
+    high_tpr_vals: ndarray
+    low_az_val: ndarray
+    high_az_val: ndarray
 
 
 def get_bootstrapped_roc_ci_curves(
@@ -22,7 +19,7 @@ def get_bootstrapped_roc_ci_curves(
     y_true: ndarray,
     num_bootstraps: int = 100,
     ci_to_use: float = 0.95,
-) -> bootstrapped_roc_ci_curves:
+) -> BootstrappedROCCICurves:
     """
     Produces Confidence-Interval Curves to go alongside a regular ROC curve
     This is done by using boostrapping.
@@ -58,9 +55,9 @@ def get_bootstrapped_roc_ci_curves(
     """
 
     rng_seed = 40  # control reproducibility
-    bootstrapped_az_scores = []
+    bootstrapped_az_scores: List[float] = []
 
-    tprs_list = []
+    tprs_list: List[ndarray] = []
     base_fpr = np.linspace(0, 1, 101)
     rng = np.random.RandomState(rng_seed)
 
@@ -92,17 +89,11 @@ def get_bootstrapped_roc_ci_curves(
     # half the error margin allowed
     one_sided_ci = (1 - ci_to_use) / 2
 
-    tprs_upper = []
-    tprs_lower = []
-    # Now get upper CI and lower CI values for each distinct fpr location
-    for b_fpr in range(len(base_fpr)):
-        tprs = tprs_array[:, b_fpr]
-        tprs.sort()
-
-        tpr_upper = tprs[int((1 - one_sided_ci) * len(tprs))]
-        tprs_upper.append(tpr_upper)
-        tpr_lower = tprs[int(one_sided_ci * len(tprs))]
-        tprs_lower.append(tpr_lower)
+    tprs_lower, tprs_upper = _get_confidence_intervals(
+        n_bootstraps=len(base_fpr),
+        one_sided_ci=one_sided_ci,
+        points_array=tprs_array,
+    )
 
     sorted_az_scores = np.array(bootstrapped_az_scores)
     sorted_az_scores.sort()
@@ -112,27 +103,23 @@ def get_bootstrapped_roc_ci_curves(
         int((1 - one_sided_ci) * len(sorted_az_scores))
     ]
 
-    return bootstrapped_roc_ci_curves(
+    return BootstrappedROCCICurves(
         fpr_vals=base_fpr,
         mean_tpr_vals=mean_tprs,
-        low_tpr_vals=np.asarray(tprs_lower),
-        high_tpr_vals=np.asarray(tprs_upper),
+        low_tpr_vals=tprs_lower,
+        high_tpr_vals=tprs_upper,
         low_az_val=az_ci_lower,
         high_az_val=az_ci_upper,
     )
 
 
-bootstrapped_ci_point_error = namedtuple(
-    "bootstrapped_ci_point_error",
-    [
-        "mean_fprs",
-        "mean_tprs",
-        "low_tpr_vals",
-        "high_tpr_vals",
-        "low_fpr_vals",
-        "high_fpr_vals",
-    ],
-)
+class BootstrappedCIPointError(NamedTuple):
+    mean_fprs: ndarray
+    mean_tprs: ndarray
+    low_tpr_vals: ndarray
+    high_tpr_vals: ndarray
+    low_fpr_vals: ndarray
+    high_fpr_vals: ndarray
 
 
 def get_bootstrapped_ci_point_error(
@@ -141,7 +128,7 @@ def get_bootstrapped_ci_point_error(
     num_bootstraps: int = 100,
     ci_to_use: float = 0.95,
     exclude_first_last: bool = True,
-) -> bootstrapped_ci_point_error:
+) -> BootstrappedCIPointError:
     """
     Produces Confidence-Interval errors for individual points from ROC
     Useful when only few ROC points exist so they will be plotted individually
@@ -190,8 +177,8 @@ def get_bootstrapped_ci_point_error(
         The fpr vals (one per ROC point) representing the highest val in CI
     """
     rng_seed = 40  # control reproducibility
-    tprs_list = []
-    fprs_list = []
+    tprs_list: List[ndarray] = []
+    fprs_list: List[ndarray] = []
     rng = np.random.RandomState(rng_seed)
 
     num_possible_scores = len(np.unique(y_score))
@@ -232,36 +219,18 @@ def get_bootstrapped_ci_point_error(
     # half the error margin allowed
     one_sided_ci = (1 - ci_to_use) / 2
 
-    tprs_upper = []
-    tprs_lower = []
-    fprs_upper = []
-    fprs_lower = []
+    tprs_lower, tprs_upper = _get_confidence_intervals(
+        n_bootstraps=tprs_array.shape[1],
+        one_sided_ci=one_sided_ci,
+        points_array=tprs_array,
+    )
+    fprs_lower, fprs_upper = _get_confidence_intervals(
+        n_bootstraps=fprs_array.shape[1],
+        one_sided_ci=one_sided_ci,
+        points_array=fprs_array,
+    )
 
-    # for each of the ROC points
-    for boot_strap_point in range(tprs_array.shape[1]):
-        # sort all of the tpr values we calculated at this point
-        tprs = tprs_array[:, boot_strap_point]
-        tprs.sort()
-        # sort all of the fpr values we calculated at this point
-        fprs = fprs_array[:, boot_strap_point]
-        fprs.sort()
-
-        tpr_upper = tprs[int((1 - one_sided_ci) * len(tprs))]
-        tprs_upper.append(tpr_upper)
-        tpr_lower = tprs[int(one_sided_ci * len(tprs))]
-        tprs_lower.append(tpr_lower)
-
-        fpr_upper = fprs[int((1 - one_sided_ci) * len(fprs))]
-        fprs_upper.append(fpr_upper)
-        fpr_lower = fprs[int(one_sided_ci * len(fprs))]
-        fprs_lower.append(fpr_lower)
-
-    tprs_lower = np.asarray(tprs_lower)
-    tprs_upper = np.asarray(tprs_upper)
-    fprs_lower = np.asarray(fprs_lower)
-    fprs_upper = np.asarray(fprs_upper)
-
-    return bootstrapped_ci_point_error(
+    return BootstrappedCIPointError(
         mean_fprs=mean_fprs,
         mean_tprs=mean_tprs,
         low_tpr_vals=tprs_lower,
@@ -269,3 +238,21 @@ def get_bootstrapped_ci_point_error(
         low_fpr_vals=fprs_lower,
         high_fpr_vals=fprs_upper,
     )
+
+
+def _get_confidence_intervals(
+    *, n_bootstraps: int, one_sided_ci: float, points_array
+) -> Tuple[ndarray, ndarray]:
+    ci_upper = []
+    ci_lower = []
+
+    for bootstrap_point in range(n_bootstraps):
+        points = points_array[:, bootstrap_point]
+        points.sort()
+
+        tpr_upper = points[int((1 - one_sided_ci) * len(points))]
+        ci_upper.append(tpr_upper)
+        tpr_lower = points[int(one_sided_ci * len(points))]
+        ci_lower.append(tpr_lower)
+
+    return np.asarray(ci_lower), np.asarray(ci_upper)

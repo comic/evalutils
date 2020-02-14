@@ -98,8 +98,9 @@ class {{ cookiecutter.package_name|capitalize }}(
         pred = self._file_loader.load_image(pred_path)
 
         # Check that they're the right images
-        assert self._file_loader.hash_image(gt) == case["hash_ground_truth"]
-        assert self._file_loader.hash_image(pred) == case["hash_prediction"]
+        if (self._file_loader.hash_image(gt) != case["hash_ground_truth"] or
+            self._file_loader.hash_image(pred) != case["hash_prediction"]):
+            raise RuntimeError("Images do not match")
 
         # Cast to the same type
         caster = SimpleITK.CastImageFilter()

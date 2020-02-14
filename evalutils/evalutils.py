@@ -15,7 +15,6 @@ from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
 
-
 DEFAULT_INPUT_PATH = Path("/input/")
 DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH = Path("/output/images/")
 DEFAULT_ALGORITHM_OUTPUT_FILE_PATH = Path("/output/results.json")
@@ -74,19 +73,21 @@ class BaseAlgorithm(ABC):
         self._ground_truth_cases = DataFrame()
         self._predictions_cases = DataFrame()
 
-        self._cases = {}
+        self._cases: Dict[str, DataFrame] = {}
 
-        self._case_results = []
+        self._case_results: List[Dict] = []
 
         super().__init__()
 
     def load(self):
         for key, file_loader in self._file_loaders.items():
-            filter = (
+            fltr = (
                 self._file_filters[key] if key in self._file_filters else None
             )
             self._cases[key] = self._load_cases(
-                folder=self._input_path, file_loader=file_loader, filter=filter
+                folder=self._input_path,
+                file_loader=file_loader,
+                file_filter=fltr,
             )
 
     def _load_cases(
@@ -94,12 +95,12 @@ class BaseAlgorithm(ABC):
         *,
         folder: Path,
         file_loader: FileLoader,
-        filter: Pattern[str] = None,
+        file_filter: Pattern[str] = None,
     ) -> DataFrame:
         cases = None
 
         for f in sorted(folder.glob("**/*"), key=self._file_sorter_key):
-            if filter is None or filter.match(str(f)):
+            if file_filter is None or file_filter.match(str(f)):
                 try:
                     new_cases = file_loader.load(fname=f)
                 except FileLoaderError:
@@ -113,7 +114,7 @@ class BaseAlgorithm(ABC):
                         cases += new_cases
             else:
                 logger.info(
-                    f"Skip loading {f.name} because it doesn't match {filter}."
+                    f"Skip loading {f.name} because it doesn't match {file_filter}."
                 )
 
         if cases is None:
@@ -153,7 +154,6 @@ class BaseAlgorithm(ABC):
         for idx, case in self._cases[file_loader_key].iterrows():
             self._case_results.append(self.process_case(idx=idx, case=case))
 
-    # noinspection PyUnusedLocal
     def process_case(self, *, idx: int, case: DataFrame) -> Dict:
         return {}
 
@@ -233,7 +233,7 @@ class BaseEvaluation(ABC):
         self._cases = DataFrame()
 
         self._case_results = DataFrame()
-        self._aggregate_results = {}
+        self._aggregate_results: Dict[str, Union[float, int, str, None]] = {}
 
         super().__init__()
 

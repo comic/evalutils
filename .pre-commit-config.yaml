@@ -28,3 +28,8 @@ repos:
     rev: "0.40"
     hooks:
       -   id: check-manifest
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.761'
+    hooks:
+      - id: mypy
+
