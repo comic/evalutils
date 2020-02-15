@@ -113,10 +113,8 @@ class BasicAlgorithmTest(BaseAlgorithm):
         return candidates
 
 
-def test_nodule_detection_algorithm(tmpdir):
+def test_detection_algorithm(tmpdir):
     indir = tmpdir / "input"
-    outdir = tmpdir / "output"
-
     resdir = (
         Path(__file__).parent.parent
         / "evalutils"
@@ -125,28 +123,54 @@ def test_nodule_detection_algorithm(tmpdir):
         / "{{ cookiecutter.package_name }}"
         / "test"
     )
-
-    os.makedirs(outdir)
     shutil.copytree(resdir, indir)
-
-    proc = BasicAlgorithmTest(input_path=indir, outdir=outdir)
-
-    proc.process()
-
-    results_file = outdir / "results.json"
-
-    assert results_file.exists()
-
-    with open(results_file, "r") as f:
-        results = json.load(f)
-
-    print(results)
-
-    expected_results_file = (
-        Path(__file__).parent / "resources" / "json" / "results.json"
+    check_algorithm_output(
+        input_dir=indir, expected_results_file="results.json"
     )
 
-    with open(expected_results_file, "r") as f:
-        expected_result = json.load(f)
 
+def test_detection_algorithm_2d_input(tmpdir):
+    indir = tmpdir / "input"
+
+    os.makedirs(indir)
+    test_image = Path(__file__).parent / "resources" / "images" / "1_mask.png"
+    SimpleITK.WriteImage(
+        SimpleITK.ReadImage(str(test_image)), str(indir / "2dtest.mha"), True
+    )
+
+    check_algorithm_output(
+        input_dir=indir, expected_results_file="results_2d.json"
+    )
+
+
+def test_detection_algorithm_empty_input(tmpdir):
+    indir = tmpdir / "input"
+
+    os.makedirs(indir)
+    SimpleITK.WriteImage(
+        SimpleITK.GetImageFromArray(np.zeros((100, 100), dtype=np.uint8)),
+        str(indir / "emptytest.mha"),
+        True,
+    )
+
+    check_algorithm_output(
+        input_dir=indir, expected_results_file="results_empty.json"
+    )
+
+
+def check_algorithm_output(input_dir: Path, expected_results_file: str):
+    output_dir = Path(input_dir).parent / "output"
+    output_dir.mkdir()
+    proc = BasicAlgorithmTest(input_path=input_dir, outdir=output_dir)
+    proc.process()
+    results_file = output_dir / "results.json"
+    assert results_file.exists()
+    with open(str(results_file), "r") as f:
+        results = json.load(f)
+    print(results)
+    expected_path = (
+        Path(__file__).parent / "resources" / "json" / expected_results_file
+    )
+    with open(str(expected_path), "r") as f:
+        expected_result = json.load(f)
     assert results == expected_result
