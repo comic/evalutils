@@ -15,16 +15,14 @@ from evalutils.validators import (
 
 
 class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
-    def __init__(self, outdir, input_path):
+    def __init__(self):
         super().__init__(
             index_key="lung",
             file_loaders=dict(lung=SimpleITKLoader()),
             file_filters=dict(lung=re.compile(r"^.*\.mh[ad]$")),
             validators=dict(
                 lung=(UniqueImagesValidator(), UniquePathIndicesValidator())
-            ),
-            input_path=Path(input_path),
-            output_file=Path(outdir) / "results.json",
+            )
         )
 
     def process_case(self, *, idx, case):
