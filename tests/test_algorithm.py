@@ -3,11 +3,12 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import SimpleITK
 import numpy as np
 from pandas import DataFrame
+from scipy.ndimage import center_of_mass, label
 
 from evalutils import BaseAlgorithm
 from evalutils.io import SimpleITKLoader
@@ -55,37 +56,41 @@ class BasicAlgorithmTest(BaseAlgorithm):
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
 
-        # Detection: Select a maximum of 10 candidates (image coordinate)
-        # using a fixed random seed
-        sample_mask = image_data > 0
-        candidates = self._sample_fixed_random_candidates(
-            sample_mask=sample_mask, num_samples=10, random_seed_value=42
+        # Detection: Compute connected components of all values greater than 2
+        # in the input image and compute their center of mass
+        sample_mask = image_data >= 2
+        labels, num_labels = label(sample_mask)
+        candidates = center_of_mass(
+            input=sample_mask, labels=labels, index=np.arange(num_labels) + 1
         )
 
-        # Scoring: Score each candidate with the value at its image coordinate
-        candidate_scores = [image_data[coord] for coord in candidates]
+        # Scoring: Score each candidate cluster with the value at its center
+        candidate_scores = [
+            image_data[tuple(coord)]
+            for coord in np.array(candidates).astype(np.uint16)
+        ]
 
-        # Serialize candidates as a list of dictionary entries
+        # Serialize candidates and scores as a list of dictionary entries
         data = self._serialize_candidates(
             candidates=candidates,
             candidate_scores=candidate_scores,
             ref_image=input_image,
         )
 
-        # Convert serialized candidates to a DataFrame
+        # Convert serialized candidates to a pandas.DataFrame
         return DataFrame(data)
 
     def _serialize_candidates(
         self,
         *,
-        candidates: List[Tuple[np.int, ...]],
+        candidates: Iterable[Tuple[float, ...]],
         candidate_scores: List[Any],
         ref_image: SimpleITK.Image,
     ) -> List[Dict]:
         data = []
         for coord, score in zip(candidates, candidate_scores):
-            world_coords = ref_image.TransformIndexToPhysicalPoint(
-                [int(c) for c in reversed(coord)]
+            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
+                [c for c in reversed(coord)]
             )
             coord_data = {
                 f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
@@ -93,24 +98,6 @@ class BasicAlgorithmTest(BaseAlgorithm):
             coord_data.update({"score": score})
             data.append(coord_data)
         return data
-
-    def _sample_fixed_random_candidates(
-        self,
-        *,
-        sample_mask: np.array,
-        num_samples: int = 10,
-        random_seed_value: int = 42,
-    ) -> List[Tuple[np.int, ...]]:
-        candidates = [e for e in zip(*np.where(sample_mask))]
-        if len(candidates) > 0:
-            np.random.seed(seed=random_seed_value)
-            indices = np.random.choice(
-                len(candidates),
-                min(num_samples, len(candidates)),
-                replace=False,
-            )
-            candidates = [candidates[idx] for idx in indices]
-        return candidates
 
 
 def test_detection_algorithm(tmpdir):
@@ -124,7 +111,7 @@ def test_detection_algorithm(tmpdir):
         / "test"
     )
     shutil.copytree(resdir, indir)
-    check_algorithm_output(
+    validate_algorithm_output(
         input_dir=indir, expected_results_file="results.json"
     )
 
@@ -133,12 +120,25 @@ def test_detection_algorithm_2d_input(tmpdir):
     indir = tmpdir / "input"
 
     os.makedirs(indir)
-    test_image = Path(__file__).parent / "resources" / "images" / "1_mask.png"
+    test_image = (
+        Path(__file__).parent.parent
+        / "evalutils"
+        / "templates"
+        / "algorithm"
+        / "{{ cookiecutter.package_name }}"
+        / "test"
+        / "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
+    )
+    image_data = SimpleITK.GetArrayFromImage(
+        SimpleITK.ReadImage(str(test_image))
+    )[74, :, :]
     SimpleITK.WriteImage(
-        SimpleITK.ReadImage(str(test_image)), str(indir / "2dtest.mha"), True
+        SimpleITK.GetImageFromArray(image_data),
+        str(indir / "2dtest.mha"),
+        True,
     )
 
-    check_algorithm_output(
+    validate_algorithm_output(
         input_dir=indir, expected_results_file="results_2d.json"
     )
 
@@ -153,12 +153,12 @@ def test_detection_algorithm_empty_input(tmpdir):
         True,
     )
 
-    check_algorithm_output(
+    validate_algorithm_output(
         input_dir=indir, expected_results_file="results_empty.json"
     )
 
 
-def check_algorithm_output(input_dir: Path, expected_results_file: str):
+def validate_algorithm_output(input_dir: Path, expected_results_file: str):
     output_dir = Path(input_dir).parent / "output"
     output_dir.mkdir()
     proc = BasicAlgorithmTest(input_path=input_dir, outdir=output_dir)
