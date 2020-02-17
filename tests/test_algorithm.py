@@ -38,7 +38,8 @@ class BasicAlgorithmTest(BaseAlgorithm):
         lung = self._file_loaders["lung"].load_image(lung_path)
 
         # Check that it is the expected image
-        assert self._file_loaders["lung"].hash_image(lung) == case["hash"]
+        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
 
         # Detect and score candidates
         scored_candidates = self.predict(input_image=lung)
