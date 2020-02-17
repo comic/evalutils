@@ -29,13 +29,16 @@ TEMPLATE_TEST_DIR = (
 
 
 class BasicAlgorithmTest(BaseAlgorithm):
-    def __init__(self, outdir, input_path):
+    def __init__(self, outdir: Path, input_path: Path):
         super().__init__(
-            index_key="lung",
-            file_loaders=dict(lung=SimpleITKLoader()),
-            file_filters=dict(lung=re.compile(r"^.*\.mh[ad]$")),
+            index_key="input_image",
+            file_loaders=dict(input_image=SimpleITKLoader()),
+            file_filters=dict(input_image=re.compile(r"^.*\.mh[ad]$")),
             validators=dict(
-                lung=(UniqueImagesValidator(), UniquePathIndicesValidator())
+                input_image=(
+                    UniqueImagesValidator(),
+                    UniquePathIndicesValidator(),
+                )
             ),
             input_path=Path(input_path),
             output_file=Path(outdir) / "results.json",
@@ -45,24 +48,31 @@ class BasicAlgorithmTest(BaseAlgorithm):
 
 class DetectionAlgorithmTest(BasicAlgorithmTest):
     def process_case(self, *, idx, case):
-        lung_path = case["path"]
+        input_image_file_path = case["path"]
 
         # Load the image for this case
-        lung = self._file_loaders["lung"].load_image(lung_path)
+        input_image = self._file_loaders["input_image"].load_image(
+            input_image_file_path
+        )
 
         # Check that it is the expected image
-        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+        if (
+            self._file_loaders["input_image"].hash_image(input_image)
+            != case["hash"]
+        ):
             raise RuntimeError("Image hashes do not match")
 
         # Detect and score candidates
-        scored_candidates = self.predict(input_image=lung)
+        scored_candidates = self.predict(input_image=input_image)
 
         # Write resulting candidates to result.json for this case
         return {
             "outputs": [
                 dict(type="candidates", data=scored_candidates.to_dict())
             ],
-            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
             "error_messages": [],
         }
 
@@ -70,9 +80,9 @@ class DetectionAlgorithmTest(BasicAlgorithmTest):
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
 
-        # Detection: Compute connected components of all values greater than 2
+        # Detection: Compute connected components of the maximum values
         # in the input image and compute their center of mass
-        sample_mask = image_data >= 2
+        sample_mask = image_data == np.max(image_data)
         labels, num_labels = label(sample_mask)
         candidates = center_of_mass(
             input=sample_mask, labels=labels, index=np.arange(num_labels) + 1
@@ -116,30 +126,37 @@ class DetectionAlgorithmTest(BasicAlgorithmTest):
 
 class SegmentationAlgorithmTest(BasicAlgorithmTest):
     def process_case(self, *, idx, case):
-        lung_path = case["path"]
+        input_image_file_path = case["path"]
 
         # Load the image for this case
-        lung = self._file_loaders["lung"].load_image(lung_path)
+        input_image = self._file_loaders["input_image"].load_image(
+            input_image_file_path
+        )
 
         # Check that it is the expected image
-        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+        if (
+            self._file_loaders["input_image"].hash_image(input_image)
+            != case["hash"]
+        ):
             raise RuntimeError("Image hashes do not match")
 
         # Segment nodule candidates
-        segmented_nodules = self.predict(input_image=lung)
+        segmented_nodules = self.predict(input_image=input_image)
 
         # Write resulting segmentation to output location
-        segmentation_path = self._output_path / lung_path.name
+        segmentation_path = self._output_path / input_image_file_path.name
         if not self._output_path.exists():
             self._output_path.mkdir()
         SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
 
-        # Write resulting file path to result.json for this case
+        # Write segmentation file path to result.json for this case
         return {
             "outputs": [
                 dict(type="metaio_image", filename=segmentation_path.name)
             ],
-            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
             "error_messages": [],
         }
 
@@ -152,30 +169,41 @@ class SegmentationAlgorithmTest(BasicAlgorithmTest):
 
 class ClassificationAlgorithmTest(BasicAlgorithmTest):
     def process_case(self, *, idx, case):
-        lung_path = case["path"]
+        input_image_file_path = case["path"]
 
         # Load the image for this case
-        lung = self._file_loaders["lung"].load_image(lung_path)
+        input_image = self._file_loaders["input_image"].load_image(
+            input_image_file_path
+        )
 
         # Check that it is the expected image
-        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+        if (
+            self._file_loaders["input_image"].hash_image(input_image)
+            != case["hash"]
+        ):
             raise RuntimeError("Image hashes do not match")
 
-        # Classify lung image
-        has_nodules = self.predict(input_image=lung)
+        # Classify input_image image
+        values_exceeding_one = self.predict(input_image=input_image)
 
         # Write resulting classification to result.json for this case
         return {
             "outputs": [
-                dict(type="bool", name="has_nodules", value=has_nodules)
+                dict(
+                    type="bool",
+                    name="values_exceeding_one",
+                    value=values_exceeding_one,
+                )
             ],
-            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
             "error_messages": [],
         }
 
     def predict(self, *, input_image: SimpleITK.Image) -> bool:
-        # Checks if there are any nodules voxels (>= 2) in the input image
-        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) >= 2))
+        # Checks if there are any nodules voxels (> 1) in the input image
+        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) > 1))
 
 
 def test_classification_algorithm(tmpdir):

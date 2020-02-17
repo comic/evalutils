@@ -3,7 +3,7 @@
         "outputs": [
             {
                 "type": "bool",
-                "name": "has_nodules",
+                "name": "has_values_above_one",
                 "value": true
             }
         ],
