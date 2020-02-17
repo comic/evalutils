@@ -168,6 +168,7 @@ def test_algorithm_cli(
 
     # Grab the results json
     out = out.decode().splitlines()
+    assert "Tests successfully passed..." in out
     start = [i for i, ln in enumerate(out) if ln == "["]
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))

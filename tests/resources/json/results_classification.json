@@ -3,7 +3,7 @@
         "outputs": [
             {
                 "type": "bool",
-                "name": "has_values_above_one",
+                "name": "values_exceeding_one",
                 "value": true
             }
         ],
