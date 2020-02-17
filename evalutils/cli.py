@@ -8,6 +8,7 @@ from cookiecutter.main import cookiecutter
 from . import __version__
 
 EVALUATION_CHOICES = ["Classification", "Segmentation", "Detection"]
+ALGORITHM_CHOICES = EVALUATION_CHOICES
 FORBIDDEN_NAMES = ["evalutils", "pandas", "Evaluation", "Algorithm"]
 MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
@@ -134,6 +135,11 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 @click.argument(
     "algorithm_name", callback=validate_python_module_name_fn("algorithm_name")
 )
+@click.option(
+    "--kind",
+    type=click.Choice(ALGORITHM_CHOICES),
+    prompt=f"What kind of algorithm is this? [{'|'.join(ALGORITHM_CHOICES)}]",
+)
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
     "--req-cpus",
@@ -178,6 +184,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 @click.option("--dev", is_flag=True)
 def init_algorithm(
     algorithm_name,
+    kind,
     diag_ticket,
     req_cpus,
     req_cpu_capabilities,
@@ -195,6 +202,7 @@ def init_algorithm(
             extra_context={
                 "diag_ticket": diag_ticket,
                 "algorithm_name": algorithm_name,
+                "algorithm_kind": kind,
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
                 "dev_build": 1 if dev else 0,

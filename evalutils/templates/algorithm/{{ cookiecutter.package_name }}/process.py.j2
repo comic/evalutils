@@ -1,17 +1,20 @@
 import re
+{% if cookiecutter.algorithm_kind == "Detection" %}
 from typing import Any, Dict, Iterable, List, Tuple
+{% endif %}
 
 import SimpleITK
 import numpy as np
+{% if cookiecutter.algorithm_kind == "Detection" %}
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
+{% endif %}
 
 from evalutils import BaseAlgorithm
-from evalutils.io import SimpleITKLoader, CSVLoader
+from evalutils.io import SimpleITKLoader
 from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
-    ExpectedColumnNamesValidator,
 )
 
 
@@ -36,6 +39,7 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
         if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
             raise RuntimeError("Image hashes do not match")
 
+{% if cookiecutter.algorithm_kind == "Detection" %}
         # Detect and score candidates
         scored_candidates = self.predict(input_image=lung)
 
@@ -44,10 +48,36 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
             "outputs": [
                 dict(type="candidates", data=scored_candidates.to_dict())
             ],
+{% elif cookiecutter.algorithm_kind == "Segmentation" %}
+        # Segment nodule candidates
+        segmented_nodules = self.predict(input_image=lung)
+
+        # Write resulting segmentation to output location
+        segmentation_path = self._output_path / lung_path.name
+        if not self._output_path.exists():
+            self._output_path.mkdir()
+        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
+
+        # Write resulting file path to result.json for this case
+        return {
+            "outputs": [
+                dict(type="metaio_image", filename=segmentation_path.name)
+            ],
+{% elif cookiecutter.algorithm_kind == "Classification" %}
+        # Classify lung image
+        has_nodules = self.predict(input_image=lung)
+
+        # Write resulting classification to result.json for this case
+        return {
+            "outputs": [
+                dict(type="bool", name="has_nodules", value=has_nodules)
+            ],
+{% endif %}
             "inputs": [dict(type="metaio_image", filename=lung_path.name)],
             "error_messages": [],
         }
 
+{% if cookiecutter.algorithm_kind == "Detection" %}
     def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
@@ -94,6 +124,17 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
             coord_data.update({"score": score})
             data.append(coord_data)
         return data
+{% elif cookiecutter.algorithm_kind == "Segmentation" %}
+    def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+        # Segment all values greater than 2 in the input image
+        return SimpleITK.BinaryThreshold(
+            image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
+        )
+{% elif cookiecutter.algorithm_kind == "Classification" %}
+    def predict(self, *, input_image: SimpleITK.Image) -> bool:
+        # Checks if there are any nodules voxels (>= 2) in the input image
+        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) >= 2))
+{% endif %}
 
 
 if __name__ == "__main__":

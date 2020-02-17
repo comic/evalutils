@@ -18,6 +18,16 @@ from evalutils.validators import (
 )
 
 
+TEMPLATE_TEST_DIR = (
+    Path(__file__).parent.parent
+    / "evalutils"
+    / "templates"
+    / "algorithm"
+    / "{{ cookiecutter.package_name }}"
+    / "test"
+)
+
+
 class BasicAlgorithmTest(BaseAlgorithm):
     def __init__(self, outdir, input_path):
         super().__init__(
@@ -29,8 +39,11 @@ class BasicAlgorithmTest(BaseAlgorithm):
             ),
             input_path=Path(input_path),
             output_file=Path(outdir) / "results.json",
+            output_path=Path(outdir) / "images",
         )
 
+
+class DetectionAlgorithmTest(BasicAlgorithmTest):
     def process_case(self, *, idx, case):
         lung_path = case["path"]
 
@@ -101,19 +114,109 @@ class BasicAlgorithmTest(BaseAlgorithm):
         return data
 
 
+class SegmentationAlgorithmTest(BasicAlgorithmTest):
+    def process_case(self, *, idx, case):
+        lung_path = case["path"]
+
+        # Load the image for this case
+        lung = self._file_loaders["lung"].load_image(lung_path)
+
+        # Check that it is the expected image
+        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
+
+        # Segment nodule candidates
+        segmented_nodules = self.predict(input_image=lung)
+
+        # Write resulting segmentation to output location
+        segmentation_path = self._output_path / lung_path.name
+        if not self._output_path.exists():
+            self._output_path.mkdir()
+        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
+
+        # Write resulting file path to result.json for this case
+        return {
+            "outputs": [
+                dict(type="metaio_image", filename=segmentation_path.name)
+            ],
+            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
+            "error_messages": [],
+        }
+
+    def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+        # Segment all values greater than 2 in the input image
+        return SimpleITK.BinaryThreshold(
+            image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
+        )
+
+
+class ClassificationAlgorithmTest(BasicAlgorithmTest):
+    def process_case(self, *, idx, case):
+        lung_path = case["path"]
+
+        # Load the image for this case
+        lung = self._file_loaders["lung"].load_image(lung_path)
+
+        # Check that it is the expected image
+        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
+
+        # Classify lung image
+        has_nodules = self.predict(input_image=lung)
+
+        # Write resulting classification to result.json for this case
+        return {
+            "outputs": [
+                dict(type="bool", name="has_nodules", value=has_nodules)
+            ],
+            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
+            "error_messages": [],
+        }
+
+    def predict(self, *, input_image: SimpleITK.Image) -> bool:
+        # Checks if there are any nodules voxels (>= 2) in the input image
+        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) >= 2))
+
+
+def test_classification_algorithm(tmpdir):
+    indir = Path(tmpdir / "input")
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
+    validate_algorithm_output(
+        input_dir=indir,
+        expected_results_file="results_classification.json",
+        algorithm_test_class=ClassificationAlgorithmTest,
+    )
+
+
+def test_segmentation_algorithm(tmpdir):
+    indir = Path(tmpdir / "input")
+    out_file = Path(
+        tmpdir
+        / "output"
+        / "images"
+        / "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
+    )
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
+    validate_algorithm_output(
+        input_dir=indir,
+        expected_results_file="results_segmentation.json",
+        algorithm_test_class=SegmentationAlgorithmTest,
+    )
+    assert out_file.exists()
+    out_img = SimpleITK.GetArrayFromImage(SimpleITK.ReadImage(str(out_file)))
+    in_img = SimpleITK.GetArrayFromImage(
+        SimpleITK.ReadImage(str(indir / out_file.name))
+    )
+    assert np.array_equal((in_img >= 2), (out_img > 0))
+
+
 def test_detection_algorithm(tmpdir):
     indir = tmpdir / "input"
-    resdir = (
-        Path(__file__).parent.parent
-        / "evalutils"
-        / "templates"
-        / "algorithm"
-        / "{{ cookiecutter.package_name }}"
-        / "test"
-    )
-    shutil.copytree(resdir, indir)
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results.json"
+        input_dir=indir,
+        expected_results_file="results_detection.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
@@ -122,12 +225,7 @@ def test_detection_algorithm_2d_input(tmpdir):
 
     os.makedirs(indir)
     test_image = (
-        Path(__file__).parent.parent
-        / "evalutils"
-        / "templates"
-        / "algorithm"
-        / "{{ cookiecutter.package_name }}"
-        / "test"
+        TEMPLATE_TEST_DIR
         / "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
     )
     image_data = SimpleITK.GetArrayFromImage(
@@ -140,7 +238,9 @@ def test_detection_algorithm_2d_input(tmpdir):
     )
 
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results_2d.json"
+        input_dir=indir,
+        expected_results_file="results_2d.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
@@ -155,14 +255,18 @@ def test_detection_algorithm_empty_input(tmpdir):
     )
 
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results_empty.json"
+        input_dir=indir,
+        expected_results_file="results_empty.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
-def validate_algorithm_output(input_dir: Path, expected_results_file: str):
+def validate_algorithm_output(
+    input_dir: Path, expected_results_file: str, algorithm_test_class: type
+):
     output_dir = Path(input_dir).parent / "output"
     output_dir.mkdir()
-    proc = BasicAlgorithmTest(input_path=input_dir, outdir=output_dir)
+    proc = algorithm_test_class(input_path=input_dir, outdir=output_dir)
     proc.process()
     results_file = output_dir / "results.json"
     assert results_file.exists()
