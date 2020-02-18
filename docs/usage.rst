@@ -444,7 +444,7 @@ The structure of the project will be:
         └── test.sh                  # A script that runs your algorithm container using the example test image and validates the output
 
 The most important file is ``process.py``.
-This is the file where you will extend the ``BaseAlgorithm`` class and implement your algorithm.
+This is the file where you will extend the ``Algorithm`` class and implement your algorithm.
 In this file, a new class has been created for you, and it is instantiated and run with:
 
 .. code-block:: python
@@ -454,7 +454,12 @@ In this file, a new class has been created for you, and it is instantiated and r
 
 
 This is all that is needed for ``evalutils`` to run the algorithm and process input images.
-The subclass of ``BaseAlgorithm`` is what you need to modify for your specific algorithm.
+The subclass of ``Algorithm`` is what you need to modify for your specific algorithms.
+
+By default all algorithms will try to load all files in the /input directory using ``SimpleITKLoader`` for loading the data.
+After successfully loading a single image a ``SimpleITK.Image`` object is ready to be manipulated by the algorithms in
+the ``predict`` method for algorithm tasks like classification, segmentation, or detection.
+
 
 Classification Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -480,156 +485,110 @@ The boilerplate for classification algorithms looks like this:
             }
 
 
-In this case the algorithm is loading only any input images using ``SimpleITKLoader`` which will do the loading of the data.
-Loading of the mha/mhd files is enforced by using a regular expression for the file_filters attribute.
-We want to validate that the input images are unique, so we use the ``UniqueImagesValidator`` and ``UniquePathIndicesValidator``.
+The input images can be validated by specifying validators. Here, we want to validate that the input images are unique,
+so we use the ``UniqueImagesValidator`` and ``UniquePathIndicesValidator``.
 See :mod:`evalutils.validators` for a list of other validators that you can use.
 
-<----- TODO ....---->
+All that needs to be modified is the ``predict`` method of your Algorithm class. By default, it takes an input ``SimpleITK.Image``
+and expects a dictionary that contains some values based on the image.
+In this example it takes the input image, converts it to a ``numpy.ndarray``, checks if there is any value larger than 1 in the image, and writes the boolean result to a dictionary.
 
+The output dictionary can have an arbitrary number of key/value pairs. Extending the outputs can be done by adding new dictionary keys and associated values.
 
-The ground truth and predictions will be loaded into two DataFrames.
-The last argument is a ``join_key``, the is the name of the column that will appear in both DataFrames that serves as an index to join the dataframes on in order to create ``self._cases``.
-The ``join_key`` is manditory when you use a ``CSVLoader``.
-This should be set to some sort of common index, such as a `case` identifier.
-When loading in files they are first going to be sorted so you might not need a ``join_key``, but you could also write a function that matches the cases based on filename.
+The resulting dictionary will be written to ``/output/results.json`` output file by the super class after running the ``predict`` method on all inputs.
 
-.. warning:: It is best practice to include an integer in the (file) name that uniquely defines each case.
-    For instance, name your testing set files case_001, case_002, ... etc.
-
-The last part is performing the actual evaluation.
-In this example we are only getting one number per submission, the accuracy score.
-This number is calculated using ``sklearn.metrics.accuracy_score``.
-The ``self._cases`` data frame will contain all of the columns that you expect, and for those that have not been joined they will be available as ``"<column_name>_ground_truth"`` and ``"<column_name>_prediction"``.
-
-If you need to score cases individually before aggregating them, you should remove the implementation of ``score_aggregates`` and implement ``score_case`` instead.
-
-Segmentation Tasks
-~~~~~~~~~~~~~~~~~~
+Segmentation Algorithm
+~~~~~~~~~~~~~~~~~~~~~~
 
 For segmentation tasks, the generated code will look like this:
 
 .. code-block:: python
 
-    class Myproject(ClassificationEvaluation):
+    class Myproject(SegmentationAlgorithm):
         def __init__(self):
             super().__init__(
-                file_loader=SimpleITKLoader(),
-                validators=(
-                    NumberOfCasesValidator(num_cases=2),
-                    UniquePathIndicesValidator(),
-                    UniqueImagesValidator(),
+                validators=dict(
+                    input_image=(
+                        UniqueImagesValidator(),
+                        UniquePathIndicesValidator(),
+                    )
                 ),
+
+        def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+            # Segment all values greater than 2 in the input image
+            return SimpleITK.BinaryThreshold(
+                image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
             )
 
-        def score_case(self, *, idx, case):
-            gt_path = case["path_ground_truth"]
-            pred_path = case["path_prediction"]
 
-            # Load the images for this case
-            gt = self._file_loader.load_image(gt_path)
-            pred = self._file_loader.load_image(pred_path)
+Similar as before, all that needs to be modified is the ``predict`` method of your Algorithm class. By default, it takes an input ``SimpleITK.Image``
+and expects another ``SimpleITK.Image`` as an output.
 
-            # Check that they're the right images
-            assert self._file_loader.hash_image(gt) == case["hash_ground_truth"]
-            assert self._file_loader.hash_image(pred) == case["hash_prediction"]
+In this example it takes the input image, thresholds this for all values greater than or equal to 2 and returns the resulting image.
 
-            # Cast to the same type
-            caster = SimpleITK.CastImageFilter()
-            caster.SetOutputPixelType(SimpleITK.sitkUInt8)
-            gt = caster.Execute(gt)
-            pred = caster.Execute(pred)
+Besides the default ``/output/results.json`` output file the SegmentationAlgorithm outputs the resulting images at: ``/output/images/``.
 
-            # Score the case
-            overlap_measures = SimpleITK.LabelOverlapMeasuresImageFilter()
-            overlap_measures.Execute(gt, pred)
 
-            return {
-                'FalseNegativeError': overlap_measures.GetFalseNegativeError(),
-                'FalsePositiveError': overlap_measures.GetFalsePositiveError(),
-                'MeanOverlap': overlap_measures.GetMeanOverlap(),
-                'UnionOverlap': overlap_measures.GetUnionOverlap(),
-                'VolumeSimilarity': overlap_measures.GetVolumeSimilarity(),
-                'JaccardCoefficient': overlap_measures.GetJaccardCoefficient(),
-                'DiceCoefficient': overlap_measures.GetDiceCoefficient(),
-                'pred_fname': pred_path.name,
-                'gt_fname': gt_path.name,
-            }
-
-Here, we are loading ITK files in the ground-truth and test folders using ``SimpleITKLoader``.
-See :mod:`evalutils.io` for the other image loaders you could use.
-By default, the files will be matched together based on the first integer found in the filename, so name your ground truth files, for example, case_001.mha, case_002.mha, etc.
-Have the participants for your challenge do the same.
-
-The loader will try to load all of the files in the ground-truth and submission folders.
-To check that the correct number of images were submitted by the participant and loaded we use ``NumberOfCasesValidator``, and check that the images are unique by using ``UniquePathIndicesValidator`` and ``UniqueImagesValidator``
-
-The ``score_case`` function will calculate the score for each case, in this case we're calculating some overlap measures using ``SimpleITK``.
-The images are not stored in the case dataframe to save memory, so first they are loaded using the file loader, and are then checked that they are the valid images by calculating the hash.
-The filenames are also stored for the case for matching later on grand-challenge.
-
-The aggregate results are automatically calculated using ``score_aggregates``, which calls ``DataFrame.describe()``.
-By default, this will calculate the mean, quartile ranges and counts of each individual metric.
-
-Detection Tasks
-~~~~~~~~~~~~~~~
+Detection Algorithm
+~~~~~~~~~~~~~~~~~~~
 
 The generated boilerplate for detection tasks is:
 
 .. code-block:: python
 
-    class Myproject(DetectionEvaluation):
+    class Myproject(DetectionAlgorithm):
         def __init__(self):
             super().__init__(
-                file_loader=CSVLoader(),
-                validators=(
-                    ExpectedColumnNamesValidator(
-                        expected=("image_id", "x", "y", "score")
-                    ),
+                validators=dict(
+                    input_image=(
+                        UniqueImagesValidator(),
+                        UniquePathIndicesValidator(),
+                    )
                 ),
-                join_key="image_id",
-                detection_radius=1.0,
-                detection_threshold=0.5,
+
+        def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
+            # Extract a numpy array with image data from the SimpleITK Image
+            image_data = SimpleITK.GetArrayFromImage(input_image)
+
+            # Detection: Compute connected components of the maximum values
+            # in the input image and compute their center of mass
+            sample_mask = image_data >= np.max(image_data)
+            labels, num_labels = label(sample_mask)
+            candidates = center_of_mass(
+                input=sample_mask, labels=labels, index=np.arange(num_labels) + 1
             )
 
-        def get_points(self, *, case, key):
-            """
-            Converts the set of ground truth or predictions for this case, into
-            points that represent true positives or predictions
-            """
-            try:
-                points = case.loc[key]
-            except KeyError:
-                # There are no ground truth/prediction points for this case
-                return []
-
-            return [
-                (p["x"], p["y"])
-                for _, p in points.iterrows()
-                if p["score"] > self._detection_threshold
+            # Scoring: Score each candidate cluster with the value at its center
+            candidate_scores = [
+                image_data[tuple(coord)]
+                for coord in np.array(candidates).astype(np.uint16)
             ]
 
-In this case, we are loading a CSV file with ``CSVLoader``, but do not validate the number of rows as they can be different between the ground truth and submissions.
-We validate the column headers in both files.
-In this case, we identify the cases with ``image_id``, and both files contain ``x`` and ``y`` locations, with a confidence score of ``score``.
-In the ground truth dataset the score should be set to 1.
+            # Serialize candidates and scores as a list of dictionary entries
+            data = self._serialize_candidates(
+                candidates=candidates,
+                candidate_scores=candidate_scores,
+                ref_image=input_image,
+            )
 
-By default, The predictions will be thresholded at ``detection_threshold``.
-The detection evaluation will count the closest prediction that lies within distance ``detection_radius`` from the ground truth point as a true positive.
-See :mod:`evalutils.scorers` for more information on the algorithm.
+            # Convert serialized candidates to a pandas.DataFrame
+            return DataFrame(data)
 
-The only function that needs to be implemented is ``get_points``, which converts a case row to a list of points which are later matched.
-In this case, we're acting on 2D images, but you could extend ``(p["x"], p["y"])`` to say ``(p["x"], p["y"], p["z"])`` if you have 3D data.
 
-By default, the f1 score, precision and accuracy are calculated for each case, see the ``DetectionEvaluation`` class for more information.
+The only function that needs to be implemented is ``predict``, which should extract a list of candidate points from the input image and
+return the candidates with some associated scores or labels to a ``pandas.DataFrame``.
 
-Add The Test Data
-^^^^^^^^^^^^^^^^^
+The ``_serialize_candidates`` helper function takes in a list of candidates in image coordinate space and converts these to world coordinates given a reference ``SimpleItk.Image``.
+Additionally, the function adds scores per candidate.
 
-The next step is to add your test data (an example image) to the repo.
-If using CSV data simply update the ``ground-truth/reference.csv`` file, and then update the expected column names and join key in evaluate.py.
-Otherwise, see :mod:`evalutils.io` for other loaders such as the ones for ITK files or images.
-You can also add your own loader by extending the ``FileLoader`` class.
+The resulting DataFrame is added to the ``/output/results.json``.
+
+Add The Test Data And The Expected Output File
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The next step is to add your test data (an example image and a json file with the expected output) to the repo.
+The test images go into the ``test`` folder in your repo.
+To update the expected output simply update the ``test/expected_output.json`` file.
 
 Adapt The Algorithm
 ^^^^^^^^^^^^^^^^^^^
