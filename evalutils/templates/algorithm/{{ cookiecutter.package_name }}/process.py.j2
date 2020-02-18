@@ -1,29 +1,22 @@
-import re
-{% if cookiecutter.algorithm_kind == "Detection" %}
-from typing import Any, Dict, Iterable, List, Tuple
+{% if cookiecutter.algorithm_kind == "Classification" %}
+from typing import Dict
 {% endif %}
-
 import SimpleITK
 import numpy as np
 {% if cookiecutter.algorithm_kind == "Detection" %}
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
 {% endif %}
-
-from evalutils import BaseAlgorithm
-from evalutils.io import SimpleITKLoader
+from evalutils import {{ cookiecutter.algorithm_kind }}Algorithm
 from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
 )
 
 
-class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
+class {{ cookiecutter.package_name|capitalize }}({{ cookiecutter.algorithm_kind }}Algorithm):
     def __init__(self):
         super().__init__(
-            index_key="input_image",
-            file_loaders=dict(input_image=SimpleITKLoader()),
-            file_filters=dict(input_image=re.compile(r"^.*\.mh[ad]$")),
             validators=dict(
                 input_image=(
                     UniqueImagesValidator(),
@@ -31,66 +24,6 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
                 )
             ),
         )
-
-    def process_case(self, *, idx, case):
-        input_image_file_path = case["path"]
-
-        # Load the image for this case
-        input_image = self._file_loaders["input_image"].load_image(
-            input_image_file_path
-        )
-
-        # Check that it is the expected image
-        if (
-            self._file_loaders["input_image"].hash_image(input_image)
-            != case["hash"]
-        ):
-            raise RuntimeError("Image hashes do not match")
-
-{% if cookiecutter.algorithm_kind == "Detection" %}
-        # Detect and score candidates
-        scored_candidates = self.predict(input_image=input_image)
-
-        # Write resulting candidates to result.json for this case
-        return {
-            "outputs": [
-                dict(type="candidates", data=scored_candidates.to_dict())
-            ],
-{% elif cookiecutter.algorithm_kind == "Segmentation" %}
-        # Segment nodule candidates
-        segmented_nodules = self.predict(input_image=input_image)
-
-        # Write resulting segmentation to output location
-        segmentation_path = self._output_path / input_image_file_path.name
-        if not self._output_path.exists():
-            self._output_path.mkdir()
-        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
-
-        # Write segmentation file path to result.json for this case
-        return {
-            "outputs": [
-                dict(type="metaio_image", filename=segmentation_path.name)
-            ],
-{% elif cookiecutter.algorithm_kind == "Classification" %}
-        # Classify input_image image
-        values_exceeding_one = self.predict(input_image=input_image)
-
-        # Write resulting classification to result.json for this case
-        return {
-            "outputs": [
-                dict(
-                    type="bool",
-                    name="values_exceeding_one",
-                    value=values_exceeding_one,
-                )
-            ],
-{% endif %}
-            "inputs": [
-                dict(type="metaio_image", filename=input_image_file_path.name)
-            ],
-            "error_messages": [],
-        }
-
 {% if cookiecutter.algorithm_kind == "Detection" %}
     def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
         # Extract a numpy array with image data from the SimpleITK Image
@@ -119,25 +52,6 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
 
         # Convert serialized candidates to a pandas.DataFrame
         return DataFrame(data)
-
-    def _serialize_candidates(
-        self,
-        *,
-        candidates: Iterable[Tuple[float, ...]],
-        candidate_scores: List[Any],
-        ref_image: SimpleITK.Image,
-    ) -> List[Dict]:
-        data = []
-        for coord, score in zip(candidates, candidate_scores):
-            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
-                [c for c in reversed(coord)]
-            )
-            coord_data = {
-                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
-            }
-            coord_data.update({"score": score})
-            data.append(coord_data)
-        return data
 {% elif cookiecutter.algorithm_kind == "Segmentation" %}
     def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
         # Segment all values greater than 2 in the input image
@@ -145,11 +59,14 @@ class {{ cookiecutter.package_name|capitalize }}(BaseAlgorithm):
             image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
         )
 {% elif cookiecutter.algorithm_kind == "Classification" %}
-    def predict(self, *, input_image: SimpleITK.Image) -> bool:
+    def predict(self, *, input_image: SimpleITK.Image) -> Dict:
         # Checks if there are any nodules voxels (> 1) in the input image
-        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) > 1))
+        return dict(
+            values_exceeding_one=bool(
+                np.any(SimpleITK.GetArrayFromImage(input_image) > 1)
+            )
+        )
 {% endif %}
-
 
 if __name__ == "__main__":
     {{ cookiecutter.package_name|capitalize }}().process()

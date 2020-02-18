@@ -2,9 +2,7 @@
     {
         "outputs": [
             {
-                "type": "bool",
-                "name": "values_exceeding_one",
-                "value": true
+                "values_exceeding_one": true
             }
         ],
         "inputs": [

@@ -1,20 +1,18 @@
 import json
 import os
-import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Dict
 
 import SimpleITK
 import numpy as np
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
 
-from evalutils import BaseAlgorithm
-from evalutils.io import SimpleITKLoader
-from evalutils.validators import (
-    UniqueImagesValidator,
-    UniquePathIndicesValidator,
+from evalutils import (
+    ClassificationAlgorithm,
+    DetectionAlgorithm,
+    SegmentationAlgorithm,
 )
 
 
@@ -28,54 +26,7 @@ TEMPLATE_TEST_DIR = (
 )
 
 
-class BasicAlgorithmTest(BaseAlgorithm):
-    def __init__(self, outdir: Path, input_path: Path):
-        super().__init__(
-            index_key="input_image",
-            file_loaders=dict(input_image=SimpleITKLoader()),
-            file_filters=dict(input_image=re.compile(r"^.*\.mh[ad]$")),
-            validators=dict(
-                input_image=(
-                    UniqueImagesValidator(),
-                    UniquePathIndicesValidator(),
-                )
-            ),
-            input_path=Path(input_path),
-            output_file=Path(outdir) / "results.json",
-            output_path=Path(outdir) / "images",
-        )
-
-
-class DetectionAlgorithmTest(BasicAlgorithmTest):
-    def process_case(self, *, idx, case):
-        input_image_file_path = case["path"]
-
-        # Load the image for this case
-        input_image = self._file_loaders["input_image"].load_image(
-            input_image_file_path
-        )
-
-        # Check that it is the expected image
-        if (
-            self._file_loaders["input_image"].hash_image(input_image)
-            != case["hash"]
-        ):
-            raise RuntimeError("Image hashes do not match")
-
-        # Detect and score candidates
-        scored_candidates = self.predict(input_image=input_image)
-
-        # Write resulting candidates to result.json for this case
-        return {
-            "outputs": [
-                dict(type="candidates", data=scored_candidates.to_dict())
-            ],
-            "inputs": [
-                dict(type="metaio_image", filename=input_image_file_path.name)
-            ],
-            "error_messages": [],
-        }
-
+class DetectionAlgorithmTest(DetectionAlgorithm):
     def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
@@ -104,62 +55,8 @@ class DetectionAlgorithmTest(BasicAlgorithmTest):
         # Convert serialized candidates to a pandas.DataFrame
         return DataFrame(data)
 
-    def _serialize_candidates(
-        self,
-        *,
-        candidates: Iterable[Tuple[float, ...]],
-        candidate_scores: List[Any],
-        ref_image: SimpleITK.Image,
-    ) -> List[Dict]:
-        data = []
-        for coord, score in zip(candidates, candidate_scores):
-            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
-                [c for c in reversed(coord)]
-            )
-            coord_data = {
-                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
-            }
-            coord_data.update({"score": score})
-            data.append(coord_data)
-        return data
 
-
-class SegmentationAlgorithmTest(BasicAlgorithmTest):
-    def process_case(self, *, idx, case):
-        input_image_file_path = case["path"]
-
-        # Load the image for this case
-        input_image = self._file_loaders["input_image"].load_image(
-            input_image_file_path
-        )
-
-        # Check that it is the expected image
-        if (
-            self._file_loaders["input_image"].hash_image(input_image)
-            != case["hash"]
-        ):
-            raise RuntimeError("Image hashes do not match")
-
-        # Segment nodule candidates
-        segmented_nodules = self.predict(input_image=input_image)
-
-        # Write resulting segmentation to output location
-        segmentation_path = self._output_path / input_image_file_path.name
-        if not self._output_path.exists():
-            self._output_path.mkdir()
-        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
-
-        # Write segmentation file path to result.json for this case
-        return {
-            "outputs": [
-                dict(type="metaio_image", filename=segmentation_path.name)
-            ],
-            "inputs": [
-                dict(type="metaio_image", filename=input_image_file_path.name)
-            ],
-            "error_messages": [],
-        }
-
+class SegmentationAlgorithmTest(SegmentationAlgorithm):
     def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
         # Segment all values greater than 2 in the input image
         return SimpleITK.BinaryThreshold(
@@ -167,43 +64,14 @@ class SegmentationAlgorithmTest(BasicAlgorithmTest):
         )
 
 
-class ClassificationAlgorithmTest(BasicAlgorithmTest):
-    def process_case(self, *, idx, case):
-        input_image_file_path = case["path"]
-
-        # Load the image for this case
-        input_image = self._file_loaders["input_image"].load_image(
-            input_image_file_path
-        )
-
-        # Check that it is the expected image
-        if (
-            self._file_loaders["input_image"].hash_image(input_image)
-            != case["hash"]
-        ):
-            raise RuntimeError("Image hashes do not match")
-
-        # Classify input_image image
-        values_exceeding_one = self.predict(input_image=input_image)
-
-        # Write resulting classification to result.json for this case
-        return {
-            "outputs": [
-                dict(
-                    type="bool",
-                    name="values_exceeding_one",
-                    value=values_exceeding_one,
-                )
-            ],
-            "inputs": [
-                dict(type="metaio_image", filename=input_image_file_path.name)
-            ],
-            "error_messages": [],
-        }
-
-    def predict(self, *, input_image: SimpleITK.Image) -> bool:
+class ClassificationAlgorithmTest(ClassificationAlgorithm):
+    def predict(self, *, input_image: SimpleITK.Image) -> Dict:
         # Checks if there are any nodules voxels (> 1) in the input image
-        return bool(np.any(SimpleITK.GetArrayFromImage(input_image) > 1))
+        return dict(
+            values_exceeding_one=bool(
+                np.any(SimpleITK.GetArrayFromImage(input_image) > 1)
+            )
+        )
 
 
 def test_classification_algorithm(tmpdir):
@@ -294,7 +162,10 @@ def validate_algorithm_output(
 ):
     output_dir = Path(input_dir).parent / "output"
     output_dir.mkdir()
-    proc = algorithm_test_class(input_path=input_dir, outdir=output_dir)
+    proc = algorithm_test_class()
+    proc._input_path = Path(input_dir)
+    proc._output_file = Path(output_dir) / "results.json"
+    proc._output_path = Path(output_dir) / "images"
     proc.process()
     results_file = output_dir / "results.json"
     assert results_file.exists()

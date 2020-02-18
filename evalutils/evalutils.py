@@ -3,15 +3,37 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Callable, Dict, List, Pattern, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+    Union,
+)
 from warnings import warn
 
+import SimpleITK
 from pandas import DataFrame, Series, concat, merge
 
 from .exceptions import ConfigurationError, FileLoaderError, ValidationError
-from .io import CSVLoader, FileLoader, first_int_in_filename_key
+from .io import (
+    CSVLoader,
+    FileLoader,
+    ImageLoader,
+    SimpleITKLoader,
+    first_int_in_filename_key,
+)
 from .scorers import score_detection
-from .validators import DataFrameValidator
+from .validators import (
+    DataFrameValidator,
+    UniqueImagesValidator,
+    UniquePathIndicesValidator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +50,7 @@ class BaseAlgorithm(ABC):
         *,
         index_key: str,
         file_loaders: Dict[str, FileLoader],
-        file_filters: Dict[str, Pattern[str]] = None,
+        file_filters: Dict[str, Optional[Pattern[str]]] = None,
         input_path: Path = DEFAULT_INPUT_PATH,
         output_path: Path = DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH,
         file_sorter_key: Callable = None,
@@ -53,7 +75,7 @@ class BaseAlgorithm(ABC):
             from
         output_path
             The path in the container where the output images will be written
-        file_sorter_keys
+        file_sorter_key
             A function that determines how files in the input_path are sorted
         validators
             A dictionary containing the validators that will be used on the
@@ -94,7 +116,7 @@ class BaseAlgorithm(ABC):
         self,
         *,
         folder: Path,
-        file_loader: FileLoader,
+        file_loader: ImageLoader,
         file_filter: Pattern[str] = None,
     ) -> DataFrame:
         cases = None
@@ -158,8 +180,156 @@ class BaseAlgorithm(ABC):
         return {}
 
     def save(self):
-        with open(self._output_file, "w") as f:
+        with open(str(self._output_file), "w") as f:
             json.dump(self._case_results, f)
+
+
+class Algorithm(BaseAlgorithm):
+    def __init__(
+        self,
+        index_key="input_image",
+        file_loaders=None,
+        file_filters=None,
+        validators=None,
+        *args,
+        **kwargs,
+    ):
+        if validators is None:
+            validators = dict(
+                input_image=(
+                    UniqueImagesValidator(),
+                    UniquePathIndicesValidator(),
+                )
+            )
+        if file_loaders is None:
+            file_loaders = dict(input_image=SimpleITKLoader())
+        if file_filters is None:
+            file_filters = dict(input_image=None)
+        super().__init__(
+            index_key=index_key,
+            file_loaders=file_loaders,
+            file_filters=file_filters,
+            validators=validators,
+            *args,
+            **kwargs,
+        )
+
+    def _load_input_image(self, *, case) -> Tuple[SimpleITK.Image, Path]:
+        input_image_file_path = case["path"]
+
+        input_image_file_loader = self._file_loaders["input_image"]
+        if not isinstance(input_image_file_loader, ImageLoader):
+            raise RuntimeError(
+                "The used FileLoader was not of subclass ImageLoader"
+            )
+
+        # Load the image for this case
+        input_image = input_image_file_loader.load_image(input_image_file_path)
+
+        # Check that it is the expected image
+        if input_image_file_loader.hash_image(input_image) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
+
+        return input_image, input_image_file_path
+
+    def predict(self, *, input_image: SimpleITK.Image) -> Any:
+        raise NotImplementedError()
+
+
+class DetectionAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Detect and score candidates
+        scored_candidates = self.predict(input_image=input_image)
+
+        # Write resulting candidates to result.json for this case
+        return {
+            "outputs": [
+                dict(type="candidates", data=scored_candidates.to_dict())
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
+        raise NotImplementedError()
+
+    def _serialize_candidates(
+        self,
+        *,
+        candidates: Iterable[Tuple[float, ...]],
+        candidate_scores: List[Any],
+        ref_image: SimpleITK.Image,
+    ) -> List[Dict]:
+        data = []
+        for coord, score in zip(candidates, candidate_scores):
+            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
+                [c for c in reversed(coord)]
+            )
+            coord_data = {
+                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
+            }
+            coord_data.update({"score": score})
+            data.append(coord_data)
+        return data
+
+
+class SegmentationAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Segment nodule candidates
+        segmented_nodules = self.predict(input_image=input_image)
+
+        # Write resulting segmentation to output location
+        segmentation_path = self._output_path / input_image_file_path.name
+        if not self._output_path.exists():
+            self._output_path.mkdir()
+        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
+
+        # Write segmentation file path to result.json for this case
+        return {
+            "outputs": [
+                dict(type="metaio_image", filename=segmentation_path.name)
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+        raise NotImplementedError()
+
+
+class ClassificationAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Classify input_image image
+        results = self.predict(input_image=input_image)
+
+        # Test classification output
+        if not isinstance(results, dict):
+            raise ValueError("Exepected a dictionary as output")
+
+        # Write resulting classification to result.json for this case
+        return {
+            "outputs": [results],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    def predict(self, *, input_image: SimpleITK.Image) -> Dict:
+        raise NotImplementedError()
 
 
 class BaseEvaluation(ABC):
