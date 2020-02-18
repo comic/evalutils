@@ -1,0 +1,7 @@
+[
+    {
+        "outputs": [{"type": "candidates", "data": {}}],
+        "inputs": [{"type": "metaio_image", "filename": "emptytest.mha"}],
+        "error_messages": []
+    }
+]

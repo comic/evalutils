@@ -173,7 +173,7 @@ def test_algorithm_cli(
     ) as f:
         expected = json.load(f)
 
-    assert len(result) == 2
+    assert len(result) == 1
     assert result == expected
 
     files = os.listdir(project_dir)

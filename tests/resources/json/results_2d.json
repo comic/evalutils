@@ -1,0 +1,16 @@
+[
+    {
+        "outputs": [
+            {
+                "type": "candidates",
+                "data": {
+                    "coordX": {"0": 85.5, "1": 172.5},
+                    "coordY": {"0": 298.5, "1": 317.5},
+                    "score": {"0": 2, "1": 2}
+                }
+            }
+        ],
+        "inputs": [{"type": "metaio_image", "filename": "2dtest.mha"}],
+        "error_messages": []
+    }
+]
