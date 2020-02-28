@@ -5,10 +5,16 @@ Usage
 Getting Started
 ---------------
 
+This guide shows you how to use ``evalutils`` to generate either an
+evaluation container or an algorithm container for `Grand Challenge`_.
+Select the appropriate project below to get started.
+
+Evaluation container
+--------------------
+
 This guide will show you how to use ``evalutils`` to generate an evaluation
 container for `Grand Challenge`_. In this example we will call our project
 ``myproject``, substitute your project name wherever you see this.
-
 
 Prerequisites
 ^^^^^^^^^^^^^
@@ -28,7 +34,7 @@ Once you have installed evalutils you can see the options with:
 
 .. code-block:: console
 
-    $ evalutils init --help
+    $ evalutils init evaluation --help
 
 Say that you want to create an evaluation for ``myproject``, you can initialize
 it with:
@@ -328,6 +334,291 @@ You can export the evaluation container with
 
 which will create myproject.tar in the folder.
 You can then upload this directly to `Grand Challenge`_ on your evaluation methods page.
+
+
+Algorithm container
+-------------------
+
+This guide will show you how to use ``evalutils`` to generate an algorithm
+container for `Grand Challenge`_. In this example we will call our project
+``myproject``, substitute your project name wherever you see this.
+
+Prerequisites
+^^^^^^^^^^^^^
+
+Before you start you will need to have:
+
+* A local `docker`_ installation
+* Some test images for your algorithm, preferably with expected output
+
+Generate The Project Structure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Evalutils contains a project generator based on `CookieCutter`_ that you can
+use to generate the boilerplate for your algorithm.
+Once you have installed evalutils you can see the options with:
+
+.. code-block:: console
+
+    $ evalutils init algorithm --help
+
+Say that you want to create an evaluation for ``myproject``, you can initialize
+it with:
+
+.. code-block:: console
+
+    $ evalutils init algorithm myproject
+
+You will then be prompted to choose an algorithm type:
+
+.. code-block:: console
+
+    $ What kind of algorithm is this? [Classification|Segmentation|Detection]:
+
+so type in your algorithm type and press <enter>.
+The different algorithm types that you can select are:
+
+- **Classification**:
+    This type of algorithm takes in an image (eg, ITK images or a collection of PNGs) and outputs a `/output/results.json` file.
+    For instance, this algorithm could be used for classification of whole images into 1 or multiple classes.
+    By default, the algorithm outputs a single `/output/results.json` which lists the results per case.
+- **Segmentation**:
+    A special case of a classification task, that takes in an image and outputs an image file to `/output/images/` (eg, ITK images or a collection of PNGs).
+    For instance, this algorithm could be used for structure segmentation in 3D images.
+    By default, the algorithm outputs an image file at `/output/images/` per case and a single `/output/results.json` file with additional information for all cases.
+- **Detection**:
+    This type of algorithm detects one or more candidates in an image and returns the positions relative to the image.
+    For instance, this evaluation could be used for detection of tumours in images.
+    By default, the algorithm outputs a single `/output/results.json` which lists the results per case.
+
+If you do not have a local python 3.6+ environment you can also
+generate your project with docker by running a container and sharing your current user id:
+
+.. code-block:: console
+
+    $ docker run -it --rm -u `id -u` -v $(pwd):/usr/src/myapp -w /usr/src/myapp python:3 bash -c "pip install evalutils && evalutils init algorithm myproject"
+
+Either of these commands will generate a folder called ``myproject``
+with everything you need to get started.
+
+It is a good idea to commit your project to git right now. You can do this with:
+
+.. code-block:: console
+
+    $ cd myproject
+    $ git init
+    $ git lfs install   (see the warning below)
+    $ git add --all
+    $ git commit -m "Initial Commit"
+
+.. warning:: The test input images and the expected output will be stored in this repo,
+    so remember to use a private repo if you're going to push this to github or gitlab,
+    and use `git lfs`_ if your ground truth data are large.
+
+    The .gitattributes file at the root of the repository specifies all the files which should be
+    tracked by git-lfs. By default all files in the test directories
+    are configured to be tracked by git-lfs, but they will only be registered
+    once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
+    command has been issued inside the generated repository.
+
+
+The structure of the project will be:
+
+.. code-block:: console
+
+    .
+    └── myproject
+        ├── build.sh                 # Builds your algorithm container
+        ├── Dockerfile               # Defines how to build your algorithm container
+        ├── export.sh                # Exports your algorithm container to a .tar file for use on grand-challenge.org
+        ├── .gitattributes           # Define which files git should put under git-lfs
+        ├── .github/workflows/ci.yml # Contains a CI configuration file for github workflows for your project
+        ├── .gitignore               # Define which files git should ignore
+        ├── process.py               # Contains your algorithm code - this is where you will extend the BaseAlgorithm class
+        ├── README.md                # For describing your algorithm to others
+        ├── requirements.txt         # The python dependencies of your algorithm container - add any new dependencies here
+        ├── test                     # A folder that contains an example test image for testing
+        │   ├── 1.0.000.000000*.mhd  # An example test image metaio header file
+        │   ├── 1.0.000.000000*.zraw # An example test image metaio data file
+        │   └── expected_output.json # Output file expected to be produced by the algorithm container
+        └── test.sh                  # A script that runs your algorithm container using the example test image and validates the output
+
+The most important file is ``process.py``.
+This is the file where you will extend the ``Algorithm`` class and implement your algorithm.
+In this file, a new class has been created for you, and it is instantiated and run with:
+
+.. code-block:: python
+
+    if __name__ == "__main__":
+        Myproject().process()
+
+
+This is all that is needed for ``evalutils`` to run the algorithm and process input images.
+The subclass of ``Algorithm`` is what you need to modify for your specific algorithms.
+
+By default all algorithms will try to load all files in the /input directory using ``SimpleITKLoader`` for loading the data.
+After successfully loading a single image a ``SimpleITK.Image`` object is ready to be manipulated by the algorithms in
+the ``predict`` method for algorithm tasks like classification, segmentation, or detection.
+
+
+Classification Algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The boilerplate for classification algorithms looks like this:
+
+.. code-block:: python
+
+    class Myproject(ClassificationAlgorithm):
+        def __init__(self):
+            super().__init__(
+                validators=dict(
+                    input_image=(
+                        UniqueImagesValidator(),
+                        UniquePathIndicesValidator(),
+                    )
+                ),
+
+        def predict(self, *, input_image: SimpleITK.Image) -> Dict:
+            # Checks if there are any nodules voxels (> 1) in the input image
+            return {
+                "values_exceeding_one": bool(np.any(SimpleITK.GetArrayFromImage(input_image) > 1))
+            }
+
+
+The input images can be validated by specifying validators. Here, we want to validate that the input images are unique,
+so we use the ``UniqueImagesValidator`` and ``UniquePathIndicesValidator``.
+See :mod:`evalutils.validators` for a list of other validators that you can use.
+
+All that needs to be modified is the ``predict`` method of your Algorithm class. By default, it takes an input ``SimpleITK.Image``
+and expects a dictionary that contains some values based on the image.
+In this example it takes the input image, converts it to a ``numpy.ndarray``, checks if there is any value larger than 1 in the image, and writes the boolean result to a dictionary.
+
+The output dictionary can have an arbitrary number of key/value pairs. Extending the outputs can be done by adding new dictionary keys and associated values.
+
+The resulting dictionary will be written to ``/output/results.json`` output file by the super class after running the ``predict`` method on all inputs.
+
+Segmentation Algorithm
+~~~~~~~~~~~~~~~~~~~~~~
+
+For segmentation tasks, the generated code will look like this:
+
+.. code-block:: python
+
+    class Myproject(SegmentationAlgorithm):
+        def __init__(self):
+            super().__init__(
+                validators=dict(
+                    input_image=(
+                        UniqueImagesValidator(),
+                        UniquePathIndicesValidator(),
+                    )
+                ),
+
+        def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+            # Segment all values greater than 2 in the input image
+            return SimpleITK.BinaryThreshold(
+                image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
+            )
+
+
+Similar as before, all that needs to be modified is the ``predict`` method of your Algorithm class. By default, it takes an input ``SimpleITK.Image``
+and expects another ``SimpleITK.Image`` as an output.
+
+In this example it takes the input image, thresholds this for all values greater than or equal to 2 and returns the resulting image.
+
+Besides the default ``/output/results.json`` output file the SegmentationAlgorithm outputs the resulting images at: ``/output/images/``.
+
+
+Detection Algorithm
+~~~~~~~~~~~~~~~~~~~
+
+The generated boilerplate for detection tasks is:
+
+.. code-block:: python
+
+    class Myproject(DetectionAlgorithm):
+        def __init__(self):
+            super().__init__(
+                validators=dict(
+                    input_image=(
+                        UniqueImagesValidator(),
+                        UniquePathIndicesValidator(),
+                    )
+                ),
+
+        def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
+            # Extract a numpy array with image data from the SimpleITK Image
+            image_data = SimpleITK.GetArrayFromImage(input_image)
+
+            # Detection: Compute connected components of the maximum values
+            # in the input image and compute their center of mass
+            sample_mask = image_data >= np.max(image_data)
+            labels, num_labels = label(sample_mask)
+            candidates = center_of_mass(
+                input=sample_mask, labels=labels, index=np.arange(num_labels) + 1
+            )
+
+            # Scoring: Score each candidate cluster with the value at its center
+            candidate_scores = [
+                image_data[tuple(coord)]
+                for coord in np.array(candidates).astype(np.uint16)
+            ]
+
+            # Serialize candidates and scores as a list of dictionary entries
+            data = self._serialize_candidates(
+                candidates=candidates,
+                candidate_scores=candidate_scores,
+                ref_image=input_image,
+            )
+
+            # Convert serialized candidates to a pandas.DataFrame
+            return DataFrame(data)
+
+
+The only function that needs to be implemented is ``predict``, which should extract a list of candidate points from the input image and
+return the candidates with some associated scores or labels to a ``pandas.DataFrame``.
+
+The ``_serialize_candidates`` helper function takes in a list of candidates in image coordinate space and converts these to world coordinates given a reference ``SimpleItk.Image``.
+Additionally, the function adds scores per candidate.
+
+The resulting DataFrame is added to the ``/output/results.json``.
+
+Add The Test Data And The Expected Output File
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The next step is to add your test data (an example image and a json file with the expected output) to the repo.
+The test images go into the ``test`` folder in your repo.
+To update the expected output simply update the ``test/expected_output.json`` file.
+
+Adapt The Algorithm
+^^^^^^^^^^^^^^^^^^^
+
+Change the function in the boilerplate to fit your needs, refer to the superclass methods for more information on return types.
+See :class:`evalutils.BaseAlgorithm` for more possibilities.
+
+Build, Test and Export
+^^^^^^^^^^^^^^^^^^^^^^
+
+When you're ready to test your algorithm you can simply invoke
+
+.. code-block:: console
+
+    $ ./test.sh
+
+This will build your docker container, add the test data as a temporary volume, run the algorithm, ``cat /output/results.json``,
+and test if the ``/output/results.json`` matches ``expected_output.json`` in the test folder of ``myproject``.
+If the output looks ok and prints ``Tests successfully passed...``, then you're ready to go.
+
+You can export the algorithm container with
+
+.. code-block:: console
+
+    $ ./export.sh
+
+which will create ``myproject.tar.gz`` in the folder.
+You can then upload this directly to `Grand Challenge`_ on your algorithms page.
+
+
 
 .. _`Grand Challenge`: https://grand-challenge.org
 .. _docker: https://www.docker.com/
