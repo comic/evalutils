@@ -105,7 +105,7 @@ class Algorithm(ABC):
             else validators
         )
         self._file_loaders: Dict[str, FileLoader] = (
-            dict(input_imagUe=SimpleITKLoader())
+            dict(input_image=SimpleITKLoader())
             if file_loaders is None
             else file_loaders
         )
