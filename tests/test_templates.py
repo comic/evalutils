@@ -101,6 +101,9 @@ def test_evaluation_cli(tmpdir, kind, expected):
     reason="This test is not supported by standard appveyor",
 )
 @pytest.mark.parametrize(
+    "kind", ("Detection", "Segmentation", "Classification")
+)
+@pytest.mark.parametrize(
     (
         "diag_ticket",
         "req_cpus",
@@ -114,6 +117,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
 )
 def test_algorithm_cli(
     tmpdir,
+    kind,
     diag_ticket,
     req_cpus,
     req_cpu_capabilities,
@@ -136,6 +140,7 @@ def test_algorithm_cli(
             "init",
             "algorithm",
             project_name,
+            f"--kind={kind}",
             f"--diag-ticket={diag_ticket}",
             f"--req-cpus={req_cpus}",
             f"--req-cpu-capabilities={req_cpu_capabilities}",
@@ -163,13 +168,17 @@ def test_algorithm_cli(
 
     # Grab the results json
     out = out.decode().splitlines()
+    assert "Tests successfully passed..." in out
     start = [i for i, ln in enumerate(out) if ln == "["]
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
     print(result)
 
     with open(
-        Path(__file__).parent / "resources" / "json" / "results.json"
+        Path(__file__).parent
+        / "resources"
+        / "json"
+        / f"results_{kind.lower()}.json"
     ) as f:
         expected = json.load(f)
 

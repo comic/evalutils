@@ -1,65 +1,39 @@
 import json
 import os
-import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Dict
 
 import SimpleITK
 import numpy as np
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
 
-from evalutils import BaseAlgorithm
-from evalutils.io import SimpleITKLoader
-from evalutils.validators import (
-    UniqueImagesValidator,
-    UniquePathIndicesValidator,
+from evalutils import (
+    ClassificationAlgorithm,
+    DetectionAlgorithm,
+    SegmentationAlgorithm,
 )
 
 
-class BasicAlgorithmTest(BaseAlgorithm):
-    def __init__(self, outdir, input_path):
-        super().__init__(
-            index_key="lung",
-            file_loaders=dict(lung=SimpleITKLoader()),
-            file_filters=dict(lung=re.compile(r"^.*\.mh[ad]$")),
-            validators=dict(
-                lung=(UniqueImagesValidator(), UniquePathIndicesValidator())
-            ),
-            input_path=Path(input_path),
-            output_file=Path(outdir) / "results.json",
-        )
+TEMPLATE_TEST_DIR = (
+    Path(__file__).parent.parent
+    / "evalutils"
+    / "templates"
+    / "algorithm"
+    / "{{ cookiecutter.package_name }}"
+    / "test"
+)
 
-    def process_case(self, *, idx, case):
-        lung_path = case["path"]
 
-        # Load the image for this case
-        lung = self._file_loaders["lung"].load_image(lung_path)
-
-        # Check that it is the expected image
-        if self._file_loaders["lung"].hash_image(lung) != case["hash"]:
-            raise RuntimeError("Image hashes do not match")
-
-        # Detect and score candidates
-        scored_candidates = self.predict(input_image=lung)
-
-        # Write resulting candidates to result.json for this case
-        return {
-            "outputs": [
-                dict(type="candidates", data=scored_candidates.to_dict())
-            ],
-            "inputs": [dict(type="metaio_image", filename=lung_path.name)],
-            "error_messages": [],
-        }
-
+class DetectionAlgorithmTest(DetectionAlgorithm):
     def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
 
-        # Detection: Compute connected components of all values greater than 2
+        # Detection: Compute connected components of the maximum values
         # in the input image and compute their center of mass
-        sample_mask = image_data >= 2
+        sample_mask = image_data == np.max(image_data)
         labels, num_labels = label(sample_mask)
         candidates = center_of_mass(
             input=sample_mask, labels=labels, index=np.arange(num_labels) + 1
@@ -81,39 +55,64 @@ class BasicAlgorithmTest(BaseAlgorithm):
         # Convert serialized candidates to a pandas.DataFrame
         return DataFrame(data)
 
-    def _serialize_candidates(
-        self,
-        *,
-        candidates: Iterable[Tuple[float, ...]],
-        candidate_scores: List[Any],
-        ref_image: SimpleITK.Image,
-    ) -> List[Dict]:
-        data = []
-        for coord, score in zip(candidates, candidate_scores):
-            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
-                [c for c in reversed(coord)]
+
+class SegmentationAlgorithmTest(SegmentationAlgorithm):
+    def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+        # Segment all values greater than 2 in the input image
+        return SimpleITK.BinaryThreshold(
+            image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
+        )
+
+
+class ClassificationAlgorithmTest(ClassificationAlgorithm):
+    def predict(self, *, input_image: SimpleITK.Image) -> Dict:
+        # Checks if there are any nodules voxels (> 1) in the input image
+        return dict(
+            values_exceeding_one=bool(
+                np.any(SimpleITK.GetArrayFromImage(input_image) > 1)
             )
-            coord_data = {
-                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
-            }
-            coord_data.update({"score": score})
-            data.append(coord_data)
-        return data
+        )
+
+
+def test_classification_algorithm(tmpdir):
+    indir = Path(tmpdir / "input")
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
+    validate_algorithm_output(
+        input_dir=indir,
+        expected_results_file="results_classification.json",
+        algorithm_test_class=ClassificationAlgorithmTest,
+    )
+
+
+def test_segmentation_algorithm(tmpdir):
+    indir = Path(tmpdir / "input")
+    out_file = Path(
+        tmpdir
+        / "output"
+        / "images"
+        / "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
+    )
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
+    validate_algorithm_output(
+        input_dir=indir,
+        expected_results_file="results_segmentation.json",
+        algorithm_test_class=SegmentationAlgorithmTest,
+    )
+    assert out_file.exists()
+    out_img = SimpleITK.GetArrayFromImage(SimpleITK.ReadImage(str(out_file)))
+    in_img = SimpleITK.GetArrayFromImage(
+        SimpleITK.ReadImage(str(indir / out_file.name))
+    )
+    assert np.array_equal((in_img >= 2), (out_img > 0))
 
 
 def test_detection_algorithm(tmpdir):
     indir = tmpdir / "input"
-    resdir = (
-        Path(__file__).parent.parent
-        / "evalutils"
-        / "templates"
-        / "algorithm"
-        / "{{ cookiecutter.package_name }}"
-        / "test"
-    )
-    shutil.copytree(resdir, indir)
+    shutil.copytree(TEMPLATE_TEST_DIR, indir)
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results.json"
+        input_dir=indir,
+        expected_results_file="results_detection.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
@@ -122,12 +121,7 @@ def test_detection_algorithm_2d_input(tmpdir):
 
     os.makedirs(indir)
     test_image = (
-        Path(__file__).parent.parent
-        / "evalutils"
-        / "templates"
-        / "algorithm"
-        / "{{ cookiecutter.package_name }}"
-        / "test"
+        TEMPLATE_TEST_DIR
         / "1.0.000.000000.0.00.0.0000000000.0000.0000000000.000.mhd"
     )
     image_data = SimpleITK.GetArrayFromImage(
@@ -140,7 +134,9 @@ def test_detection_algorithm_2d_input(tmpdir):
     )
 
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results_2d.json"
+        input_dir=indir,
+        expected_results_file="results_2d.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
@@ -155,14 +151,21 @@ def test_detection_algorithm_empty_input(tmpdir):
     )
 
     validate_algorithm_output(
-        input_dir=indir, expected_results_file="results_empty.json"
+        input_dir=indir,
+        expected_results_file="results_empty.json",
+        algorithm_test_class=DetectionAlgorithmTest,
     )
 
 
-def validate_algorithm_output(input_dir: Path, expected_results_file: str):
+def validate_algorithm_output(
+    input_dir: Path, expected_results_file: str, algorithm_test_class: type
+):
     output_dir = Path(input_dir).parent / "output"
     output_dir.mkdir()
-    proc = BasicAlgorithmTest(input_path=input_dir, outdir=output_dir)
+    proc = algorithm_test_class()
+    proc._input_path = Path(input_dir)
+    proc._output_file = Path(output_dir) / "results.json"
+    proc._output_path = Path(output_dir) / "images"
     proc.process()
     results_file = output_dir / "results.json"
     assert results_file.exists()

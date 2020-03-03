@@ -3,15 +3,33 @@ import logging
 from abc import ABC, abstractmethod
 from os import PathLike
 from pathlib import Path
-from typing import Callable, Dict, List, Pattern, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+    Union,
+)
 from warnings import warn
 
+import SimpleITK
 from pandas import DataFrame, Series, concat, merge
 
 from .exceptions import ConfigurationError, FileLoaderError, ValidationError
-from .io import CSVLoader, FileLoader, first_int_in_filename_key
+from .io import (
+    CSVLoader,
+    FileLoader,
+    ImageLoader,
+    SimpleITKLoader,
+    first_int_in_filename_key,
+)
 from .scorers import score_detection
-from .validators import DataFrameValidator
+from .validators import DataFrameValidator, UniqueImagesValidator
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +40,17 @@ DEFAULT_GROUND_TRUTH_PATH = Path("/opt/evaluation/ground-truth/")
 DEFAULT_EVALUATION_OUTPUT_FILE_PATH = Path("/output/metrics.json")
 
 
-class BaseAlgorithm(ABC):
+class Algorithm(ABC):
     def __init__(
         self,
         *,
-        index_key: str,
-        file_loaders: Dict[str, FileLoader],
-        file_filters: Dict[str, Pattern[str]] = None,
+        index_key: str = "input_image",
+        file_loaders: Optional[Dict[str, FileLoader]] = None,
+        file_filters: Optional[Dict[str, Optional[Pattern[str]]]] = None,
         input_path: Path = DEFAULT_INPUT_PATH,
         output_path: Path = DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH,
-        file_sorter_key: Callable = None,
-        validators: Dict[str, Tuple[DataFrameValidator, ...]],
+        file_sorter_key: Optional[Callable] = None,
+        validators: Optional[Dict[str, Tuple[DataFrameValidator, ...]]] = None,
         output_file: PathLike = DEFAULT_ALGORITHM_OUTPUT_FILE_PATH,
     ):
         """
@@ -43,31 +61,35 @@ class BaseAlgorithm(ABC):
         Parameters
         ----------
         index_key
-            Fileloader key which must be used for the index
+            Fileloader key which must be used for the index.
+            Default: `input_image`
         file_loaders
-            The loaders that will be used to get all files
+            The loaders that will be used to get all files.
+            Default: `evalutils.io.SimpleITKLoader` for `input_image`
         file_filters
-            Regular expressions for filtering certain FileLoaders
+            Regular expressions for filtering certain FileLoaders.
+            Default: no filtering.
         input_path
             The path in the container where the ground truth will be loaded
-            from
+            from. Default: `/input`
         output_path
-            The path in the container where the output images will be written
-        file_sorter_keys
-            A function that determines how files in the input_path are sorted
+            The path in the container where the output images will be written.
+            Default: `/output/images`
+        file_sorter_key
+            A function that determines how files in the input_path are sorted.
+            Default: `None` (alphanumerical)
         validators
             A dictionary containing the validators that will be used on the
-            loaded data per file_loader key
+            loaded data per file_loader key. Default:
+            `evalutils.validators.UniqueImagesValidator` for `input_image`
         output_file
-            The path to the location where the results will be written
+            The path to the location where the results will be written.
+            Default: `/output/results.json`
         """
         self._index_key = index_key
         self._input_path = input_path
         self._output_path = output_path
         self._file_sorter_key = file_sorter_key
-        self._file_filters = file_filters
-        self._file_loaders = file_loaders
-        self._validators = validators
         self._output_file = output_file
 
         self._ground_truth_cases = DataFrame()
@@ -76,6 +98,20 @@ class BaseAlgorithm(ABC):
         self._cases: Dict[str, DataFrame] = {}
 
         self._case_results: List[Dict] = []
+
+        self._validators: Dict[str, Tuple[DataFrameValidator, ...]] = (
+            dict(input_image=(UniqueImagesValidator(),))
+            if validators is None
+            else validators
+        )
+        self._file_loaders: Dict[str, FileLoader] = (
+            dict(input_image=SimpleITKLoader())
+            if file_loaders is None
+            else file_loaders
+        )
+        self._file_filters: Dict[str, Optional[Pattern[str]]] = (
+            dict(input_image=None) if file_filters is None else file_filters
+        )
 
         super().__init__()
 
@@ -94,7 +130,7 @@ class BaseAlgorithm(ABC):
         self,
         *,
         folder: Path,
-        file_loader: FileLoader,
+        file_loader: ImageLoader,
         file_filter: Pattern[str] = None,
     ) -> DataFrame:
         cases = None
@@ -154,12 +190,134 @@ class BaseAlgorithm(ABC):
         for idx, case in self._cases[file_loader_key].iterrows():
             self._case_results.append(self.process_case(idx=idx, case=case))
 
+    @abstractmethod
     def process_case(self, *, idx: int, case: DataFrame) -> Dict:
-        return {}
+        raise NotImplementedError()
 
     def save(self):
-        with open(self._output_file, "w") as f:
+        with open(str(self._output_file), "w") as f:
             json.dump(self._case_results, f)
+
+    def _load_input_image(self, *, case) -> Tuple[SimpleITK.Image, Path]:
+        input_image_file_path = case["path"]
+
+        input_image_file_loader = self._file_loaders["input_image"]
+        if not isinstance(input_image_file_loader, ImageLoader):
+            raise RuntimeError(
+                "The used FileLoader was not of subclass ImageLoader"
+            )
+
+        # Load the image for this case
+        input_image = input_image_file_loader.load_image(input_image_file_path)
+
+        # Check that it is the expected image
+        if input_image_file_loader.hash_image(input_image) != case["hash"]:
+            raise RuntimeError("Image hashes do not match")
+
+        return input_image, input_image_file_path
+
+    @abstractmethod
+    def predict(self, *, input_image: SimpleITK.Image) -> Any:
+        raise NotImplementedError()
+
+
+class DetectionAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Detect and score candidates
+        scored_candidates = self.predict(input_image=input_image)
+
+        # Write resulting candidates to result.json for this case
+        return {
+            "outputs": [
+                dict(type="candidates", data=scored_candidates.to_dict())
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    @abstractmethod
+    def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
+        raise NotImplementedError()
+
+    @staticmethod
+    def _serialize_candidates(
+        *,
+        candidates: Iterable[Tuple[float, ...]],
+        candidate_scores: List[Any],
+        ref_image: SimpleITK.Image,
+    ) -> List[Dict]:
+        data = []
+        for coord, score in zip(candidates, candidate_scores):
+            world_coords = ref_image.TransformContinuousIndexToPhysicalPoint(
+                [c for c in reversed(coord)]
+            )
+            coord_data = {
+                f"coord{k}": v for k, v in zip(["X", "Y", "Z"], world_coords)
+            }
+            coord_data.update({"score": score})
+            data.append(coord_data)
+        return data
+
+
+class SegmentationAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Segment nodule candidates
+        segmented_nodules = self.predict(input_image=input_image)
+
+        # Write resulting segmentation to output location
+        segmentation_path = self._output_path / input_image_file_path.name
+        if not self._output_path.exists():
+            self._output_path.mkdir()
+        SimpleITK.WriteImage(segmented_nodules, str(segmentation_path), True)
+
+        # Write segmentation file path to result.json for this case
+        return {
+            "outputs": [
+                dict(type="metaio_image", filename=segmentation_path.name)
+            ],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    @abstractmethod
+    def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
+        raise NotImplementedError()
+
+
+class ClassificationAlgorithm(Algorithm):
+    def process_case(self, *, idx, case):
+        # Load and test the image for this case
+        input_image, input_image_file_path = self._load_input_image(case=case)
+
+        # Classify input_image image
+        results = self.predict(input_image=input_image)
+
+        # Test classification output
+        if not isinstance(results, dict):
+            raise ValueError("Exepected a dictionary as output")
+
+        # Write resulting classification to result.json for this case
+        return {
+            "outputs": [results],
+            "inputs": [
+                dict(type="metaio_image", filename=input_image_file_path.name)
+            ],
+            "error_messages": [],
+        }
+
+    @abstractmethod
+    def predict(self, *, input_image: SimpleITK.Image) -> Dict:
+        raise NotImplementedError()
 
 
 class BaseEvaluation(ABC):
