@@ -173,11 +173,13 @@ def test_algorithm_cli(
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
     print(result)
-
     with open(
-        Path(__file__).parent
-        / "resources"
-        / "json"
+        Path(__file__).parent.parent
+        / "evalutils"
+        / "templates"
+        / "algorithm"
+        / "{{ cookiecutter.package_name }}"
+        / "test"
         / f"results_{kind.lower()}.json"
     ) as f:
         expected = json.load(f)

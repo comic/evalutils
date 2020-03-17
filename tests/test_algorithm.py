@@ -175,6 +175,9 @@ def validate_algorithm_output(
     expected_path = (
         Path(__file__).parent / "resources" / "json" / expected_results_file
     )
+    if not expected_path.exists():
+        expected_path = TEMPLATE_TEST_DIR / expected_results_file
+
     with open(str(expected_path), "r") as f:
         expected_result = json.load(f)
     assert results == expected_result
