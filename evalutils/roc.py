@@ -112,9 +112,9 @@ def get_bootstrapped_roc_ci_curves(
         high_az_val=az_ci_upper,
     )
 
+
 def average_roc_curves(
-    roc_curves: List[BootstrappedROCCICurves],
-    bins: int = 200
+    roc_curves: List[BootstrappedROCCICurves], bins: int = 200
 ) -> BootstrappedROCCICurves:
     """
     Averages ROC curves using vertical averaging (fixed FP rates),
@@ -171,6 +171,7 @@ def average_roc_curves(
         low_az_val=mean_low_az,
         high_az_val=mean_high_az,
     )
+
 
 class BootstrappedCIPointError(NamedTuple):
     mean_fprs: ndarray
