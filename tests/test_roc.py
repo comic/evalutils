@@ -3,6 +3,12 @@ import numpy as np
 from evalutils import roc
 
 
+@pytest.fixture(autouse=True)
+def reset_seeds():
+    np.random.seed(42)
+    yield
+
+
 def test_get_bootstrapped_roc_ci_curves():
     y_true = np.random.randint(0, 2, 500).astype(np.int)
     y_pred = np.random.random_sample(500)
