@@ -113,6 +113,66 @@ def get_bootstrapped_roc_ci_curves(
     )
 
 
+def average_roc_curves(
+    roc_curves: List[BootstrappedROCCICurves], bins: int = 200
+) -> BootstrappedROCCICurves:
+    """
+    Averages ROC curves using vertical averaging (fixed FP rates),
+    which gives a 1D measure of variability.
+
+    Parameters
+    ----------
+    curves
+        List of BootstrappedROCCICurves to be averaged
+    bins (optional)
+        Number of false-positives to iterate over. (Default: 200)
+
+    Returns
+    -------
+    BootstrappedROCCICurves
+        ROC class containing the average over all ROCs.
+    """
+    tprs = []
+    low_tprs = []
+    high_tprs = []
+    low_azs = []
+    high_azs = []
+
+    mean_fpr = np.linspace(0, 1, bins)
+
+    for roc in roc_curves:
+        # get values at fixed fpr locations
+        interp_tpr = np.interp(mean_fpr, roc.fpr_vals, roc.mean_tpr_vals)
+        interp_tpr[0] = 0.0
+
+        interp_low_tpr = np.interp(mean_fpr, roc.fpr_vals, roc.low_tpr_vals)
+        interp_high_tpr = np.interp(mean_fpr, roc.fpr_vals, roc.high_tpr_vals)
+
+        tprs.append(interp_tpr)
+        low_tprs.append(interp_low_tpr)
+        high_tprs.append(interp_high_tpr)
+        low_azs.append(roc.low_az_val)
+        high_azs.append(roc.high_az_val)
+
+    # get the mean tpr of all ROCs
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+
+    mean_low_tpr = np.mean(low_tprs, axis=0)
+    mean_high_tpr = np.mean(high_tprs, axis=0)
+    mean_low_az = np.mean(low_azs, axis=0)
+    mean_high_az = np.mean(high_azs, axis=0)
+
+    return BootstrappedROCCICurves(
+        fpr_vals=mean_fpr,
+        mean_tpr_vals=mean_tpr,
+        low_tpr_vals=mean_low_tpr,
+        high_tpr_vals=mean_high_tpr,
+        low_az_val=mean_low_az,
+        high_az_val=mean_high_az,
+    )
+
+
 class BootstrappedCIPointError(NamedTuple):
     mean_fprs: ndarray
     mean_tprs: ndarray

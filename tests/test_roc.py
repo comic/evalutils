@@ -1,6 +1,13 @@
 import numpy as np
+import pytest
 
 from evalutils import roc
+
+
+@pytest.fixture(autouse=True)
+def reset_seeds():
+    np.random.seed(42)
+    yield
 
 
 def test_get_bootstrapped_roc_ci_curves():
@@ -47,6 +54,52 @@ def test_get_bootstrapped_roc_ci_curves():
     assert roc_95.low_az_val <= roc_65.low_az_val
     # check that the az_upper_95 is always >= az_upper_65
     assert roc_95.high_az_val >= roc_65.high_az_val
+
+
+def test_average_roc_curves():
+    y_true = np.random.randint(0, 2, 500).astype(np.int)
+    y_pred = np.random.random_sample(500)
+    roc_95 = roc.get_bootstrapped_roc_ci_curves(
+        y_pred, y_true, num_bootstraps=3, ci_to_use=0.95
+    )
+
+    # average of 3 identical ROCs should be close to the
+    # individual ROC.
+    assert np.isclose(
+        roc.average_roc_curves([roc_95, roc_95, roc_95], bins=101).fpr_vals,
+        roc_95.fpr_vals,
+    ).all()
+
+    assert np.isclose(
+        roc.average_roc_curves(
+            [roc_95, roc_95, roc_95], bins=101
+        ).mean_tpr_vals,
+        roc_95.mean_tpr_vals,
+    ).all()
+
+    assert np.isclose(
+        roc.average_roc_curves(
+            [roc_95, roc_95, roc_95], bins=101
+        ).low_tpr_vals,
+        roc_95.low_tpr_vals,
+    ).all()
+
+    assert np.isclose(
+        roc.average_roc_curves(
+            [roc_95, roc_95, roc_95], bins=101
+        ).high_tpr_vals,
+        roc_95.high_tpr_vals,
+    ).all()
+
+    assert np.isclose(
+        roc.average_roc_curves([roc_95, roc_95, roc_95], bins=101).low_az_val,
+        roc_95.low_az_val,
+    )
+
+    assert np.isclose(
+        roc.average_roc_curves([roc_95, roc_95, roc_95], bins=101).high_az_val,
+        roc_95.high_az_val,
+    )
 
 
 def test_get_bootstrapped_ci_point_error():
