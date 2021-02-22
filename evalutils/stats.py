@@ -105,21 +105,23 @@ def distance_transform_edt_float32(  # noqa: C901
     dt_inplace = isinstance(distances, np.ndarray)
 
     # calculate the feature transform
-    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
+    input_data = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
+    input_data_check = input_data.nbytes > 100e6
 
     def garbage_collect():
-        if input.nbytes > 100e6:
+        nonlocal input_data_check
+        if input_data_check:
             gc.collect()
 
     garbage_collect()
 
-    input = input.astype(np.int32)
+    input_data = input_data.astype(np.int32)
     garbage_collect()
 
     sampling_arr: Optional[np.ndarray] = None
     if sampling is not None:
         sampling_arr = np.asarray(
-            _ni_support._normalize_sequence(sampling, input.ndim),
+            _ni_support._normalize_sequence(sampling, input_data.ndim),
             dtype=np.float64,
         )
         if not sampling_arr.flags.contiguous:
@@ -127,17 +129,17 @@ def distance_transform_edt_float32(  # noqa: C901
 
     if ft_inplace and indices is not None:
         ft = indices
-        if ft.shape != (input.ndim,) + input.shape:
+        if ft.shape != (input_data.ndim,) + input_data.shape:
             raise RuntimeError("indices has wrong shape")
         if ft.dtype.type != np.int32:
             raise RuntimeError("indices must be of int32 type")
     else:
-        ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
+        ft = np.zeros((input_data.ndim,) + input_data.shape, dtype=np.int32)
 
-    _nd_image.euclidean_feature_transform(input, sampling_arr, ft)
-    input_shape = input.shape
+    _nd_image.euclidean_feature_transform(input_data, sampling_arr, ft)
+    input_shape = input_data.shape
 
-    del input
+    del input_data
     garbage_collect()
 
     # if requested, calculate the distance transform
