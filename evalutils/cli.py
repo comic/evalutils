@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import List
 
 import click
 from cookiecutter.exceptions import FailedHookException
@@ -39,6 +40,25 @@ def validate_python_module_name_fn(option):
     return validate_python_module_name_string
 
 
+class AbbreviatedChoice(click.Choice):
+    def __init__(self, choices: List[str]):
+        super().__init__(choices=choices, case_sensitive=True)
+        self.abbreviations = [e[0] for e in choices]
+
+    def get_metavar(self, param):
+        return "[{}]".format(
+            "|".join([f"({e[0]}){e[1:]}" for e in self.choices])
+        )
+
+    def convert(self, value, param, ctx):
+        value = value.upper()
+        if value in self.abbreviations:
+            value = self.choices[self.abbreviations.index(value)]
+        else:
+            value = value.title()
+        super().convert(value=value, param=param, ctx=ctx)
+
+
 @init.command(
     name="evaluation", short_help="Initialise an evaluation project."
 )
@@ -47,8 +67,8 @@ def validate_python_module_name_fn(option):
 )
 @click.option(
     "--kind",
-    type=click.Choice(EVALUATION_CHOICES),
-    prompt=f"What kind of challenge is this? [{'|'.join(EVALUATION_CHOICES)}]",
+    type=AbbreviatedChoice(EVALUATION_CHOICES),
+    prompt=f"What kind of challenge is this?",
 )
 @click.option("--dev", is_flag=True)
 def init_evaluation(challenge_name, kind, dev):
@@ -137,8 +157,8 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 )
 @click.option(
     "--kind",
-    type=click.Choice(ALGORITHM_CHOICES),
-    prompt=f"What kind of algorithm is this? [{'|'.join(ALGORITHM_CHOICES)}]",
+    type=AbbreviatedChoice(ALGORITHM_CHOICES),
+    prompt=f"What kind of algorithm is this?",
 )
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
