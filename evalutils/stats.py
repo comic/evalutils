@@ -8,13 +8,18 @@ from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
+VOXELSPACING_TYPE = Optional[
+    Union[Tuple[Union[float, int], ...], List[Union[float, int]], float, int]
+]
+
+
 def distance_transform_edt_float32(  # noqa: C901
-    input,
-    sampling=None,
-    return_distances=True,
-    return_indices=False,
-    distances=None,
-    indices=None,
+    input: ndarray,
+    sampling: VOXELSPACING_TYPE = None,
+    return_distances: bool = True,
+    return_indices: bool = False,
+    distances: Optional[ndarray] = None,
+    indices: Optional[ndarray] = None,
 ):
     """
     The same as scipy.ndimage.morphology.distance_transform_edt but
@@ -102,19 +107,25 @@ def distance_transform_edt_float32(  # noqa: C901
     # calculate the feature transform
     input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
 
-    garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
+    def garbage_collect():
+        if input.nbytes > 100e6:
+            gc.collect()
+
     garbage_collect()
 
     input = input.astype(np.int32)
     garbage_collect()
 
+    sampling_arr: Optional[np.ndarray] = None
     if sampling is not None:
-        sampling = _ni_support._normalize_sequence(sampling, input.ndim)
-        sampling = np.asarray(sampling, dtype=np.float64)
-        if not sampling.flags.contiguous:
-            sampling = sampling.copy()
+        sampling_arr = np.asarray(
+            _ni_support._normalize_sequence(sampling, input.ndim),
+            dtype=np.float64,
+        )
+        if not sampling_arr.flags.contiguous:
+            sampling_arr = sampling_arr.copy()
 
-    if ft_inplace:
+    if ft_inplace and indices is not None:
         ft = indices
         if ft.shape != (input.ndim,) + input.shape:
             raise RuntimeError("indices has wrong shape")
@@ -123,7 +134,7 @@ def distance_transform_edt_float32(  # noqa: C901
     else:
         ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
 
-    _nd_image.euclidean_feature_transform(input, sampling, ft)
+    _nd_image.euclidean_feature_transform(input, sampling_arr, ft)
     input_shape = input.shape
 
     del input
@@ -147,11 +158,11 @@ def distance_transform_edt_float32(  # noqa: C901
             c_indices[0] += 1
 
         dt = dt.astype(np.float32, copy=False)
-        if sampling is not None:
-            for ii in range(len(sampling)):
-                dt[ii, ...] *= sampling[ii]
+        if sampling_arr is not None:
+            for ii in range(len(sampling_arr)):
+                dt[ii, ...] *= sampling_arr[ii]
         np.multiply(dt, dt, dt)
-        if dt_inplace:
+        if dt_inplace and distances is not None:
             dt = np.add.reduce(dt, axis=0)
             if distances.shape != dt.shape:
                 raise RuntimeError("indices has wrong shape")
@@ -327,7 +338,7 @@ def dice_from_confusion_matrix(cm: ndarray) -> ndarray:
 def __surface_distances(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> ndarray:
     """
@@ -381,7 +392,7 @@ def __surface_distances(
 def hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -430,7 +441,7 @@ def percentile_hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
     percentile: Union[int, float] = 0.95,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -493,7 +504,7 @@ def percentile_hausdorff_distance(
 def modified_hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -568,9 +579,7 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Union[List[Union[int, float]], int, float, None] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
@@ -620,9 +629,7 @@ def absolute_volume_difference(
 
 
 def __directed_contour_distances(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> ndarray:
     """
     Computes set of surface contour distances.
@@ -683,9 +690,7 @@ def __directed_contour_distances(
 
 
 def mean_contour_distance(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> float:
     """
     Computes the (symmetric) Mean Contour Distance between the binary objects
@@ -731,7 +736,7 @@ HausdorffMeasures = namedtuple(
 def hausdorff_distance_measures(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: None = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
     percentile: float = 0.95,
 ) -> HausdorffMeasures:
