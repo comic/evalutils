@@ -15,6 +15,32 @@ def reset_seeds():
     yield
 
 
+def test_edt32_gc():
+    x = np.random.random((100,)) > 0.5
+    indices = np.zeros((x.ndim,) + x.shape, dtype=np.int32)
+    stats.distance_transform_edt_float32(
+        input=x, sampling=[1.2], gc_byte_threshold=99, indices=indices
+    )
+
+
+def test_edt32_indices_wrong_shape():
+    x = np.random.random((10,)) > 0.5
+    indices = np.zeros((x.ndim, 12), dtype=np.int32)
+    with pytest.raises(RuntimeError):
+        stats.distance_transform_edt_float32(
+            input=x, sampling=[1.2], indices=indices
+        )
+
+
+def test_edt32_indices_wrong_dtype():
+    x = np.random.random((10,)) > 0.5
+    indices = np.zeros((x.ndim,) + x.shape, dtype=np.int8)
+    with pytest.raises(RuntimeError):
+        stats.distance_transform_edt_float32(
+            input=x, sampling=[1.2], indices=indices
+        )
+
+
 @pytest.mark.parametrize(
     "y_true", [np.random.randint(0, 2, (30, 20, 10)).astype(np.int)]
 )

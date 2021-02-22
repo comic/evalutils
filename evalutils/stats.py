@@ -20,6 +20,7 @@ def distance_transform_edt_float32(  # noqa: C901
     return_indices: bool = False,
     distances: Optional[ndarray] = None,
     indices: Optional[ndarray] = None,
+    gc_byte_threshold: int = 100000000,
 ):
     """
     The same as scipy.ndimage.morphology.distance_transform_edt but
@@ -46,6 +47,9 @@ def distance_transform_edt_float32(  # noqa: C901
         Used for output of distance array, must be of type float64.
     indices : ndarray, optional
         Used for output of indices, must be of type int32.
+    gc_byte_threshold : int, optional
+        Number of bytes that the input needs to exceed before
+        garbage collection and memory cleanup routines are called.
     Returns
     -------
     distance_transform_edt : ndarray or list of ndarrays
@@ -105,8 +109,8 @@ def distance_transform_edt_float32(  # noqa: C901
     dt_inplace = isinstance(distances, np.ndarray)
 
     # calculate the feature transform
-    input_data = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
-    input_data_check = input_data.nbytes > 100e6
+    input_data = np.atleast_1d(input > 0)
+    input_data_check = input_data.nbytes >= gc_byte_threshold
 
     def garbage_collect():
         nonlocal input_data_check
