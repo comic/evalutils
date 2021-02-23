@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import SimpleITK
 import numpy as np
 import pytest
@@ -23,18 +25,12 @@ def test_edt32_gc():
     )
 
 
-def test_edt32_indices_wrong_shape():
+@pytest.mark.parametrize(
+    "shape, dtype", (((12,), np.int32), ((10, 2), np.int32), ((10,), np.int8))
+)
+def test_edt32_indices_wrong_format(shape: Tuple[int, ...], dtype: np.dtype):
     x = np.random.random((10,)) > 0.5
-    indices = np.zeros((x.ndim, 12), dtype=np.int32)
-    with pytest.raises(RuntimeError):
-        stats.distance_transform_edt_float32(
-            input=x, sampling=[1.2], indices=indices
-        )
-
-
-def test_edt32_indices_wrong_dtype():
-    x = np.random.random((10,)) > 0.5
-    indices = np.zeros((x.ndim,) + x.shape, dtype=np.int8)
+    indices = np.zeros((x.ndim,) + shape, dtype=dtype)
     with pytest.raises(RuntimeError):
         stats.distance_transform_edt_float32(
             input=x, sampling=[1.2], indices=indices
