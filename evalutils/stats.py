@@ -20,8 +20,7 @@ def distance_transform_edt_float32(  # noqa: C901
     return_indices: bool = False,
     distances: Optional[ndarray] = None,
     indices: Optional[ndarray] = None,
-    gc_byte_threshold: int = 100000000,
-):
+) -> Union[ndarray, List[ndarray]]:
     """
     The same as scipy.ndimage.morphology.distance_transform_edt but
     using float32 and better memory cleaning internally.
@@ -31,28 +30,25 @@ def distance_transform_edt_float32(  # noqa: C901
     element is returned along the first axis of the result.
     Parameters
     ----------
-    input : array_like
+    input
         Input data to transform. Can be any type but will be converted
         into binary: 1 wherever input equates to True, 0 elsewhere.
-    sampling : float or int, or sequence of same, optional
+    sampling
         Spacing of elements along each dimension. If a sequence, must be of
         length equal to the input rank; if a single number, this is used for
         all axes. If not specified, a grid spacing of unity is implied.
-    return_distances : bool, optional
+    return_distances
         Whether to return distance matrix. At least one of
         return_distances/return_indices must be True. Default is True.
-    return_indices : bool, optional
+    return_indices
         Whether to return indices matrix. Default is False.
-    distances : ndarray, optional
+    distances
         Used for output of distance array, must be of type float64.
-    indices : ndarray, optional
+    indices
         Used for output of indices, must be of type int32.
-    gc_byte_threshold : int, optional
-        Number of bytes that the input needs to exceed before
-        garbage collection and memory cleanup routines are called.
     Returns
     -------
-    distance_transform_edt : ndarray or list of ndarrays
+    distance_transform_edt
         Either distance matrix, index matrix, or a list of the two,
         depending on `return_x` flags and `distance` and `indices`
         input parameters.
@@ -109,41 +105,33 @@ def distance_transform_edt_float32(  # noqa: C901
     dt_inplace = isinstance(distances, np.ndarray)
 
     # calculate the feature transform
-    input_data = np.atleast_1d(input != 0)
-    input_data_check = input_data.nbytes >= gc_byte_threshold
+    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
 
-    def garbage_collect():
-        nonlocal input_data_check
-        if input_data_check:
-            gc.collect()
-
+    garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
     garbage_collect()
 
-    input_data = input_data.astype(np.int32)
+    input = input.astype(np.int32)
     garbage_collect()
 
-    sampling_arr: Optional[np.ndarray] = None
     if sampling is not None:
-        sampling_arr = np.asarray(
-            _ni_support._normalize_sequence(sampling, input_data.ndim),
-            dtype=np.float64,
-        )
-        if not sampling_arr.flags.contiguous:
-            sampling_arr = sampling_arr.copy()
+        sampling = _ni_support._normalize_sequence(sampling, input.ndim)
+        sampling = np.asarray(sampling, dtype=np.float64)
+        if not sampling.flags.contiguous:
+            sampling = sampling.copy()
 
-    if ft_inplace and indices is not None:
+    if ft_inplace:
         ft = indices
-        if ft.shape != (input_data.ndim,) + input_data.shape:
+        if ft.shape != (input.ndim,) + input.shape:
             raise RuntimeError("indices has wrong shape")
         if ft.dtype.type != np.int32:
             raise RuntimeError("indices must be of int32 type")
     else:
-        ft = np.zeros((input_data.ndim,) + input_data.shape, dtype=np.int32)
+        ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
 
-    _nd_image.euclidean_feature_transform(input_data, sampling_arr, ft)
-    input_shape = input_data.shape
+    _nd_image.euclidean_feature_transform(input, sampling, ft)
+    input_shape = input.shape
 
-    del input_data
+    del input
     garbage_collect()
 
     # if requested, calculate the distance transform
@@ -164,11 +152,11 @@ def distance_transform_edt_float32(  # noqa: C901
             c_indices[0] += 1
 
         dt = dt.astype(np.float32, copy=False)
-        if sampling_arr is not None:
-            for ii in range(len(sampling_arr)):
-                dt[ii, ...] *= sampling_arr[ii]
+        if sampling is not None:
+            for ii in range(len(sampling)):
+                dt[ii, ...] *= sampling[ii]
         np.multiply(dt, dt, dt)
-        if dt_inplace and distances is not None:
+        if dt_inplace:
             dt = np.add.reduce(dt, axis=0)
             if distances.shape != dt.shape:
                 raise RuntimeError("indices has wrong shape")

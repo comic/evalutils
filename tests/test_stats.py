@@ -17,14 +17,6 @@ def reset_seeds():
     yield
 
 
-def test_edt32_gc():
-    x = np.random.random((100,)) > 0.5
-    indices = np.zeros((x.ndim,) + x.shape, dtype=np.int32)
-    stats.distance_transform_edt_float32(
-        input=x, sampling=[1.2], gc_byte_threshold=99, indices=indices
-    )
-
-
 @pytest.mark.parametrize(
     "shape, dtype", (((12,), np.int32), ((10, 2), np.int32), ((10,), np.int8))
 )
