@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import List
 
 import click
 from cookiecutter.exceptions import FailedHookException
@@ -39,6 +40,30 @@ def validate_python_module_name_fn(option):
     return validate_python_module_name_string
 
 
+class AbbreviatedChoice(click.Choice):
+    def __init__(self, choices: List[str]):
+        super().__init__(choices=choices, case_sensitive=True)
+        self._abbreviations = [e[0].upper() for e in choices]
+        self._choices_upper = list(map(str.upper, choices))
+        if len(set(self._abbreviations)) != len(choices):
+            raise ValueError(
+                "First letters of choices for AbbreviatedChoices should be unique!"
+            )
+
+    def get_metavar(self, param):
+        return "[{}]".format(
+            "|".join([f"({e[0]}){e[1:]}" for e in self.choices])
+        )
+
+    def convert(self, value, param, ctx):
+        value = value.upper()
+        if value in self._abbreviations:
+            value = self.choices[self._abbreviations.index(value)]
+        elif value in self._choices_upper:
+            value = self.choices[self._choices_upper.index(value)]
+        return super().convert(value=value, param=param, ctx=ctx)
+
+
 @init.command(
     name="evaluation", short_help="Initialise an evaluation project."
 )
@@ -47,8 +72,8 @@ def validate_python_module_name_fn(option):
 )
 @click.option(
     "--kind",
-    type=click.Choice(EVALUATION_CHOICES),
-    prompt=f"What kind of challenge is this? [{'|'.join(EVALUATION_CHOICES)}]",
+    type=AbbreviatedChoice(EVALUATION_CHOICES),
+    prompt=f"What kind of challenge is this?",
 )
 @click.option("--dev", is_flag=True)
 def init_evaluation(challenge_name, kind, dev):
@@ -137,8 +162,8 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 )
 @click.option(
     "--kind",
-    type=click.Choice(ALGORITHM_CHOICES),
-    prompt=f"What kind of algorithm is this? [{'|'.join(ALGORITHM_CHOICES)}]",
+    type=AbbreviatedChoice(ALGORITHM_CHOICES),
+    prompt=f"What kind of algorithm is this?",
 )
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
