@@ -1,6 +1,6 @@
 import gc
 from collections import namedtuple
-from typing import List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -107,19 +107,26 @@ def distance_transform_edt_float32(  # noqa: C901
     # calculate the feature transform
     input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
 
-    garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
+    def nop():
+        pass
+
+    garbage_collect: Callable[[], Any] = nop
+    if input.nbytes > 100e6:
+        garbage_collect = gc.collect
     garbage_collect()
 
     input = input.astype(np.int32)
     garbage_collect()
 
     if sampling is not None:
-        sampling = _ni_support._normalize_sequence(sampling, input.ndim)
-        sampling = np.asarray(sampling, dtype=np.float64)
-        if not sampling.flags.contiguous:
-            sampling = sampling.copy()
+        sampling_arr = _ni_support._normalize_sequence(sampling, input.ndim)
+        sampling_arr = np.asarray(sampling_arr, dtype=np.float64)
+        if not sampling_arr.flags.contiguous:
+            sampling_arr = sampling_arr.copy()
+    else:
+        sampling_arr = None
 
-    if ft_inplace:
+    if ft_inplace and indices is not None:
         ft = indices
         if ft.shape != (input.ndim,) + input.shape:
             raise RuntimeError("indices has wrong shape")
@@ -128,7 +135,7 @@ def distance_transform_edt_float32(  # noqa: C901
     else:
         ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
 
-    _nd_image.euclidean_feature_transform(input, sampling, ft)
+    _nd_image.euclidean_feature_transform(input, sampling_arr, ft)
     input_shape = input.shape
 
     del input
@@ -152,11 +159,11 @@ def distance_transform_edt_float32(  # noqa: C901
             c_indices[0] += 1
 
         dt = dt.astype(np.float32, copy=False)
-        if sampling is not None:
-            for ii in range(len(sampling)):
-                dt[ii, ...] *= sampling[ii]
+        if sampling_arr is not None:
+            for ii in range(len(sampling_arr)):
+                dt[ii, ...] *= sampling_arr[ii]
         np.multiply(dt, dt, dt)
-        if dt_inplace:
+        if dt_inplace and distances is not None:
             dt = np.add.reduce(dt, axis=0)
             if distances.shape != dt.shape:
                 raise RuntimeError("indices has wrong shape")
