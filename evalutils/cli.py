@@ -43,7 +43,12 @@ def validate_python_module_name_fn(option):
 class AbbreviatedChoice(click.Choice):
     def __init__(self, choices: List[str]):
         super().__init__(choices=choices, case_sensitive=True)
-        self.abbreviations = [e[0] for e in choices]
+        self._abbreviations = [e[0].upper() for e in choices]
+        self._choices_upper = list(map(str.upper, choices))
+        if len(set(self._abbreviations)) != len(choices):
+            raise ValueError(
+                "First letters of choices for AbbreviatedChoices should be unique!"
+            )
 
     def get_metavar(self, param):
         return "[{}]".format(
@@ -52,11 +57,11 @@ class AbbreviatedChoice(click.Choice):
 
     def convert(self, value, param, ctx):
         value = value.upper()
-        if value in self.abbreviations:
-            value = self.choices[self.abbreviations.index(value)]
-        else:
-            value = value.title()
-        super().convert(value=value, param=param, ctx=ctx)
+        if value in self._abbreviations:
+            value = self.choices[self._abbreviations.index(value)]
+        elif value in self._choices_upper:
+            value = self.choices[self._choices_upper.index(value)]
+        return super().convert(value=value, param=param, ctx=ctx)
 
 
 @init.command(
