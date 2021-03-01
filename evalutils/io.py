@@ -156,9 +156,9 @@ class SimpleITKLoader(ImageLoader):
 class CSVLoader(FileLoader):
     def load(self, *, fname: Path):
         try:
-            return read_csv(fname, skipinitialspace=True).to_dict(
-                orient="records"
-            )
+            return read_csv(
+                fname, skipinitialspace=True, encoding="utf-8"
+            ).to_dict(orient="records")
         except UnicodeDecodeError:
             raise FileLoaderError(f"Could not load {fname} using {__name__}.")
         except (ParserError, EmptyDataError):
