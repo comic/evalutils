@@ -1,6 +1,6 @@
 import gc
 from collections import namedtuple
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -107,12 +107,12 @@ def distance_transform_edt_float32(  # noqa: C901
     # calculate the feature transform
     input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
 
-    def nop():
-        pass
+    is_input_large = input.nbytes > 100e6
 
-    garbage_collect: Callable[[], Any] = nop
-    if input.nbytes > 100e6:
-        garbage_collect = gc.collect
+    def garbage_collect():
+        if is_input_large:
+            gc.collect()
+
     garbage_collect()
 
     input = input.astype(np.int32)
