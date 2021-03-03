@@ -8,6 +8,11 @@ from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
+VOXELSPACING_TYPE = Optional[
+    Union[Tuple[Union[float, int], ...], List[Union[float, int]], float, int]
+]
+
+
 def distance_transform_edt_float32(  # noqa: C901
     input,
     sampling=None,
@@ -327,7 +332,7 @@ def dice_from_confusion_matrix(cm: ndarray) -> ndarray:
 def __surface_distances(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> ndarray:
     """
@@ -381,7 +386,7 @@ def __surface_distances(
 def hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -430,7 +435,7 @@ def percentile_hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
     percentile: Union[int, float] = 0.95,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -493,7 +498,7 @@ def percentile_hausdorff_distance(
 def modified_hausdorff_distance(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
 ) -> float:
     """
@@ -568,9 +573,7 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Union[List[Union[int, float]], int, float, None] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
@@ -620,9 +623,7 @@ def absolute_volume_difference(
 
 
 def __directed_contour_distances(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> ndarray:
     """
     Computes set of surface contour distances.
@@ -683,9 +684,7 @@ def __directed_contour_distances(
 
 
 def mean_contour_distance(
-    s1: ndarray,
-    s2: ndarray,
-    voxelspacing: Optional[Tuple[float, float]] = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
 ) -> float:
     """
     Computes the (symmetric) Mean Contour Distance between the binary objects
@@ -731,7 +730,7 @@ HausdorffMeasures = namedtuple(
 def hausdorff_distance_measures(
     s1: ndarray,
     s2: ndarray,
-    voxelspacing: None = None,
+    voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
     percentile: float = 0.95,
 ) -> HausdorffMeasures:
