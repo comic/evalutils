@@ -14,13 +14,13 @@ VOXELSPACING_TYPE = Optional[
 
 
 def distance_transform_edt_float32(  # noqa: C901
-    input: ndarray,
-    sampling: VOXELSPACING_TYPE = None,
-    return_distances: bool = True,
-    return_indices: bool = False,
-    distances: Optional[ndarray] = None,
-    indices: Optional[ndarray] = None,
-) -> Union[ndarray, List[ndarray]]:
+    input,
+    sampling=None,
+    return_distances=True,
+    return_indices=False,
+    distances=None,
+    indices=None,
+):
     """
     The same as scipy.ndimage.morphology.distance_transform_edt but
     using float32 and better memory cleaning internally.
@@ -30,25 +30,25 @@ def distance_transform_edt_float32(  # noqa: C901
     element is returned along the first axis of the result.
     Parameters
     ----------
-    input
+    input : array_like
         Input data to transform. Can be any type but will be converted
         into binary: 1 wherever input equates to True, 0 elsewhere.
-    sampling
+    sampling : float or int, or sequence of same, optional
         Spacing of elements along each dimension. If a sequence, must be of
         length equal to the input rank; if a single number, this is used for
         all axes. If not specified, a grid spacing of unity is implied.
-    return_distances
+    return_distances : bool, optional
         Whether to return distance matrix. At least one of
         return_distances/return_indices must be True. Default is True.
-    return_indices
+    return_indices : bool, optional
         Whether to return indices matrix. Default is False.
-    distances
+    distances : ndarray, optional
         Used for output of distance array, must be of type float64.
-    indices
+    indices : ndarray, optional
         Used for output of indices, must be of type int32.
     Returns
     -------
-    distance_transform_edt
+    distance_transform_edt : ndarray or list of ndarrays
         Either distance matrix, index matrix, or a list of the two,
         depending on `return_x` flags and `distance` and `indices`
         input parameters.
