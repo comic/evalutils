@@ -105,7 +105,7 @@ def distance_transform_edt_float32(  # noqa: C901
     dt_inplace = isinstance(distances, np.ndarray)
 
     # calculate the feature transform
-    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
+    input = np.atleast_1d(input != 0)
 
     garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
     garbage_collect()
