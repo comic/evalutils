@@ -169,7 +169,7 @@ def validate_algorithm_output(
     proc.process()
     results_file = output_dir / "results.json"
     assert results_file.exists()
-    with open(str(results_file), "r") as f:
+    with open(str(results_file)) as f:
         results = json.load(f)
     print(results)
     expected_path = (
@@ -178,6 +178,6 @@ def validate_algorithm_output(
     if not expected_path.exists():
         expected_path = TEMPLATE_TEST_DIR / expected_results_file
 
-    with open(str(expected_path), "r") as f:
+    with open(str(expected_path)) as f:
         expected_result = json.load(f)
     assert results == expected_result

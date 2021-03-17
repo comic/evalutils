@@ -5,7 +5,7 @@ from evalutils.scorers import find_hits_for_targets, score_detection
 
 
 def load_points_csv(filepath):
-    with open(Path(__file__).parent / filepath, "r") as f:
+    with open(Path(__file__).parent / filepath) as f:
         positions = DictReader(f, skipinitialspace=True)
         points = [(float(p["x"]), float(p["y"])) for p in positions]
 
