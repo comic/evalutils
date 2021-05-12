@@ -366,8 +366,9 @@ def __surface_distances(
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -429,8 +430,9 @@ def hausdorff_distance(
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -492,8 +494,9 @@ def percentile_hausdorff_distance(
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -559,8 +562,9 @@ def modified_hausdorff_distance(
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -694,8 +698,9 @@ def __directed_contour_distances(
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -762,8 +767,9 @@ def mean_contour_distance(
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
@@ -826,8 +832,9 @@ def hausdorff_distance_measures(
     percentile
         The percentile at which to calculate the Hausdorff Distance
     use_memory_efficient_edt
-        When enabled it uses a float 32 version of the scipy euclidean distance
-        transform to reduce memory costs at the cost of some additional
+        When enabled it uses a float 32 version of the
+        `scipy.ndimage.morphology.distance_transform_edt`
+        to reduce memory costs at the cost of some additional
         compute time.
 
     Returns
