@@ -168,7 +168,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 @click.option("--diag-ticket", type=click.STRING, default="")
 @click.option(
     "--req-cpus",
-    type=click.IntRange(1, 64, True),
+    type=click.IntRange(min=1, max=64, clamp=True),
     default=1,
     prompt="Required number of cpus?",
 )
@@ -188,7 +188,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 )
 @click.option(
     "--req-gpus",
-    type=click.IntRange(0, 8, True),
+    type=click.IntRange(min=0, max=8, clamp=True),
     default=0,
     prompt="Required number of gpus?",
     callback=req_gpu_prompt,
