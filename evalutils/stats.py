@@ -338,7 +338,7 @@ def __surface_distances(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> ndarray:
     """
     Computes set of surface distances.
@@ -404,7 +404,7 @@ def hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> float:
     """
     Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
@@ -463,7 +463,7 @@ def percentile_hausdorff_distance(
     percentile: Union[int, float] = 0.95,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> float:
     """
     Nth Percentile Hausdorff Distance.
@@ -536,7 +536,7 @@ def modified_hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> float:
     """
     Computes the (symmetric) Modified Hausdorff Distance (MHD) between the
@@ -672,7 +672,7 @@ def __directed_contour_distances(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> ndarray:
     """
     Computes set of surface contour distances.
@@ -746,7 +746,7 @@ def mean_contour_distance(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> float:
     """
     Computes the (symmetric) Mean Contour Distance between the binary objects
@@ -804,7 +804,7 @@ def hausdorff_distance_measures(
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
     percentile: float = 0.95,
-    use_memory_efficient_edt: bool = False,
+    use_memory_efficient_edt: bool = True,
 ) -> HausdorffMeasures:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
