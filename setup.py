@@ -6,7 +6,7 @@ from typing import Dict
 from setuptools import find_packages, setup
 
 NAME = "evalutils"
-REQUIRES_PYTHON = ">=3.6.0"
+REQUIRES_PYTHON = ">=3.7"
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -43,7 +43,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
