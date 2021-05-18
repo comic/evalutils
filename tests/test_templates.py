@@ -1,8 +1,6 @@
 import json
 import os
-import platform
 import subprocess
-from distutils.util import strtobool
 from pathlib import Path
 
 import pytest
@@ -17,10 +15,6 @@ def check_dict(check, expected):
             assert check[key] == val
 
 
-@pytest.mark.skipif(
-    strtobool(os.environ.get("APPVEYOR", "False").lower()),
-    reason="This test is not supported by standard appveyor",
-)
 @pytest.mark.parametrize(
     ("kind", "expected"),
     [
@@ -94,10 +88,6 @@ def test_evaluation_cli(tmpdir, kind, expected):
     assert f"{project_name}.tar.gz" in files
 
 
-@pytest.mark.skipif(
-    strtobool(os.environ.get("APPVEYOR", "False").lower()),
-    reason="This test is not supported by standard appveyor",
-)
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
