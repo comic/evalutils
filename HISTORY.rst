@@ -7,6 +7,9 @@ History
 
 * Removed Windows batch files, please use WSL2 instead
 * Fixed CLI with click 8.0
+* Updated templated containers to use Python 3.9 and latest libraries
+* Added support for Python 3.9
+* Dropped support for Python 3.6
 
 0.2.4 (2020-01-18)
 ------------------
@@ -51,9 +54,7 @@ History
 
 * Pins Pandas version due to a bug with dataframe conversion to dictionaries in Pandas 0.24.0
 * Updates the export.sh template to gzip the docker container after creation
-* Updated templated containers to use Python 3.9 and latest libraries
 * Added Python 3.7 support
-* Dropped support for Python 3.6
 
 0.1.14 (2018-10-16)
 -------------------
