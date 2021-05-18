@@ -2,6 +2,12 @@
 History
 =======
 
+0.3.0 (UNRELEASED)
+------------------
+
+* Removed Windows batch files, please use WSL2 instead
+* Fixed CLI with click 8.0
+
 0.2.4 (2020-01-18)
 ------------------
 
