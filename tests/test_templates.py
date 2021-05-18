@@ -67,7 +67,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
     out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
-    assert f"Successfully tagged {project_name}:latest" in out.decode()
+    assert f"Successfully tagged {project_name.lower()}:latest" in out.decode()
 
     out = subprocess.check_output([str(project_dir / "test.sh")])
 
@@ -89,9 +89,6 @@ def test_evaluation_cli(tmpdir, kind, expected):
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(
-    "Algorithms will be refactored in https://github.com/comic/evalutils/issues/309"
-)
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
@@ -151,11 +148,12 @@ def test_algorithm_cli(
     out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
-    assert f"Successfully tagged {project_name}:latest" in out.decode()
+    assert f"Successfully tagged {project_name.lower()}:latest" in out.decode()
     out = subprocess.check_output([str(project_dir / "test.sh")])
 
     # Grab the results json
     out = out.decode().splitlines()
+    assert "Tests successfully passed..." in out
     start = [i for i, ln in enumerate(out) if ln == "["]
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
