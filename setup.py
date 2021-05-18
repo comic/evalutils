@@ -25,7 +25,7 @@ requirements = [
     "numpy",
 ]
 
-test_requirements = ["pytest", "pytest-cov"]
+test_requirements = ["pytest", "pytest-cov", "pytest-xdist", "pytest-randomly"]
 
 here = os.path.abspath(os.path.dirname(__file__))
 

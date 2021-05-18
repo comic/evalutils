@@ -39,7 +39,8 @@ jobs:
           pip install -U pip
           pip install tox codecov
       - name: Run Tox with system python
-        run: tox -e py
+        # TODO: run all tests
+        run: tox -e py -- -m "not slow"
       - name: Upload coverage results
         if: matrix.python == '3.9'
         run: codecov

@@ -13,7 +13,7 @@ def bootstrap_development_distribution(project_name: str, dest_dir: Path):
     several unnecessary files and directories
     """
     src_dir = Path(__file__).parent.parent.absolute()
-    print(f"Bootstrap: {src_dir} -> {dest_dir}")
+
     shutil.copytree(
         src_dir,
         dest_dir,

@@ -14,7 +14,7 @@ def check_dict(check, expected):
         else:
             assert check[key] == val
 
-
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("kind", "expected"),
     [
@@ -40,7 +40,6 @@ def check_dict(check, expected):
     ],
 )
 def test_evaluation_cli(tmpdir, kind, expected):
-    print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
     files = os.listdir(tmpdir)
@@ -87,7 +86,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files
 
-
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
@@ -114,7 +113,6 @@ def test_algorithm_cli(
     req_gpu_compute_capability,
     req_gpu_memory,
 ):
-    print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
     files = os.listdir(tmpdir)
@@ -150,7 +148,6 @@ def test_algorithm_cli(
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
     out = subprocess.check_output([str(project_dir / "test.sh")])
-    print(out)
 
     # Grab the results json
     out = out.decode().splitlines()
@@ -158,7 +155,7 @@ def test_algorithm_cli(
     start = [i for i, ln in enumerate(out) if ln == "["]
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
-    print(result)
+
     with open(
         Path(__file__).parent.parent
         / "evalutils"
