@@ -140,7 +140,7 @@ class ImageIOLoader(ImageLoader):
 
     @staticmethod
     def hash_image(image):
-        return hash(image.tostring())
+        return hash(image.tobytes())
 
 
 class SimpleITKLoader(ImageLoader):
@@ -150,7 +150,7 @@ class SimpleITKLoader(ImageLoader):
 
     @staticmethod
     def hash_image(image):
-        return hash(GetArrayFromImage(image).tostring())
+        return hash(GetArrayFromImage(image).tobytes())
 
 
 class CSVLoader(FileLoader):
