@@ -49,8 +49,6 @@ def test_evaluation_cli(tmpdir, kind, expected):
     print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
-    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
-
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
@@ -72,12 +70,12 @@ def test_evaluation_cli(tmpdir, kind, expected):
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
 
-    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "test.sh")])
 
     # Grab the results json
     out = out.decode().splitlines()
@@ -90,7 +88,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" not in files
 
-    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+    subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files
@@ -129,8 +127,6 @@ def test_algorithm_cli(
     print(json.dumps(dict(os.environ), indent=4))
     project_name = "testeval"
 
-    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
-
     files = os.listdir(tmpdir)
     assert len(files) == 0
 
@@ -159,11 +155,11 @@ def test_algorithm_cli(
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
     assert f"Successfully tagged {project_name}:latest" in out.decode()
-    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "test.sh")])
     print(out)
 
     # Grab the results json
@@ -190,7 +186,7 @@ def test_algorithm_cli(
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" not in files
 
-    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+    subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files
