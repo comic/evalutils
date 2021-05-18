@@ -36,9 +36,9 @@ with open(os.path.join(here, NAME, "__version__.py")) as f:
 
 setup(
     author="James Meakin",
-    author_email="jamesmeakin@gmail.com",
+    author_email="code@jmsmkn.com",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
@@ -46,10 +46,10 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description=(
-        "evalutils helps challenge administrators easily create evaluation "
-        "containers for grand-challenge.org."
+        "evalutils helps users create extensions for grand-challenge.org."
     ),
     extras_require={"test": test_requirements},
     install_requires=requirements,
