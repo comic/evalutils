@@ -14,6 +14,7 @@ def check_dict(check, expected):
         else:
             assert check[key] == val
 
+
 @pytest.mark.slow
 @pytest.mark.parametrize(
     ("kind", "expected"),
@@ -85,6 +86,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files
+
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
