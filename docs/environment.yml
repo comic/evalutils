@@ -5,6 +5,6 @@ dependencies:
  - pip:
     - SimpleITK
     - sphinx-autodoc-typehints
- - python=3.6
+ - python=3.9
  - pandas
  - imageio

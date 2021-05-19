@@ -30,16 +30,16 @@ def test_edt32_indices_wrong_format(shape: Tuple[int, ...], dtype: np.dtype):
 
 
 @pytest.mark.parametrize(
-    "y_true", [np.random.randint(0, 2, (30, 20, 10)).astype(np.int)]
+    "y_true", [np.random.randint(0, 2, (30, 20, 10)).astype(int)]
 )
 @pytest.mark.parametrize(
-    "y_pred", [np.random.randint(0, 2, (30, 20, 10)).astype(np.int)]
+    "y_pred", [np.random.randint(0, 2, (30, 20, 10)).astype(int)]
 )
 @pytest.mark.parametrize("labels", [[0], [0, 1], [0, 2], [0, 1, 2]])
 def test_calculate_confusion_matrix(y_true, y_pred, labels):
     result = stats.calculate_confusion_matrix(y_true, y_pred, labels)
     result2 = sklearn.metrics.confusion_matrix(
-        y_true.flatten(), y_pred.flatten(), labels
+        y_true.flatten(), y_pred.flatten(), labels=labels
     )
     assert result.shape[0] == len(labels) and result.shape[1] == len(labels)
     assert np.equal(result, result2).all()
@@ -48,7 +48,7 @@ def test_calculate_confusion_matrix(y_true, y_pred, labels):
 def test_accuracies_from_cm():
     cm = np.array([[5, 2, 1], [1, 2, 1], [1, 0, 4]])
     expected = np.array(
-        [5 + 2 + 1 + 4, 2 + 5 + 4 + 1 + 1, 4 + 2 + 1 + 2 + 5], dtype=np.float
+        [5 + 2 + 1 + 4, 2 + 5 + 4 + 1 + 1, 4 + 2 + 1 + 2 + 5], dtype=float
     ) // float(np.sum(cm))
     accs = stats.accuracies_from_confusion_matrix(cm)
     assert np.equal(expected, accs).all()
@@ -56,8 +56,8 @@ def test_accuracies_from_cm():
 
 def test_jaccard_from_cm():
     cm = np.array([[5, 2, 1], [1, 2, 1], [1, 0, 4]])
-    expected = np.array([5, 2, 4], dtype=np.float) / np.array(
-        [2 + 1 + 1 + 1 + 5, 2 + 1 + 1 + 2, 4 + 1 + 1 + 1], dtype=np.float
+    expected = np.array([5, 2, 4], dtype=float) / np.array(
+        [2 + 1 + 1 + 1 + 5, 2 + 1 + 1 + 2, 4 + 1 + 1 + 1], dtype=float
     )
     accs = stats.jaccard_from_confusion_matrix(cm)
     assert np.allclose(expected, accs)
@@ -66,11 +66,11 @@ def test_jaccard_from_cm():
 def test_dice_from_cm():
     cm = np.array([[5, 2, 1], [1, 2, 1], [1, 0, 4]])
     expected = (
-        np.array([5, 2, 4], dtype=np.float)
+        np.array([5, 2, 4], dtype=float)
         * 2
         / np.array(
             [2 + 1 + 1 + 1 + 5 + 5, 2 + 1 + 1 + 2 + 2, 4 + 4 + 1 + 1 + 1],
-            dtype=np.float,
+            dtype=float,
         )
     )
     accs = stats.dice_from_confusion_matrix(cm)
@@ -78,8 +78,8 @@ def test_dice_from_cm():
 
 
 def test_ravd():
-    a = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
-    b = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
+    a = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=bool)
+    b = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=bool)
     r1 = stats.relative_absolute_volume_difference(a, b)
     r2 = stats.relative_absolute_volume_difference(b, a)
     assert r1 != r2
@@ -89,8 +89,8 @@ def test_ravd():
 
 @pytest.mark.parametrize("voxelspace", [None, (0.3, 0.8)])
 def test_avd(voxelspace):
-    a = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=np.bool)
-    b = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=np.bool)
+    a = np.array([[1, 0, 0], [1, 1, 1], [0, 1, 1]], dtype=bool)
+    b = np.array([[1, 0, 1], [1, 0, 1], [0, 0, 1]], dtype=bool)
     r1 = stats.absolute_volume_difference(a, b, voxelspace)
     r2 = stats.absolute_volume_difference(b, a, voxelspace)
     assert r1 == r2
@@ -107,8 +107,8 @@ def test_avd(voxelspace):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ]
@@ -165,8 +165,8 @@ def test_hd(a, b, voxelspace, connectivity):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ],
@@ -190,8 +190,8 @@ def test_modified_hd(a, b, voxelspace, connectivity):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ],
@@ -225,8 +225,8 @@ def test_percentile_hd(a, b, voxelspace, connectivity, percentile):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ],
@@ -332,8 +332,8 @@ def sitk_directed_contour_distance(a, b, voxelspace):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ],
@@ -354,8 +354,8 @@ def test_directed_contour_distance(a, b, voxelspace):
     "a,b",
     [
         [
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
-            np.random.randint(0, 2, (6, 6), dtype=np.bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
+            np.random.randint(0, 2, (6, 6), dtype=bool),
         ]
         for _ in range(20)
     ],
@@ -376,10 +376,10 @@ def test_surface_distance(a, b, voxelspace, connectivity):
 
 
 @pytest.mark.parametrize(
-    "a", [np.random.randint(0, 2, (30, 20, 10)).astype(np.bool)]
+    "a", [np.random.randint(0, 2, (30, 20, 10)).astype(bool)]
 )
 @pytest.mark.parametrize(
-    "b", [np.random.randint(0, 2, (30, 20, 10)).astype(np.bool)]
+    "b", [np.random.randint(0, 2, (30, 20, 10)).astype(bool)]
 )
 @pytest.mark.parametrize("voxelspace", [None])  # , (0.3, 0.8, 1.2)])
 @pytest.mark.parametrize("connectivity", [0, 1, 2])

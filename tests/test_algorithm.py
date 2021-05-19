@@ -171,7 +171,7 @@ def validate_algorithm_output(
     assert results_file.exists()
     with open(str(results_file)) as f:
         results = json.load(f)
-    print(results)
+
     expected_path = (
         Path(__file__).parent / "resources" / "json" / expected_results_file
     )

@@ -11,7 +11,7 @@ def reset_seeds():
 
 
 def test_get_bootstrapped_roc_ci_curves():
-    y_true = np.random.randint(0, 2, 500).astype(np.int)
+    y_true = np.random.randint(0, 2, 500).astype(int)
     y_pred = np.random.random_sample(500)
     roc_95 = roc.get_bootstrapped_roc_ci_curves(
         y_pred, y_true, num_bootstraps=3, ci_to_use=0.95
@@ -57,7 +57,7 @@ def test_get_bootstrapped_roc_ci_curves():
 
 
 def test_average_roc_curves():
-    y_true = np.random.randint(0, 2, 500).astype(np.int)
+    y_true = np.random.randint(0, 2, 500).astype(int)
     y_pred = np.random.random_sample(500)
     roc_95 = roc.get_bootstrapped_roc_ci_curves(
         y_pred, y_true, num_bootstraps=3, ci_to_use=0.95
@@ -103,8 +103,8 @@ def test_average_roc_curves():
 
 
 def test_get_bootstrapped_ci_point_error():
-    y_true = np.random.randint(0, 2, 500).astype(np.int)
-    y_pred = np.random.randint(1, 10, 500).astype(np.int)
+    y_true = np.random.randint(0, 2, 500).astype(int)
+    y_pred = np.random.randint(1, 10, 500).astype(int)
     err_95 = roc.get_bootstrapped_ci_point_error(
         y_pred, y_true, num_bootstraps=100, ci_to_use=0.95
     )

@@ -6,7 +6,7 @@ from typing import Dict
 from setuptools import find_packages, setup
 
 NAME = "evalutils"
-REQUIRES_PYTHON = ">=3.6.0"
+REQUIRES_PYTHON = ">=3.7"
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -25,7 +25,7 @@ requirements = [
     "numpy",
 ]
 
-test_requirements = ["pytest", "pytest-cov"]
+test_requirements = ["pytest", "pytest-cov", "pytest-xdist", "pytest-randomly"]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -36,20 +36,19 @@ with open(os.path.join(here, NAME, "__version__.py")) as f:
 
 setup(
     author="James Meakin",
-    author_email="jamesmeakin@gmail.com",
+    author_email="code@jmsmkn.com",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description=(
-        "evalutils helps challenge administrators easily create evaluation "
-        "containers for grand-challenge.org."
+        "evalutils helps users create extensions for grand-challenge.org."
     ),
     extras_require={"test": test_requirements},
     install_requires=requirements,

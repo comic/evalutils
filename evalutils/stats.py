@@ -208,7 +208,7 @@ def calculate_confusion_matrix(
     predicted to be in group :math:`j`.
 
     """
-    cm = np.zeros((len(labels), len(labels)), dtype=np.int)
+    cm = np.zeros((len(labels), len(labels)), dtype=int)
 
     for i, x in enumerate(labels):
         for j, y in enumerate(labels):
@@ -271,7 +271,7 @@ def accuracies_from_confusion_matrix(cm: ndarray) -> ndarray:
     results = np.zeros((len(cm)), dtype=np.float32)
 
     for i in range(len(cm)):
-        mask = np.ones((len(cm)), dtype=np.bool)
+        mask = np.ones((len(cm)), dtype=bool)
         mask[i] = False
         results[i] = cm[i, i] + np.sum(cm[mask, :][:, mask])
 
@@ -372,8 +372,8 @@ def __surface_distances(
     -----
     This function is not symmetric.
     """
-    s1_b = np.atleast_1d(s1.astype(np.bool))
-    s2_b = np.atleast_1d(s2.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(bool))
+    s2_b = np.atleast_1d(s2.astype(bool))
 
     if connectivity > 0:
         footprint = generate_binary_structure(s1.ndim, connectivity)
@@ -664,8 +664,8 @@ def __directed_contour_distances(
     `ZeroFluxNeumannBoundaryCondition`, which equals `nearest` mode in scipy.
 
     """
-    s1_b = np.atleast_1d(s1.astype(np.bool))
-    s2_b = np.atleast_1d(s2.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(bool))
+    s2_b = np.atleast_1d(s2.astype(bool))
 
     # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
     # for s1.ndim == 3
@@ -675,7 +675,7 @@ def __directed_contour_distances(
     # generate mask for elements not entirly enclosed by mask s1_b
     # (contours & non-zero elements)
     # convolve mode ITK relies on ZeroFluxNeumannBoundaryCondition == nearest
-    mask = convolve(s1_b.astype(np.int), footprint, mode="nearest") < np.sum(
+    mask = convolve(s1_b.astype(int), footprint, mode="nearest") < np.sum(
         footprint
     )
 
@@ -769,8 +769,8 @@ def hausdorff_distance_measures(
     -----
     This returns real metrics.
     """
-    s1_b = np.atleast_1d(s1.astype(np.bool))
-    s2_b = np.atleast_1d(s2.astype(np.bool))
+    s1_b = np.atleast_1d(s1.astype(bool))
+    s2_b = np.atleast_1d(s2.astype(bool))
 
     if connectivity > 0:
         footprint = generate_binary_structure(s1.ndim, connectivity)

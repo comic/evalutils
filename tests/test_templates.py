@@ -1,8 +1,6 @@
 import json
 import os
-import platform
 import subprocess
-from distutils.util import strtobool
 from pathlib import Path
 
 import pytest
@@ -17,10 +15,7 @@ def check_dict(check, expected):
             assert check[key] == val
 
 
-@pytest.mark.skipif(
-    strtobool(os.environ.get("APPVEYOR", "False").lower()),
-    reason="This test is not supported by standard appveyor",
-)
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("kind", "expected"),
     [
@@ -46,10 +41,7 @@ def check_dict(check, expected):
     ],
 )
 def test_evaluation_cli(tmpdir, kind, expected):
-    print(json.dumps(dict(os.environ), indent=4))
-    project_name = "testeval"
-
-    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
+    project_name = f"testeval{kind}"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
@@ -67,17 +59,17 @@ def test_evaluation_cli(tmpdir, kind, expected):
     )
 
     files = os.listdir(tmpdir)
-    assert "testeval" in files
+    assert project_name in files
     assert f"Created project {project_name}" in out.decode()
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
-    assert f"Successfully tagged {project_name}:latest" in out.decode()
+    assert f"Successfully tagged {project_name.lower()}:latest" in out.decode()
 
-    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "test.sh")])
 
     # Grab the results json
     out = out.decode().splitlines()
@@ -90,16 +82,13 @@ def test_evaluation_cli(tmpdir, kind, expected):
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" not in files
 
-    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+    subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files
 
 
-@pytest.mark.skipif(
-    strtobool(os.environ.get("APPVEYOR", "False").lower()),
-    reason="This test is not supported by standard appveyor",
-)
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
@@ -126,10 +115,7 @@ def test_algorithm_cli(
     req_gpu_compute_capability,
     req_gpu_memory,
 ):
-    print(json.dumps(dict(os.environ), indent=4))
-    project_name = "testeval"
-
-    file_ext = "bat" if platform.system().lower() == "windows" else "sh"
+    project_name = f"testalg{kind}"
 
     files = os.listdir(tmpdir)
     assert len(files) == 0
@@ -154,17 +140,16 @@ def test_algorithm_cli(
     )
 
     files = os.listdir(tmpdir)
-    assert "testeval" in files
+    assert project_name in files
     assert f"Created project {project_name}" in out.decode()
 
     project_dir = Path(tmpdir) / project_name
 
-    out = subprocess.check_output([str(project_dir / f"build.{file_ext}")])
+    out = subprocess.check_output([str(project_dir / "build.sh")])
 
     assert "Successfully built" in out.decode()
-    assert f"Successfully tagged {project_name}:latest" in out.decode()
-    out = subprocess.check_output([str(project_dir / f"test.{file_ext}")])
-    print(out)
+    assert f"Successfully tagged {project_name.lower()}:latest" in out.decode()
+    out = subprocess.check_output([str(project_dir / "test.sh")])
 
     # Grab the results json
     out = out.decode().splitlines()
@@ -172,7 +157,7 @@ def test_algorithm_cli(
     start = [i for i, ln in enumerate(out) if ln == "["]
     end = [i for i, ln in enumerate(out) if ln == "]"]
     result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
-    print(result)
+
     with open(
         Path(__file__).parent.parent
         / "evalutils"
@@ -190,7 +175,7 @@ def test_algorithm_cli(
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" not in files
 
-    subprocess.call([str(project_dir / f"export.{file_ext}")], cwd=project_dir)
+    subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
     assert f"{project_name}.tar.gz" in files

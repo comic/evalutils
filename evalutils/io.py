@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from SimpleITK import GetArrayFromImage, ReadImage
-from imageio import imread
+from imageio import get_reader
 from pandas import read_csv
 from pandas.errors import EmptyDataError, ParserError
 
@@ -136,11 +136,13 @@ class ImageLoader(FileLoader):
 class ImageIOLoader(ImageLoader):
     @staticmethod
     def load_image(fname):
-        return imread(fname, as_gray=True)
+        with open(fname, "rb") as f:
+            with get_reader(f, mode="i", as_gray=True) as r:
+                return r.get_data(0)
 
     @staticmethod
     def hash_image(image):
-        return hash(image.tostring())
+        return hash(image.tobytes())
 
 
 class SimpleITKLoader(ImageLoader):
@@ -150,7 +152,7 @@ class SimpleITKLoader(ImageLoader):
 
     @staticmethod
     def hash_image(image):
-        return hash(GetArrayFromImage(image).tostring())
+        return hash(GetArrayFromImage(image).tobytes())
 
 
 class CSVLoader(FileLoader):

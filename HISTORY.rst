@@ -2,6 +2,15 @@
 History
 =======
 
+0.3.0 (UNRELEASED)
+------------------
+
+* Removed Windows batch files, please use WSL2 instead
+* Fixed CLI with click 8.0
+* Updated templated containers to use Python 3.9 and latest libraries
+* Added support for Python 3.9
+* Dropped support for Python 3.6
+
 0.2.4 (2020-01-18)
 ------------------
 

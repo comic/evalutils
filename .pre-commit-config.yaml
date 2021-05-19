@@ -6,7 +6,7 @@ repos:
     hooks:
       - id: pyupgrade
         language: python
-        args: [--py36-plus]
+        args: [--py37-plus]
   - repo: https://github.com/ambv/black
     rev: 19.10b0
     hooks:

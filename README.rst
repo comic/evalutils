@@ -40,7 +40,7 @@ Features
 Getting Started
 ---------------
 
-evalutils_ requires Python 3.6, and can be installed from `pip`. Please
+evalutils_ requires Python 3.7 or above, and can be installed from `pip`. Please
 see the `Getting Started`_ documentation for more details.
 
 
