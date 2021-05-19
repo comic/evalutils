@@ -1,13 +1,12 @@
 import gc
 from collections import namedtuple
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
 from scipy.ndimage.filters import convolve
 from scipy.ndimage.morphology import (
     binary_erosion,
-    distance_transform_edt,
     generate_binary_structure,
 )
 
@@ -338,7 +337,7 @@ def __surface_distances(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> ndarray:
     """
     Computes set of surface distances.
@@ -365,11 +364,11 @@ def __surface_distances(
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -390,12 +389,6 @@ def __surface_distances(
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    edt_method = (
-        distance_transform_edt_float32
-        if use_memory_efficient_edt
-        else distance_transform_edt
-    )
-
     return edt_method(~s2_b, sampling=voxelspacing)[s1_b]
 
 
@@ -404,7 +397,7 @@ def hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
@@ -429,11 +422,11 @@ def hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -448,10 +441,10 @@ def hausdorff_distance(
     http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html
     """
     s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, use_memory_efficient_edt
+        s1, s2, voxelspacing, connectivity, edt_method=edt_method
     )
     s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, use_memory_efficient_edt
+        s2, s1, voxelspacing, connectivity, edt_method=edt_method
     )
 
     return max(s1_dist.max(), s2_dist.max())
@@ -463,7 +456,7 @@ def percentile_hausdorff_distance(
     percentile: Union[int, float] = 0.95,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Nth Percentile Hausdorff Distance.
@@ -493,11 +486,11 @@ def percentile_hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -516,10 +509,10 @@ def percentile_hausdorff_distance(
     This is a real metric.
     """
     s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, use_memory_efficient_edt
+        s1, s2, voxelspacing, connectivity, edt_method=edt_method
     )
     s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, use_memory_efficient_edt
+        s2, s1, voxelspacing, connectivity, edt_method=edt_method
     )
 
     s1_dist.sort()
@@ -536,7 +529,7 @@ def modified_hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Modified Hausdorff Distance (MHD) between the
@@ -561,11 +554,11 @@ def modified_hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.morphology.generate_binary_structure` and should usually
         be :math:`> 1`.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -579,10 +572,10 @@ def modified_hausdorff_distance(
     This is a real metric.
     """
     s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, use_memory_efficient_edt
+        s1, s2, voxelspacing, connectivity, edt_method=edt_method
     )
     s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, use_memory_efficient_edt
+        s2, s1, voxelspacing, connectivity, edt_method=edt_method
     )
 
     return max(s1_dist.mean(), s2_dist.mean())
@@ -672,7 +665,7 @@ def __directed_contour_distances(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> ndarray:
     """
     Computes set of surface contour distances.
@@ -697,11 +690,11 @@ def __directed_contour_distances(
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -724,11 +717,6 @@ def __directed_contour_distances(
     # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
     # for s1.ndim == 3
     footprint = generate_binary_structure(s1.ndim, s1.ndim)
-    edt_method = (
-        distance_transform_edt_float32
-        if use_memory_efficient_edt
-        else distance_transform_edt
-    )
     df = edt_method(~s2_b, sampling=voxelspacing)
 
     # generate mask for elements not entirly enclosed by mask s1_b
@@ -746,7 +734,7 @@ def mean_contour_distance(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Mean Contour Distance between the binary objects
@@ -766,11 +754,11 @@ def mean_contour_distance(
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -783,10 +771,10 @@ def mean_contour_distance(
     This is a real metric that mimics the ITK MeanContourDistanceFilter.
     """
     s1_c_dist = __directed_contour_distances(
-        s1, s2, voxelspacing, use_memory_efficient_edt
+        s1, s2, voxelspacing, edt_method=edt_method
     )
     s2_c_dist = __directed_contour_distances(
-        s2, s1, voxelspacing, use_memory_efficient_edt
+        s2, s1, voxelspacing, edt_method=edt_method
     )
 
     return max(s1_c_dist.mean(), s2_c_dist.mean())
@@ -804,7 +792,7 @@ def hausdorff_distance_measures(
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
     percentile: float = 0.95,
-    use_memory_efficient_edt: bool = True,
+    edt_method: Callable = distance_transform_edt_float32,
 ) -> HausdorffMeasures:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
@@ -831,11 +819,11 @@ def hausdorff_distance_measures(
         be :math:`> 1`.
     percentile
         The percentile at which to calculate the Hausdorff Distance
-    use_memory_efficient_edt
-        When enabled it uses a float 32 version of the
-        `scipy.ndimage.morphology.distance_transform_edt`
-        to reduce memory costs at the cost of some additional
-        compute time.
+    edt_method
+        Method used for computing the euclidean distance transform. By default
+        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        method that uses float32 data to reduce memory costs at the cost of
+        some additional compute time.
 
     Returns
     -------
@@ -853,12 +841,6 @@ def hausdorff_distance_measures(
         footprint = generate_binary_structure(s1.ndim, connectivity)
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
-
-    edt_method = (
-        distance_transform_edt_float32
-        if use_memory_efficient_edt
-        else distance_transform_edt
-    )
 
     s1_dist = edt_method(~s2_b, sampling=voxelspacing)[s1_b]
     s2_dist = edt_method(~s1_b, sampling=voxelspacing)[s2_b]
