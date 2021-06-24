@@ -92,28 +92,9 @@ def test_evaluation_cli(tmpdir, kind, expected):
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
-@pytest.mark.parametrize(
-    (
-        "diag_ticket",
-        "req_cpus",
-        "req_cpu_capabilities",
-        "req_memory",
-        "req_gpus",
-        "req_gpu_compute_capability",
-        "req_gpu_memory",
-    ),
-    [("", 1, (), "2G", 0, "", "")],
-)
+@pytest.mark.parametrize("diag_ticket", ("",))
 def test_algorithm_cli(
-    tmpdir,
-    kind,
-    diag_ticket,
-    req_cpus,
-    req_cpu_capabilities,
-    req_memory,
-    req_gpus,
-    req_gpu_compute_capability,
-    req_gpu_memory,
+    tmpdir, kind, diag_ticket,
 ):
     project_name = f"testalg{kind}"
 
@@ -128,12 +109,6 @@ def test_algorithm_cli(
             project_name,
             f"--kind={kind}",
             f"--diag-ticket={diag_ticket}",
-            f"--req-cpus={req_cpus}",
-            f"--req-cpu-capabilities={req_cpu_capabilities}",
-            f"--req-memory={req_memory}",
-            f"--req-gpus={req_gpus}",
-            f"--req-gpu-compute-capability={req_gpu_compute_capability}",
-            f"--req-gpu-memory={req_gpu_memory}",
             "--dev",
         ],
         cwd=tmpdir,

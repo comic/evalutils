@@ -166,58 +166,9 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     prompt=f"What kind of algorithm is this?",
 )
 @click.option("--diag-ticket", type=click.STRING, default="")
-@click.option(
-    "--req-cpus",
-    type=click.IntRange(min=1, max=64, clamp=True),
-    default=1,
-    prompt="Required number of cpus?",
-)
-@click.option(
-    "--req-cpu-capabilities",
-    type=click.STRING,
-    multiple=True,
-    default=None,
-    callback=req_cpu_capabilities_prompt,
-)
-@click.option(
-    "--req-memory",
-    type=click.STRING,
-    default="1G",
-    prompt="Minimal required amount of cpu RAM?",
-    callback=validate_size_format_fn(can_be_empty=False),
-)
-@click.option(
-    "--req-gpus",
-    type=click.IntRange(min=0, max=8, clamp=True),
-    default=0,
-    prompt="Required number of gpus?",
-    callback=req_gpu_prompt,
-)
-@click.option(
-    "--req-gpu-compute-capability",
-    type=click.STRING,
-    is_eager=True,
-    default="",
-)
-@click.option(
-    "--req-gpu-memory",
-    type=click.STRING,
-    is_eager=True,
-    default="",
-    callback=validate_size_format_fn(can_be_empty=True),
-)
 @click.option("--dev", is_flag=True)
 def init_algorithm(
-    algorithm_name,
-    kind,
-    diag_ticket,
-    req_cpus,
-    req_cpu_capabilities,
-    req_memory,
-    req_gpus,
-    req_gpu_compute_capability,
-    req_gpu_memory,
-    dev,
+    algorithm_name, kind, diag_ticket, dev,
 ):
     template_dir = Path(__file__).parent / "templates" / "algorithm"
     try:
@@ -231,14 +182,6 @@ def init_algorithm(
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": __version__,
                 "dev_build": 1 if dev else 0,
-                "requirements": {
-                    "cpu_count": req_cpus,
-                    "cpu_capabilities": req_cpu_capabilities,
-                    "memory": req_memory,
-                    "gpu_count": req_gpus,
-                    "gpu_compute_capability": req_gpu_compute_capability,
-                    "gpu_memory": req_gpu_memory,
-                },
             },
         )
         click.echo(f"Created project {algorithm_name}")
