@@ -34,8 +34,3 @@ ENTRYPOINT python -m process $0 $@
 
 # These labels are required
 LABEL nl.diagnijmegen.rse.algorithm.name={{ cookiecutter.algorithm_name }}
-
-{% if cookiecutter.diag_ticket|trim() -%}
-# Optional labels
-LABEL nl.diagnijmegen.rse.algorithm.ticket={{ cookiecutter.diag_ticket|trim() }}
-{%- endif %}

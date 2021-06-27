@@ -5,7 +5,6 @@
         "Segmentation",
         "Detection"
     ],
-    "diag_ticket": "",
     "package_name": "{{ cookiecutter.algorithm_name|replace(' ', '') }}",
     "evalutils_name": "",
     "evalutils_version": "",

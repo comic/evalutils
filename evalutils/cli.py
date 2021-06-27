@@ -165,10 +165,9 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
     type=AbbreviatedChoice(ALGORITHM_CHOICES),
     prompt=f"What kind of algorithm is this?",
 )
-@click.option("--diag-ticket", type=click.STRING, default="")
 @click.option("--dev", is_flag=True)
 def init_algorithm(
-    algorithm_name, kind, diag_ticket, dev,
+    algorithm_name, kind, dev,
 ):
     template_dir = Path(__file__).parent / "templates" / "algorithm"
     try:
@@ -176,7 +175,6 @@ def init_algorithm(
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "diag_ticket": diag_ticket,
                 "algorithm_name": algorithm_name,
                 "algorithm_kind": kind,
                 "evalutils_name": __name__.split(".")[0],
