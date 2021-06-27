@@ -92,9 +92,8 @@ def test_evaluation_cli(tmpdir, kind, expected):
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
-@pytest.mark.parametrize("diag_ticket", ("",))
 def test_algorithm_cli(
-    tmpdir, kind, diag_ticket,
+    tmpdir, kind,
 ):
     project_name = f"testalg{kind}"
 
@@ -108,7 +107,6 @@ def test_algorithm_cli(
             "algorithm",
             project_name,
             f"--kind={kind}",
-            f"--diag-ticket={diag_ticket}",
             "--dev",
         ],
         cwd=tmpdir,
