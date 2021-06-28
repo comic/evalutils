@@ -9,7 +9,6 @@ VOLUME_SUFFIX=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
 docker volume create {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX
 
 docker run --rm \
-        --memory={{ cookiecutter.requirements.memory|lower }} \
         -v $SCRIPTPATH/test/:/input/ \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         {{ cookiecutter.package_name|lower }}

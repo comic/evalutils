@@ -34,16 +34,3 @@ ENTRYPOINT python -m process $0 $@
 
 # These labels are required
 LABEL nl.diagnijmegen.rse.algorithm.name={{ cookiecutter.algorithm_name }}
-
-# These labels are required and describe what kind of hardware your algorithm requires to run.
-LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.count={{ cookiecutter.requirements.cpu_count }}
-LABEL nl.diagnijmegen.rse.algorithm.hardware.cpu.capabilities={{ cookiecutter.requirements.cpu_capabilities }}
-LABEL nl.diagnijmegen.rse.algorithm.hardware.memory={{ cookiecutter.requirements.memory }}
-LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.count={{ cookiecutter.requirements.gpu_count }}
-LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.cuda_compute_capability={{ cookiecutter.requirements.gpu_compute_capability }}
-LABEL nl.diagnijmegen.rse.algorithm.hardware.gpu.memory={{ cookiecutter.requirements.gpu_memory }}
-
-{% if cookiecutter.diag_ticket|trim() -%}
-# Optional labels
-LABEL nl.diagnijmegen.rse.algorithm.ticket={{ cookiecutter.diag_ticket|trim() }}
-{%- endif %}
