@@ -2,7 +2,7 @@
 History
 =======
 
-0.3.0 (UNRELEASED)
+0.3.0 (2021-10-08)
 ------------------
 
 * Removed Windows batch files, please use WSL2 instead
@@ -11,7 +11,7 @@ History
 * Added support for Python 3.9
 * Dropped support for Python 3.6
 
-0.2.4 (2020-01-18)
+0.2.4 (2021-01-18)
 ------------------
 
 * Added `roc.average_roc_curves`
