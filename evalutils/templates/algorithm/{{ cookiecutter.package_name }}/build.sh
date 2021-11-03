@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
-docker build -t {{ cookiecutter.package_name|lower }} "$SCRIPTPATH"
+set -o errexit
+
+SCRIPTPATH="$(dirname "$(realpath "${0}")")"
+
+docker build -t {{ cookiecutter.package_name|lower }} "${SCRIPTPATH}"
