@@ -8,7 +8,7 @@ SCRIPTPATH="$(dirname "$(realpath "${0}")")"
 
 VOLUME_SUFFIX=$(dd if=/dev/urandom bs=32 count=1 | md5sum | cut --delimiter=' ' --fields=1)
 
-docker volume create "{{ cookiecutter.package_name|lower }-output-${VOLUME_SUFFIX}"
+docker volume create "{{ cookiecutter.package_name|lower }}-output-${VOLUME_SUFFIX}"
 
 docker run --rm \
         -v "${SCRIPTPATH}/test/":/input/ \
