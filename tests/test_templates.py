@@ -75,8 +75,8 @@ def test_evaluation_cli(tmpdir, kind, expected):
     out = out.decode().splitlines()
     start = [i for i, ln in enumerate(out) if ln == "{"]
     end = [i for i, ln in enumerate(out) if ln == "}"]
-    result = json.loads("\n".join(out[start[0] : (end[-1] + 1)]))
-
+    result = json.loads("\n".join(out[start[0]:(end[-1] + 1)])) if start and end else None
+    assert result
     check_dict(result, expected)
 
     files = os.listdir(project_dir)
