@@ -2,4 +2,4 @@
 
 ./build.sh
 
-docker save {{ cookiecutter.package_name|lower }} | gz -c > {{ cookiecutter.package_name }}.tar.gz
+docker save {{ cookiecutter.package_name|lower }} | gzip -c > {{ cookiecutter.package_name }}.tar.gz
