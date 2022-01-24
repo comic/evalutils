@@ -615,7 +615,7 @@ You can export the algorithm container with
 
     $ ./export.sh
 
-which will create ``myproject.tar.gz`` in the folder.
+which will create ``myproject.tar.xz`` in the folder.
 You can then upload this directly to `Grand Challenge`_ on your algorithms page.
 
 

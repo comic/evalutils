@@ -80,12 +80,12 @@ def test_evaluation_cli(tmpdir, kind, expected):
     check_dict(result, expected)
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar.gz" not in files
+    assert f"{project_name}.tar.xz" not in files
 
     subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar.gz" in files
+    assert f"{project_name}.tar.xz" in files
 
 
 @pytest.mark.slow
@@ -146,9 +146,9 @@ def test_algorithm_cli(
     assert result == expected
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar.gz" not in files
+    assert f"{project_name}.tar.xz" not in files
 
     subprocess.call([str(project_dir / "export.sh")], cwd=project_dir)
 
     files = os.listdir(project_dir)
-    assert f"{project_name}.tar.gz" in files
+    assert f"{project_name}.tar.xz" in files
