@@ -2,6 +2,11 @@
 History
 =======
 
+0.3.1 (2022-01-24)
+------------------
+
+* Added parameters to docker run commands to better reflect how containers are executed
+
 0.3.0 (2021-10-08)
 ------------------
 
