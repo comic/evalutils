@@ -685,8 +685,8 @@ class DetectionEvaluation(BaseEvaluation):
 
         totals = self._case_results.sum()
 
-        for s in totals.index:
-            aggregate_results[s]["sum"] = totals[s]
+        for s in ["true_positives", "false_positives", "false_negatives"]:
+            aggregate_results[s]["sum"] = int(totals[s])
 
         tp = aggregate_results["true_positives"]["sum"]
         fp = aggregate_results["false_positives"]["sum"]

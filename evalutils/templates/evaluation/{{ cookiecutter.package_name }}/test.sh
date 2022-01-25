@@ -8,8 +8,15 @@ VOLUME_SUFFIX=$(dd if=/dev/urandom bs=32 count=1 | md5sum | cut --delimiter=' ' 
 
 docker volume create {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX
 
+# Do not change any of the parameters to docker run, these are fixed
 docker run --rm \
-        --memory=4g \
+        --memory="4g" \
+        --memory-swap="4g" \
+        --network="none" \
+        --cap-drop="ALL" \
+        --security-opt="no-new-privileges" \
+        --shm-size="128m" \
+        --pids-limit="256" \
         -v $SCRIPTPATH/test/:/input/ \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         {{ cookiecutter.package_name|lower }}

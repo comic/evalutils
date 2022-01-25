@@ -29,8 +29,3 @@ RUN python -m pip install --user -rrequirements.txt
 COPY --chown=algorithm:algorithm process.py /opt/algorithm/
 
 ENTRYPOINT python -m process $0 $@
-
-## ALGORITHM LABELS ##
-
-# These labels are required
-LABEL nl.diagnijmegen.rse.algorithm.name={{ cookiecutter.algorithm_name }}
