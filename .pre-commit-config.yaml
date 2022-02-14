@@ -24,6 +24,7 @@ repos:
           # The following is disabled due to a runtime error
           # - flake8-docstrings
           - mccabe
+          - yesqa
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.47"
     hooks:
