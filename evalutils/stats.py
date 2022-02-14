@@ -4,8 +4,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
-from scipy.ndimage import binary_erosion, generate_binary_structure
-from scipy.ndimage.filters import convolve
+from scipy.ndimage import binary_erosion, convolve, generate_binary_structure
 
 
 VOXELSPACING_TYPE = Optional[
