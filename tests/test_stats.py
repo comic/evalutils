@@ -6,7 +6,7 @@ import pytest
 import scipy.ndimage as ndimage
 import sklearn
 from numpy.testing import assert_array_almost_equal
-from scipy.ndimage.morphology import generate_binary_structure
+from scipy.ndimage import generate_binary_structure
 
 import evalutils.stats as stats
 
