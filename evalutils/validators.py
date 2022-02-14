@@ -11,7 +11,7 @@ from .io import first_int_in_filename_key
 class DataFrameValidator(ABC):
     @abstractmethod
     def validate(self, *, df: DataFrame):
-        """ Validates a single aspect of a DataFrame
+        """Validates a single aspect of a DataFrame
 
         Parameters
         ----------

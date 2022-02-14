@@ -65,7 +65,7 @@ class BoundingBox:
 
     @property
     def area(self) -> float:
-        """ Return the area of the bounding box in natural units """
+        """Return the area of the bounding box in natural units"""
         return (self.x_right - self.x_left) * (self.y_top - self.y_bottom)
 
     def intersection(self, *, other: "BoundingBox") -> float:

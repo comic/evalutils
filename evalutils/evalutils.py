@@ -161,7 +161,7 @@ class Algorithm(ABC):
         return DataFrame(cases)
 
     def validate(self):
-        """ Validates each dataframe for each fileloader separately """
+        """Validates each dataframe for each fileloader separately"""
         file_loaders_keys = [k for k in self._file_loaders.keys()]
         for key in self._validators.keys():
             if key not in file_loaders_keys:
@@ -402,7 +402,7 @@ class BaseEvaluation(ABC):
 
     @property
     def _metrics(self) -> Dict:
-        """ Returns the calculated case and aggregate results """
+        """Returns the calculated case and aggregate results"""
         return {
             "case": self._case_results.to_dict(),
             "aggregates": self._aggregate_results,
@@ -449,7 +449,7 @@ class BaseEvaluation(ABC):
         return DataFrame(cases)
 
     def validate(self):
-        """ Validates each dataframe separately """
+        """Validates each dataframe separately"""
         self._validate_data_frame(df=self._ground_truth_cases)
         self._validate_data_frame(df=self._predictions_cases)
 
@@ -463,7 +463,7 @@ class BaseEvaluation(ABC):
 
     @abstractmethod
     def cross_validate(self):
-        """ Validates both dataframes """
+        """Validates both dataframes"""
         pass
 
     def _raise_missing_predictions_error(self, *, missing=None):
@@ -639,11 +639,11 @@ class DetectionEvaluation(BaseEvaluation):
             self._raise_extra_predictions_error(extra=extra)
 
     def _raise_extra_predictions_error(self, *, extra=None):
-        """ In detection challenges extra predictions are ok """
+        """In detection challenges extra predictions are ok"""
         warn(f"There are extra predictions for cases: {extra}.")
 
     def _raise_missing_predictions_error(self, *, missing=None):
-        """ In detection challenges missing predictions are ok """
+        """In detection challenges missing predictions are ok"""
         warn(f"Could not find predictions for cases: {missing}.")
 
     def score(self):

@@ -73,7 +73,7 @@ class AbbreviatedChoice(click.Choice):
 @click.option(
     "--kind",
     type=AbbreviatedChoice(EVALUATION_CHOICES),
-    prompt=f"What kind of challenge is this?",
+    prompt="What kind of challenge is this?",
 )
 @click.option("--dev", is_flag=True)
 def init_evaluation(challenge_name, kind, dev):
@@ -163,12 +163,10 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 @click.option(
     "--kind",
     type=AbbreviatedChoice(ALGORITHM_CHOICES),
-    prompt=f"What kind of algorithm is this?",
+    prompt="What kind of algorithm is this?",
 )
 @click.option("--dev", is_flag=True)
-def init_algorithm(
-    algorithm_name, kind, dev,
-):
+def init_algorithm(algorithm_name, kind, dev):
     template_dir = Path(__file__).parent / "templates" / "algorithm"
     try:
         cookiecutter(

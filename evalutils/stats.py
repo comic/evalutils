@@ -5,10 +5,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import numpy as np
 from numpy import ndarray
 from scipy.ndimage.filters import convolve
-from scipy.ndimage.morphology import (
-    binary_erosion,
-    generate_binary_structure,
-)
+from scipy.ndimage.morphology import binary_erosion, generate_binary_structure
 
 
 VOXELSPACING_TYPE = Optional[
@@ -612,7 +609,7 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
