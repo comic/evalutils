@@ -3,7 +3,7 @@ name: CI
 on: [push, pull_request]
 
 env:
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.10'
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.7, 3.8, 3.9]
+        python: ["3.7", "3.8", "3.9", "3.10"]
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python
@@ -42,14 +42,14 @@ jobs:
         run: |
           pip install -U pip
           pip install tox codecov
-      - name: Run quick tests (Not Python 3.9)
-        if: matrix.python != '3.9'
+      - name: Run quick tests (Not Python 3.10)
+        if: matrix.python != '3.10'
         run: tox -e py -- -m "not slow"
-      - name: Run all tests (Python 3.9 only)
-        if: matrix.python == '3.9'
+      - name: Run all tests (Python 3.10 only)
+        if: matrix.python == '3.10'
         run: tox -e py
       - name: Upload coverage results
-        if: matrix.python == '3.9'
+        if: matrix.python == '3.10'
         run: codecov
         env:
             CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
