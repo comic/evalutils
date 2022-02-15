@@ -1,14 +1,14 @@
-class EvalUtilsException(Exception):
+class EvalUtilsError(Exception):
     pass
 
 
-class FileLoaderError(EvalUtilsException):
+class FileLoaderError(EvalUtilsError):
     pass
 
 
-class ValidationError(EvalUtilsException):
+class ValidationError(EvalUtilsError):
     pass
 
 
-class ConfigurationError(EvalUtilsException):
+class ConfigurationError(EvalUtilsError):
     pass

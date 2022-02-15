@@ -7,7 +7,7 @@ import pytest
 
 
 def check_dict(check, expected):
-    """ Recursively check a dictionary of dictionaries """
+    """Recursively check a dictionary of dictionaries"""
     for key, val in expected.items():
         if isinstance(val, dict):
             check_dict(check[key], val)
@@ -92,9 +92,7 @@ def test_evaluation_cli(tmpdir, kind, expected):
 @pytest.mark.parametrize(
     "kind", ("Detection", "Segmentation", "Classification")
 )
-def test_algorithm_cli(
-    tmpdir, kind,
-):
+def test_algorithm_cli(tmpdir, kind):
     project_name = f"testalg{kind}"
 
     files = os.listdir(tmpdir)

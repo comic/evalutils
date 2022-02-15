@@ -4,11 +4,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
-from scipy.ndimage.filters import convolve
-from scipy.ndimage.morphology import (
-    binary_erosion,
-    generate_binary_structure,
-)
+from scipy.ndimage import binary_erosion, convolve, generate_binary_structure
 
 
 VOXELSPACING_TYPE = Optional[
@@ -25,7 +21,7 @@ def distance_transform_edt_float32(  # noqa: C901
     indices=None,
 ):
     """
-    The same as scipy.ndimage.morphology.distance_transform_edt but
+    The same as scipy.ndimage.distance_transform_edt but
     using float32 and better memory cleaning internally.
 
     In addition to the distance transform, the feature transform can
@@ -362,11 +358,11 @@ def __surface_distances(
     connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -420,11 +416,11 @@ def hausdorff_distance(
     connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -484,11 +480,11 @@ def percentile_hausdorff_distance(
     connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -552,11 +548,11 @@ def modified_hausdorff_distance(
     connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -612,7 +608,7 @@ def relative_absolute_volume_difference(s1: ndarray, s2: ndarray) -> float:
 
 
 def absolute_volume_difference(
-    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None,
+    s1: ndarray, s2: ndarray, voxelspacing: VOXELSPACING_TYPE = None
 ) -> float:
     """
     Calculate absolute volume difference from s2 to s1
@@ -692,7 +688,7 @@ def __directed_contour_distances(
         not specified, a grid spacing of unity is implied.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -756,7 +752,7 @@ def mean_contour_distance(
         not specified, a grid spacing of unity is implied.
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 
@@ -815,13 +811,13 @@ def hausdorff_distance_measures(
     connectivity
         The neighbourhood/connectivity considered when determining the surface
         of the binary objects. This value is passed to
-        `scipy.ndimage.morphology.generate_binary_structure` and should usually
+        `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
     percentile
         The percentile at which to calculate the Hausdorff Distance
     edt_method
         Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.morphology.distance_transform_edt`
+        it uses a variant on the `scipy.ndimage.distance_transform_edt`
         method that uses float32 data to reduce memory costs at the cost of
         some additional compute time.
 

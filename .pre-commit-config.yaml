@@ -2,18 +2,18 @@ default_language_version:
   python: python3.8
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.10.1
+    rev: v2.31.0
     hooks:
       - id: pyupgrade
         language: python
         args: [--py37-plus]
   - repo: https://github.com/ambv/black
-    rev: 19.10b0
+    rev: 22.1.0
     hooks:
       - id: black
         language: python
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 4.0.1
     hooks:
       - id: flake8
         language: python
@@ -24,12 +24,13 @@ repos:
           # The following is disabled due to a runtime error
           # - flake8-docstrings
           - mccabe
+          - yesqa
   - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.40"
+    rev: "0.47"
     hooks:
       -   id: check-manifest
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v0.761'
+    rev: 'v0.931'
     hooks:
       - id: mypy
 

@@ -15,7 +15,7 @@ def bootstrap_development_distribution(project_name: str, dest_dir: Path):
 
 
 def convert_line_endings():
-    """ Enforce unix line endings for the generated files """
+    """Enforce unix line endings for the generated files"""
     files = []
     for ext in [
         ".py",

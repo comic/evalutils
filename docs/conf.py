@@ -148,7 +148,7 @@ latex_documents = [
         "evalutils Documentation",
         "James Meakin",
         "manual",
-    ),
+    )
 ]
 
 
@@ -173,5 +173,5 @@ texinfo_documents = [
         "evalutils",
         "One line description of project.",
         "Miscellaneous",
-    ),
+    )
 ]
