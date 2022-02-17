@@ -133,6 +133,11 @@ In this file, a new class has been created for you, and it is instantiated and r
 This is all that is needed for ``evalutils`` to perform the evaluation and generate the output for each new submission.
 The superclass of ``Evaluation`` is what you need to adapt to your specific challenge.
 
+.. warning:: When designing your submission format do NOT use subfolders to differentiate between tasks.
+    If you have multiple tasks, you should be using multiple phases and evaluations instead.
+    On grand challenge all common path prefixes will be removed from the submitted files,
+    so your evaluation should only work with flat lists of files.
+
 Classification Tasks
 ~~~~~~~~~~~~~~~~~~~~
 
