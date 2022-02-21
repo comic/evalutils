@@ -4,7 +4,7 @@ version = "0.3.1"
 description = "evalutils helps users create extensions for grand-challenge.org"
 authors = ["James Meakin <evalutils@jmsmkn.com>"]
 license = "MIT"
-readme = "README.rst"
+readme = "README.md"
 repository = "https://github.com/comic/evalutils"
 classifiers = [
     "Development Status :: 3 - Alpha",

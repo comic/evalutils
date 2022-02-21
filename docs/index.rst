@@ -24,8 +24,6 @@ you can then upload it to `Grand Challenge`_.
    usage
    modules
    contributing
-   authors
-   history
 
 Indices and tables
 ==================
