@@ -10,7 +10,7 @@ def bootstrap_development_distribution(project_name: str, dest_dir: Path):
     src_dir = Path(__file__).parent.parent.absolute()
 
     shutil.copytree(src_dir / "evalutils", dest_dir / "evalutils")
-    for file in ["pyproject.toml", "README.rst", "HISTORY.rst"]:
+    for file in ["pyproject.toml", "README.md"]:
         shutil.copy(src_dir / file, dest_dir / file)
 
 

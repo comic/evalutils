@@ -19,7 +19,6 @@ you can then upload it to `Grand Challenge`_.
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
    usage
    modules
