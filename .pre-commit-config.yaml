@@ -1,6 +1,14 @@
 default_language_version:
   python: python3.8
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.31.0
     hooks:
@@ -33,4 +41,3 @@ repos:
     rev: 'v0.931'
     hooks:
       - id: mypy
-
