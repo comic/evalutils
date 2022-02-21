@@ -94,7 +94,7 @@ It is a good idea to commit your project to git right now. You can do this with:
     The .gitattributes file at the root of the repository specifies all the files which should be
     tracked by git-lfs. By default all files in the ground truth and test directories
     are configured to be tracked by git-lfs, but they will only be registered
-    once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
+    once the `git lfs`_ extension is installed on your system and the ``git lfs install``
     command has been issued inside the generated repository.
 
 
@@ -423,7 +423,7 @@ It is a good idea to commit your project to git right now. You can do this with:
     The .gitattributes file at the root of the repository specifies all the files which should be
     tracked by git-lfs. By default all files in the test directories
     are configured to be tracked by git-lfs, but they will only be registered
-    once the `git lfs`_ extension is installed on your system and the :console:`git lfs install`
+    once the `git lfs`_ extension is installed on your system and the ``git lfs install``
     command has been issued inside the generated repository.
 
 
