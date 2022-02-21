@@ -19,7 +19,6 @@
 #
 import os
 import sys
-from importlib import metadata
 from typing import Dict, List
 
 try:

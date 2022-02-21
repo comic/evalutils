@@ -57,7 +57,7 @@ def distance_transform_edt_float32(  # noqa: C901
 
     Notes
     -----
-    
+
     The euclidean distance transform gives values of the euclidean
     distance:
 
