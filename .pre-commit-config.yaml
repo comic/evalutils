@@ -37,3 +37,5 @@ repos:
     rev: 'v0.931'
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-setuptools  # Required for versioning on py37

@@ -120,7 +120,7 @@
 ## 0.1.3 (2018-03-29)
 
   -   - Adds basic implementation with
-        
+
           - Full Evaluation workflow
           - CSV, SimpleITK, and ImageIO loaders
           - BoundingBox annotations with intersection, union and

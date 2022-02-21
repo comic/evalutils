@@ -6,7 +6,15 @@ import click
 from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
 
-from . import __version__
+try:
+    from importlib.metadata import version
+
+    evalutils_version = version("evalutils")
+except ImportError:
+    # py <= py37
+    from pkg_resources import get_distribution
+
+    evalutils_version = get_distribution("evalutils").version
 
 EVALUATION_CHOICES = ["Classification", "Segmentation", "Detection"]
 ALGORITHM_CHOICES = EVALUATION_CHOICES
@@ -15,7 +23,7 @@ MODULE_REGEX = r"^[_a-zA-Z][_a-zA-Z0-9]+$"
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.version_option(__version__, "-v", "--version")
+@click.version_option(evalutils_version, "-v", "--version")
 def main():
     pass
 
@@ -85,7 +93,7 @@ def init_evaluation(challenge_name, kind, dev):
             extra_context={
                 "challenge_name": challenge_name,
                 "evalutils_name": __name__.split(".")[0],
-                "evalutils_version": __version__,
+                "evalutils_version": evalutils_version,
                 "challenge_kind": kind,
                 "dev_build": 1 if dev else 0,
             },
@@ -176,7 +184,7 @@ def init_algorithm(algorithm_name, kind, dev):
                 "algorithm_name": algorithm_name,
                 "algorithm_kind": kind,
                 "evalutils_name": __name__.split(".")[0],
-                "evalutils_version": __version__,
+                "evalutils_version": evalutils_version,
                 "dev_build": 1 if dev else 0,
             },
         )
