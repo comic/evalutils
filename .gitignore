@@ -104,3 +104,6 @@ ENV/
 
 # Pycharm
 .idea/
+
+# Poetry
+poetry.lock

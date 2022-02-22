@@ -1,9 +1,14 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  release:
+    types:
+      - published
 
 env:
-  PYTHON_VERSION: '3.9'
+  MINIMUM_PYTHON_VERSION: "3.7"
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,42 +19,78 @@ jobs:
   precommit:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v1
+      - name: Install Python ${{ env.MINIMUM_PYTHON_VERSION }}
+        uses: actions/setup-python@v2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ env.MINIMUM_PYTHON_VERSION }}
       - uses: actions/checkout@v2
       - name: Install pre-commit
         run: |
-          python -m pip install pre-commit
+          python -m pip install --upgrade pip
+          python -m pip install pre-commit virtualenv!=20.0.6
           pre-commit install
       - name: Run static code inspections
         run: pre-commit run --all-files
 
-  test:
-    needs: [precommit]
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Python
-        uses: actions/setup-python@v1
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
       - name: Install Tox and any other packages
         run: |
-          pip install -U pip
-          pip install tox codecov
-      - name: Run quick tests (Not Python 3.9)
-        if: matrix.python != '3.9'
-        run: tox -e py -- -m "not slow"
-      - name: Run all tests (Python 3.9 only)
-        if: matrix.python == '3.9'
-        run: tox -e py
-      - name: Upload coverage results
-        if: matrix.python == '3.9'
-        run: codecov
+          python -m pip install --upgrade pip
+          python -m pip install tox-gh-actions poetry
+      - name: Run quick tests (Not Python ${{ env.MINIMUM_PYTHON_VERSION }})
+        if: ${{ matrix.python-version != env.MINIMUM_PYTHON_VERSION }}
+        run: tox -- -m "not slow"
+      - name: Run all tests (Python ${{ env.MINIMUM_PYTHON_VERSION }} only)
+        if: ${{ matrix.python-version == env.MINIMUM_PYTHON_VERSION }}
+        run: tox
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python ${{ env.MINIMUM_PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.MINIMUM_PYTHON_VERSION }}
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+          poetry install
+          poetry run bash -c 'cd docs && make html'
+      - name: Deploy the documentation on master
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build/html
+
+  deploy:
+    if: github.event_name == 'release'
+    needs: [precommit, build, docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Python ${{ env.MINIMUM_PYTHON_VERSION }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.MINIMUM_PYTHON_VERSION }}
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+      - name: Upload to pypi
         env:
-            CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
+        run: |
+          poetry publish --build

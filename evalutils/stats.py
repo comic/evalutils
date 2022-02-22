@@ -20,79 +20,87 @@ def distance_transform_edt_float32(  # noqa: C901
     distances=None,
     indices=None,
 ):
-    """
+    """Memory efficient version of scipy.ndimage.distance_transform_edt
+
     The same as scipy.ndimage.distance_transform_edt but
     using float32 and better memory cleaning internally.
 
     In addition to the distance transform, the feature transform can
     be calculated. In this case the index of the closest background
     element is returned along the first axis of the result.
+
     Parameters
     ----------
-    input : array_like
+    input
         Input data to transform. Can be any type but will be converted
         into binary: 1 wherever input equates to True, 0 elsewhere.
-    sampling : float or int, or sequence of same, optional
+    sampling
         Spacing of elements along each dimension. If a sequence, must be of
         length equal to the input rank; if a single number, this is used for
         all axes. If not specified, a grid spacing of unity is implied.
-    return_distances : bool, optional
+    return_distances
         Whether to return distance matrix. At least one of
         return_distances/return_indices must be True. Default is True.
-    return_indices : bool, optional
+    return_indices
         Whether to return indices matrix. Default is False.
-    distances : ndarray, optional
+    distances
         Used for output of distance array, must be of type float64.
-    indices : ndarray, optional
+    indices
         Used for output of indices, must be of type int32.
+
     Returns
     -------
-    distance_transform_edt : ndarray or list of ndarrays
+    distance_transform_edt
         Either distance matrix, index matrix, or a list of the two,
-        depending on `return_x` flags and `distance` and `indices`
+        depending on ``return_x`` flags and ``distance`` and ``indices``
         input parameters.
+
     Notes
     -----
+
     The euclidean distance transform gives values of the euclidean
-    distance::
-                    n
-      y_i = sqrt(sum (x[i]-b[i])**2)
-                    i
+    distance:
+
+    .. code-block:: console
+
+                      n
+        y_i = sqrt(sum (x[i]-b[i])**2)
+                      i
+
     where b[i] is the background point (value 0) with the smallest
     Euclidean distance to input points x[i], and n is the
     number of dimensions.
 
-    ---
+    Copyright (C) 2003-2005 Peter J. Verveer
 
-     Copyright (C) 2003-2005 Peter J. Verveer
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
 
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
 
-     1. Redistributions of source code must retain the above copyright
-        notice, this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above
+       copyright notice, this list of conditions and the following
+       disclaimer in the documentation and/or other materials provided
+       with the distribution.
 
-     2. Redistributions in binary form must reproduce the above
-        copyright notice, this list of conditions and the following
-        disclaimer in the documentation and/or other materials provided
-        with the distribution.
+    3. The name of the author may not be used to endorse or promote
+       products derived from this software without specific prior
+       written permission.
 
-     3. The name of the author may not be used to endorse or promote
-        products derived from this software without specific prior
-        written permission.
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS
+    OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+    GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-     THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-     OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-     ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-     DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-     GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-     WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-     NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
     from scipy.ndimage import _nd_image, _ni_support
 
