@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>evalutils.roc &#8212; evalutils 0.3.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for evalutils.roc</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">ndarray</span>
+<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">metrics</span>
+
+
+<div class="viewcode-block" id="BootstrappedROCCICurves"><a class="viewcode-back" href="../../modules.html#evalutils.roc.BootstrappedROCCICurves">[docs]</a><span class="k">class</span> <span class="nc">BootstrappedROCCICurves</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">fpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">mean_tpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">low_tpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">high_tpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">low_az_val</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">high_az_val</span><span class="p">:</span> <span class="n">ndarray</span></div>
+
+
+<div class="viewcode-block" id="get_bootstrapped_roc_ci_curves"><a class="viewcode-back" href="../../modules.html#evalutils.roc.get_bootstrapped_roc_ci_curves">[docs]</a><span class="k">def</span> <span class="nf">get_bootstrapped_roc_ci_curves</span><span class="p">(</span>
+    <span class="n">y_pred</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">y_true</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">num_bootstraps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">ci_to_use</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BootstrappedROCCICurves</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Produces Confidence-Interval Curves to go alongside a regular ROC curve</span>
+<span class="sd">    This is done by using boostrapping.</span>
+<span class="sd">    Bootstrapping is done by selecting len(y_pred) samples randomly</span>
+<span class="sd">    (with replacement) from y_pred and y_true.</span>
+<span class="sd">    This is done num_boostraps times.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_pred</span>
+<span class="sd">        The predictions (scores) produced by the system being evaluated</span>
+<span class="sd">    y_true</span>
+<span class="sd">        The true labels (1 or 0) which are the reference standard being used</span>
+<span class="sd">    num_bootstraps</span>
+<span class="sd">        How many times to make a random sample with replacement</span>
+<span class="sd">    ci_to_use</span>
+<span class="sd">        Which confidence interval is required.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fpr_vals</span>
+<span class="sd">        An equally spaced set of fpr vals between 0 and 1</span>
+<span class="sd">    mean_tpr_vals</span>
+<span class="sd">        The mean tpr vals (one per fpr_val) obtained by boostrapping</span>
+<span class="sd">    low_tpr_vals</span>
+<span class="sd">        The tpr vals (one per fpr_val) representing lower curve for CI</span>
+<span class="sd">    high_tpr_vals</span>
+<span class="sd">        The tpr vals (one per fpr_val) representing the upper curve for CI</span>
+<span class="sd">    low_Az_val</span>
+<span class="sd">        The lower Az (AUC) val for the given CI_to_use</span>
+<span class="sd">    high_Az_val</span>
+<span class="sd">        The higher Az (AUC) val for the given CI_to_use</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rng_seed</span> <span class="o">=</span> <span class="mi">40</span>  <span class="c1"># control reproducibility</span>
+    <span class="n">bootstrapped_az_scores</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">tprs_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">base_fpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rng_seed</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">bootstrapped_az_scores</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_bootstraps</span><span class="p">:</span>
+        <span class="c1"># bootstrap by sampling with replacement on the prediction indices</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_true</span><span class="p">[</span><span class="n">indices</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># We need at least one positive and one negative sample for ROC AUC</span>
+            <span class="c1"># to be defined: reject the sample</span>
+            <span class="k">continue</span>
+        <span class="c1"># get the fpr and tpr for this bootstrap</span>
+        <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">roc_curve</span><span class="p">(</span>
+            <span class="n">y_true</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># get values at fixed fpr locations</span>
+        <span class="n">tpr_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">base_fpr</span><span class="p">,</span> <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">)</span>
+        <span class="n">tpr_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="c1"># append to list for all bootstraps</span>
+        <span class="n">tprs_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tpr_b</span><span class="p">)</span>
+
+        <span class="c1"># Get the Az score</span>
+        <span class="n">az_score</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">auc</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">)</span>
+        <span class="n">bootstrapped_az_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">az_score</span><span class="p">)</span>
+
+    <span class="c1"># Get the mean of the boostrapped tprs (at each fpr location)</span>
+    <span class="n">tprs_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tprs_list</span><span class="p">)</span>
+    <span class="n">mean_tprs</span> <span class="o">=</span> <span class="n">tprs_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># half the error margin allowed</span>
+    <span class="n">one_sided_ci</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ci_to_use</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">tprs_lower</span><span class="p">,</span> <span class="n">tprs_upper</span> <span class="o">=</span> <span class="n">_get_confidence_intervals</span><span class="p">(</span>
+        <span class="n">n_bootstraps</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">base_fpr</span><span class="p">),</span>
+        <span class="n">one_sided_ci</span><span class="o">=</span><span class="n">one_sided_ci</span><span class="p">,</span>
+        <span class="n">points_array</span><span class="o">=</span><span class="n">tprs_array</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sorted_az_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bootstrapped_az_scores</span><span class="p">)</span>
+    <span class="n">sorted_az_scores</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="n">az_ci_lower</span> <span class="o">=</span> <span class="n">sorted_az_scores</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">one_sided_ci</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_az_scores</span><span class="p">))]</span>
+    <span class="n">az_ci_upper</span> <span class="o">=</span> <span class="n">sorted_az_scores</span><span class="p">[</span>
+        <span class="nb">int</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">one_sided_ci</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_az_scores</span><span class="p">))</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">BootstrappedROCCICurves</span><span class="p">(</span>
+        <span class="n">fpr_vals</span><span class="o">=</span><span class="n">base_fpr</span><span class="p">,</span>
+        <span class="n">mean_tpr_vals</span><span class="o">=</span><span class="n">mean_tprs</span><span class="p">,</span>
+        <span class="n">low_tpr_vals</span><span class="o">=</span><span class="n">tprs_lower</span><span class="p">,</span>
+        <span class="n">high_tpr_vals</span><span class="o">=</span><span class="n">tprs_upper</span><span class="p">,</span>
+        <span class="n">low_az_val</span><span class="o">=</span><span class="n">az_ci_lower</span><span class="p">,</span>
+        <span class="n">high_az_val</span><span class="o">=</span><span class="n">az_ci_upper</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="average_roc_curves"><a class="viewcode-back" href="../../modules.html#evalutils.roc.average_roc_curves">[docs]</a><span class="k">def</span> <span class="nf">average_roc_curves</span><span class="p">(</span>
+    <span class="n">roc_curves</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BootstrappedROCCICurves</span><span class="p">],</span> <span class="n">bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BootstrappedROCCICurves</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Averages ROC curves using vertical averaging (fixed FP rates),</span>
+<span class="sd">    which gives a 1D measure of variability.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    curves</span>
+<span class="sd">        List of BootstrappedROCCICurves to be averaged</span>
+<span class="sd">    bins (optional)</span>
+<span class="sd">        Number of false-positives to iterate over. (Default: 200)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    BootstrappedROCCICurves</span>
+<span class="sd">        ROC class containing the average over all ROCs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tprs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">low_tprs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">high_tprs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">low_azs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">high_azs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">mean_fpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">roc</span> <span class="ow">in</span> <span class="n">roc_curves</span><span class="p">:</span>
+        <span class="c1"># get values at fixed fpr locations</span>
+        <span class="n">interp_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">fpr_vals</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">mean_tpr_vals</span><span class="p">)</span>
+        <span class="n">interp_tpr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">interp_low_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">fpr_vals</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">low_tpr_vals</span><span class="p">)</span>
+        <span class="n">interp_high_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">fpr_vals</span><span class="p">,</span> <span class="n">roc</span><span class="o">.</span><span class="n">high_tpr_vals</span><span class="p">)</span>
+
+        <span class="n">tprs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interp_tpr</span><span class="p">)</span>
+        <span class="n">low_tprs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interp_low_tpr</span><span class="p">)</span>
+        <span class="n">high_tprs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interp_high_tpr</span><span class="p">)</span>
+        <span class="n">low_azs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roc</span><span class="o">.</span><span class="n">low_az_val</span><span class="p">)</span>
+        <span class="n">high_azs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roc</span><span class="o">.</span><span class="n">high_az_val</span><span class="p">)</span>
+
+    <span class="c1"># get the mean tpr of all ROCs</span>
+    <span class="n">mean_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">tprs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mean_tpr</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">mean_low_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">low_tprs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mean_high_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">high_tprs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mean_low_az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">low_azs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mean_high_az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">high_azs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">BootstrappedROCCICurves</span><span class="p">(</span>
+        <span class="n">fpr_vals</span><span class="o">=</span><span class="n">mean_fpr</span><span class="p">,</span>
+        <span class="n">mean_tpr_vals</span><span class="o">=</span><span class="n">mean_tpr</span><span class="p">,</span>
+        <span class="n">low_tpr_vals</span><span class="o">=</span><span class="n">mean_low_tpr</span><span class="p">,</span>
+        <span class="n">high_tpr_vals</span><span class="o">=</span><span class="n">mean_high_tpr</span><span class="p">,</span>
+        <span class="n">low_az_val</span><span class="o">=</span><span class="n">mean_low_az</span><span class="p">,</span>
+        <span class="n">high_az_val</span><span class="o">=</span><span class="n">mean_high_az</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BootstrappedCIPointError"><a class="viewcode-back" href="../../modules.html#evalutils.roc.BootstrappedCIPointError">[docs]</a><span class="k">class</span> <span class="nc">BootstrappedCIPointError</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+    <span class="n">mean_fprs</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">mean_tprs</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">low_tpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">high_tpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">low_fpr_vals</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">high_fpr_vals</span><span class="p">:</span> <span class="n">ndarray</span></div>
+
+
+<div class="viewcode-block" id="get_bootstrapped_ci_point_error"><a class="viewcode-back" href="../../modules.html#evalutils.roc.get_bootstrapped_ci_point_error">[docs]</a><span class="k">def</span> <span class="nf">get_bootstrapped_ci_point_error</span><span class="p">(</span>
+    <span class="n">y_score</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">y_true</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">num_bootstraps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">ci_to_use</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span><span class="p">,</span>
+    <span class="n">exclude_first_last</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BootstrappedCIPointError</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Produces Confidence-Interval errors for individual points from ROC</span>
+<span class="sd">    Useful when only few ROC points exist so they will be plotted individually</span>
+<span class="sd">    e.g. when range of score values in y_score is very small</span>
+<span class="sd">    (e.g. manual observer scores)</span>
+
+<span class="sd">    Note that this method only works by analysing the cloud of boostrapped</span>
+<span class="sd">    points generatedfor a particular threshold value.  A fixed number of</span>
+<span class="sd">    threshold values is essential. Therefore the scores in y_score must be</span>
+<span class="sd">    from a fixed discrete set of values, eg. [1,2,3,4,5]</span>
+
+<span class="sd">    Bootstrapping is done by selecting len(y_score) samples randomly</span>
+<span class="sd">    (with replacement) from y_score and y_true.</span>
+<span class="sd">    This is done num_boostraps times.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_score</span>
+<span class="sd">        The scores produced by the system being evaluated. A discrete set of</span>
+<span class="sd">        possible scores must be used.</span>
+<span class="sd">    y_true</span>
+<span class="sd">        The true labels (1 or 0) which are the reference standard being used</span>
+<span class="sd">    num_bootstraps: integer</span>
+<span class="sd">        How many times to make a random sample with replacement</span>
+<span class="sd">    ci_to_use</span>
+<span class="sd">        Which confidence interval is required.</span>
+<span class="sd">    exclude_first_last</span>
+<span class="sd">        The first and last ROC point (0,0 and 1,1) are usually irrelevant</span>
+<span class="sd">        in these scenarios where only a few ROC points will be</span>
+<span class="sd">        individually plotted.</span>
+<span class="sd">        Set this to true to ignore these first and last points.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mean_fprs</span>
+<span class="sd">        The array of mean fpr values (1 per possible ROC point)</span>
+<span class="sd">    mean_tprs</span>
+<span class="sd">        The array of mean tpr values (1 per possible ROC point)</span>
+<span class="sd">    low_tpr_vals</span>
+<span class="sd">        The tpr vals (one per ROC point) representing lowest val in CI</span>
+<span class="sd">    high_tpr_vals</span>
+<span class="sd">        The tpr vals (one per ROC point) representing the highest val in CI</span>
+<span class="sd">    low_fpr_vals</span>
+<span class="sd">        The fpr vals (one per ROC point) representing lowest val in CI_to_use</span>
+<span class="sd">    high_fpr_vals</span>
+<span class="sd">        The fpr vals (one per ROC point) representing the highest val in CI</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng_seed</span> <span class="o">=</span> <span class="mi">40</span>  <span class="c1"># control reproducibility</span>
+    <span class="n">tprs_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">fprs_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">rng_seed</span><span class="p">)</span>
+
+    <span class="n">num_possible_scores</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_score</span><span class="p">))</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">tprs_list</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_bootstraps</span><span class="p">:</span>
+        <span class="c1"># bootstrap by sampling with replacement on the prediction indices</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_score</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_score</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_true</span><span class="p">[</span><span class="n">indices</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># We need at least one positive and one negative sample for ROC AUC</span>
+            <span class="c1"># to be defined: reject the sample</span>
+            <span class="k">continue</span>
+        <span class="c1"># get ROC data this boostrap</span>
+        <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">roc_curve</span><span class="p">(</span>
+            <span class="n">y_true</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span> <span class="n">y_score</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fpr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_possible_scores</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># if all scores are not represented in this selection then a</span>
+            <span class="c1"># different number of ROC thresholds will be defined.</span>
+            <span class="c1"># This causes problems.</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># remove first and last items - these are just end points of the ROC</span>
+        <span class="k">if</span> <span class="n">exclude_first_last</span><span class="p">:</span>
+            <span class="n">fpr</span> <span class="o">=</span> <span class="n">fpr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">tpr</span> <span class="o">=</span> <span class="n">tpr</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># append these boostrap values to the list</span>
+        <span class="n">tprs_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tpr</span><span class="p">)</span>
+        <span class="n">fprs_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fpr</span><span class="p">)</span>
+
+    <span class="c1"># Get the mean values for fpr and tpr at each ROC location</span>
+    <span class="n">tprs_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tprs_list</span><span class="p">)</span>
+    <span class="n">fprs_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fprs_list</span><span class="p">)</span>
+
+    <span class="n">mean_tprs</span> <span class="o">=</span> <span class="n">tprs_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">mean_fprs</span> <span class="o">=</span> <span class="n">fprs_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># half the error margin allowed</span>
+    <span class="n">one_sided_ci</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">ci_to_use</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">tprs_lower</span><span class="p">,</span> <span class="n">tprs_upper</span> <span class="o">=</span> <span class="n">_get_confidence_intervals</span><span class="p">(</span>
+        <span class="n">n_bootstraps</span><span class="o">=</span><span class="n">tprs_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">one_sided_ci</span><span class="o">=</span><span class="n">one_sided_ci</span><span class="p">,</span>
+        <span class="n">points_array</span><span class="o">=</span><span class="n">tprs_array</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fprs_lower</span><span class="p">,</span> <span class="n">fprs_upper</span> <span class="o">=</span> <span class="n">_get_confidence_intervals</span><span class="p">(</span>
+        <span class="n">n_bootstraps</span><span class="o">=</span><span class="n">fprs_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">one_sided_ci</span><span class="o">=</span><span class="n">one_sided_ci</span><span class="p">,</span>
+        <span class="n">points_array</span><span class="o">=</span><span class="n">fprs_array</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">BootstrappedCIPointError</span><span class="p">(</span>
+        <span class="n">mean_fprs</span><span class="o">=</span><span class="n">mean_fprs</span><span class="p">,</span>
+        <span class="n">mean_tprs</span><span class="o">=</span><span class="n">mean_tprs</span><span class="p">,</span>
+        <span class="n">low_tpr_vals</span><span class="o">=</span><span class="n">tprs_lower</span><span class="p">,</span>
+        <span class="n">high_tpr_vals</span><span class="o">=</span><span class="n">tprs_upper</span><span class="p">,</span>
+        <span class="n">low_fpr_vals</span><span class="o">=</span><span class="n">fprs_lower</span><span class="p">,</span>
+        <span class="n">high_fpr_vals</span><span class="o">=</span><span class="n">fprs_upper</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_confidence_intervals</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">n_bootstraps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">one_sided_ci</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">points_array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">]:</span>
+    <span class="n">ci_upper</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ci_lower</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">bootstrap_point</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bootstraps</span><span class="p">):</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">points_array</span><span class="p">[:,</span> <span class="n">bootstrap_point</span><span class="p">]</span>
+        <span class="n">points</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="n">tpr_upper</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">one_sided_ci</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))]</span>
+        <span class="n">ci_upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tpr_upper</span><span class="p">)</span>
+        <span class="n">tpr_lower</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">one_sided_ci</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))]</span>
+        <span class="n">ci_lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tpr_lower</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ci_lower</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ci_upper</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">evalutils</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, James Meakin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
