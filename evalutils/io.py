@@ -4,10 +4,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List
 
-from SimpleITK import GetArrayFromImage, ReadImage
 from imageio import get_reader
 from pandas import read_csv
 from pandas.errors import EmptyDataError, ParserError
+from SimpleITK import GetArrayFromImage, ReadImage
 
 from .exceptions import FileLoaderError
 

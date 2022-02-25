@@ -1,9 +1,9 @@
 from typing import Tuple
 
-import SimpleITK
 import numpy as np
 import pytest
 import scipy.ndimage as ndimage
+import SimpleITK
 import sklearn
 from numpy.testing import assert_array_almost_equal
 from scipy.ndimage import generate_binary_structure
