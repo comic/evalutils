@@ -4,8 +4,8 @@ import shutil
 from pathlib import Path
 from typing import Dict
 
-import SimpleITK
 import numpy as np
+import SimpleITK
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
 
@@ -14,7 +14,6 @@ from evalutils import (
     DetectionAlgorithm,
     SegmentationAlgorithm,
 )
-
 
 TEMPLATE_TEST_DIR = (
     Path(__file__).parent.parent

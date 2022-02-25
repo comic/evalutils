@@ -6,7 +6,6 @@ import numpy as np
 from numpy import ndarray
 from scipy.ndimage import binary_erosion, convolve, generate_binary_structure
 
-
 VOXELSPACING_TYPE = Optional[
     Union[Tuple[Union[float, int], ...], List[Union[float, int]], float, int]
 ]
