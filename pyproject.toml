@@ -17,7 +17,7 @@ classifiers = [
 evalutils = "evalutils.__main__:main"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<3.10"  # Pandas requires py>=3.7.1
+python = ">=3.7.1"  # Pandas requires py>=3.7.1
 imageio = "*"
 SimpleITK = ">=2.0"
 cookiecutter = "*"
@@ -26,7 +26,7 @@ scipy = "*"
 scikit-learn = "*"
 numpy = [
   { version = "^1.21", python = "<3.8" },
-  { version = "^1.22", python = ">=3.8,<3.10" }
+  { version = "^1.22", python = "^3.8" }
 ]
 pandas = "^1.3"
 setuptools = { version = "*", python = "~3.7" }
@@ -72,13 +72,14 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 isolated_build = True
-envlist = py{37, 38, 39}
+envlist = py{37, 38, 39, 310}
 
 [gh-actions]
 python =
     3.7: py37
     3.8: py38
     3.9: py39
+    3.10: py310
 
 [testenv]
 allowlist_externals =

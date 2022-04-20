@@ -1,5 +1,9 @@
 # History
 
+## 0.3.2 (UNRELEASED)
+
+ - Added support for Python 3.10
+
 ## 0.3.1 (2022-01-24)
 
   - Added parameters to docker run commands to better reflect how

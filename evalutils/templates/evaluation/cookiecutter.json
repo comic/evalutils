@@ -8,7 +8,7 @@
     ],
     "evalutils_name": "",
     "evalutils_version": "",
-    "docker_base_container": "python:3.9-slim",
+    "docker_base_container": "python:3.10-slim",
     "dev_build": 0,
     "_copy_without_render": [
         "*.github"
