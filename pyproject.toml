@@ -18,7 +18,7 @@ evalutils = "evalutils.__main__:main"
 
 [tool.poetry.dependencies]
 python = ">=3.7.1"  # Pandas requires py>=3.7.1
-imageio = "*"
+imageio = { version = "*", extras=["tifffile"] }
 SimpleITK = ">=2.0"
 cookiecutter = "*"
 click = "*"
