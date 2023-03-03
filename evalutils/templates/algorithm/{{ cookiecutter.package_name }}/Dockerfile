@@ -28,4 +28,4 @@ RUN python -m pip install --user -rrequirements.txt
 
 COPY --chown=algorithm:algorithm process.py /opt/algorithm/
 
-ENTRYPOINT python -m process $0 $@
+ENTRYPOINT [ "python", "-m", "process" ]

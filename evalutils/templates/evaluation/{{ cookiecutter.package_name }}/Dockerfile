@@ -29,4 +29,4 @@ RUN python -m pip install --user -rrequirements.txt
 
 COPY --chown=evaluator:evaluator evaluation.py /opt/evaluation/
 
-ENTRYPOINT "python" "-m" "evaluation"
+ENTRYPOINT [ "python", "-m", "evaluation" ]
