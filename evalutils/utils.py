@@ -1,17 +1,27 @@
 import shutil
+import subprocess
+import warnings
 from pathlib import Path
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=UserWarning)
+    # Suppress "Setuptools is replacing distutils"
+    from piptools.scripts.compile import cli
 
 EOL_UNIX = b"\n"
 EOL_WIN = b"\r\n"
 EOL_MAC = b"\r"
 
 
-def bootstrap_development_distribution(project_name: str, dest_dir: Path):
-    src_dir = Path(__file__).parent.parent.absolute()
+def generate_source_wheel(dest_dir: Path):
+    dist_dir = Path(__file__).parent.parent.absolute() / "dist"
 
-    shutil.copytree(src_dir / "evalutils", dest_dir / "evalutils")
-    for file in ["pyproject.toml", "README.md"]:
-        shutil.copy(src_dir / file, dest_dir / file)
+    subprocess.check_call(["poetry", "build"])
+
+    dest_dir.mkdir(exist_ok=True, parents=True)
+
+    for file in dist_dir.rglob("*.whl"):
+        shutil.copyfile(file, dest_dir / file.name)
 
 
 def convert_line_endings():
@@ -36,3 +46,7 @@ def convert_line_endings():
 
         with open(str(file), "wb") as f:
             f.write(lines)
+
+
+def generate_requirements_txt():
+    cli(["--resolver", "backtracking", "--quiet"])

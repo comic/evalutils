@@ -86,12 +86,8 @@ def init_evaluation(challenge_name, kind, dev):
             no_input=True,
             extra_context={
                 "challenge_name": challenge_name,
-                "evalutils_name": __name__.split(".")[0],
-                "evalutils_version": evalutils_version,
                 "challenge_kind": kind,
-                "dev_build": 1 if dev else 0,
-                "python_major_version": sys.version_info.major,
-                "python_minor_version": sys.version_info.minor,
+                **_get_cookiecutter_base_context(dev_build=dev),
             },
         )
         click.echo(f"Created project {challenge_name}")
@@ -179,13 +175,28 @@ def init_algorithm(algorithm_name, kind, dev):
             extra_context={
                 "algorithm_name": algorithm_name,
                 "algorithm_kind": kind,
-                "evalutils_name": __name__.split(".")[0],
-                "evalutils_version": evalutils_version,
-                "dev_build": 1 if dev else 0,
-                "python_major_version": sys.version_info.major,
-                "python_minor_version": sys.version_info.minor,
+                **_get_cookiecutter_base_context(dev_build=dev),
             },
         )
         click.echo(f"Created project {algorithm_name}")
     except FailedHookException:
         exit(1)
+
+
+def _get_cookiecutter_base_context(*, dev_build):
+    dev_build = 1 if dev_build else 0
+
+    if dev_build:
+        requirements = {
+            f"file:vendor/evalutils-{evalutils_version}-py3-none-any.whl#egg=evalutils": ""  # noqa: B950
+        }
+    else:
+        requirements = {"evalutils": f"=={evalutils_version}"}
+
+    return {
+        "dev_build": dev_build,
+        "evalutils_version": evalutils_version,
+        "python_major_version": sys.version_info.major,
+        "python_minor_version": sys.version_info.minor,
+        "requirements": requirements,
+    }

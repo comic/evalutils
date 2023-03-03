@@ -113,7 +113,8 @@ The structure of the project will be:
         ├── ground-truth        # A folder that contains your ground truth annotations
         │   └── reference.csv   # In this example the ground truth is a csv file
         ├── README.md           # For describing your evaluation to others
-        ├── requirements.txt    # The python dependencies of your evaluation container - add any new dependencies here
+        ├── requirements.in     # The python dependencies of your evaluation container - add any new dependencies here
+        ├── requirements.txt    # The compiled python dependencies, update this with `pip-compile`
         ├── test                # A folder that contains an example submission for testing
         │   └── submission.csv  # In this example the participants will submit a csv file
         └── test.sh             # A script that runs your evaluation container on the test submission
@@ -441,7 +442,8 @@ The structure of the project will be:
         ├── .gitignore               # Define which files git should ignore
         ├── process.py               # Contains your algorithm code - this is where you will extend the BaseAlgorithm class
         ├── README.md                # For describing your algorithm to others
-        ├── requirements.txt         # The python dependencies of your algorithm container - add any new dependencies here
+        ├── requirements.in          # The python dependencies of your algorithm container - add any new dependencies here
+        ├── requirements.txt         # The compiled python dependencies, update this with `pip-compile`
         ├── test                     # A folder that contains an example test image for testing
         │   ├── 1.0.000.000000*.mhd  # An example test image metaio header file
         │   ├── 1.0.000.000000*.zraw # An example test image metaio data file
