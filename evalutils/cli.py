@@ -30,12 +30,12 @@ def init():
 def validate_python_module_name_fn(option):
     def validate_python_module_name_string(ctx, param, arg):
         if len(arg.strip()) == 0:
-            click.echo(f"{option.upper()} should be non empty. Aborting...")
-            exit(1)
+            raise click.BadParameter(f"{option.upper()} should be non empty")
 
         if not re.match(MODULE_REGEX, arg) or arg in FORBIDDEN_NAMES:
-            click.echo(f"ERROR: {arg!r} is not a valid Python module name!")
-            exit(1)
+            raise click.BadParameter(
+                f"{arg!r} is not a valid Python module name"
+            )
 
         return arg
 
@@ -79,14 +79,15 @@ class AbbreviatedChoice(click.Choice):
 )
 @click.option("--dev", is_flag=True)
 def init_evaluation(challenge_name, kind, dev):
-    template_dir = Path(__file__).parent / "templates" / "evaluation"
+    template_dir = Path(__file__).parent / "templates" / "container"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "challenge_name": challenge_name,
-                "challenge_kind": kind,
+                "full_project_name": challenge_name,
+                "task_kind": kind,
+                "template_kind": "Evaluation",
                 **_get_cookiecutter_base_context(dev_build=dev),
             },
         )
@@ -167,14 +168,15 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 )
 @click.option("--dev", is_flag=True)
 def init_algorithm(algorithm_name, kind, dev):
-    template_dir = Path(__file__).parent / "templates" / "algorithm"
+    template_dir = Path(__file__).parent / "templates" / "container"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "algorithm_name": algorithm_name,
-                "algorithm_kind": kind,
+                "full_project_name": algorithm_name,
+                "task_kind": kind,
+                "template_kind": "Algorithm",
                 **_get_cookiecutter_base_context(dev_build=dev),
             },
         )

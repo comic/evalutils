@@ -19,9 +19,9 @@ TEMPLATE_TEST_DIR = (
     Path(__file__).parent.parent
     / "evalutils"
     / "templates"
-    / "algorithm"
+    / "container"
     / "{{ cookiecutter.package_name }}"
-    / "test"
+    / "algorithm_test"
 )
 
 

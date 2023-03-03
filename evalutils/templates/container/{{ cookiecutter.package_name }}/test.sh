@@ -5,7 +5,10 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 ./build.sh
 
 VOLUME_SUFFIX=$(dd if=/dev/urandom bs=32 count=1 | md5sum | cut --delimiter=' ' --fields=1)
-MEM_LIMIT="4g"  # Maximum is currently 30g, configurable in your algorithm image settings on grand challenge
+{% if cookiecutter.template_kind == "Algorithm" -%}
+# Maximum is currently 30g, configurable in your algorithm image settings on grand challenge
+{%- endif %}
+MEM_LIMIT="4g"
 
 docker volume create {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX
 
@@ -22,6 +25,13 @@ docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         {{ cookiecutter.package_name|lower }}
 
+{% if cookiecutter.template_kind == "Evaluation" -%}
+docker run --rm \
+        -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
+        python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim cat /output/metrics.json | python -m json.tool
+{%- endif %}
+
+{% if cookiecutter.template_kind == "Algorithm" -%}
 docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim cat /output/results.json | python -m json.tool
@@ -36,5 +46,6 @@ if [ $? -eq 0 ]; then
 else
     echo "Expected output was not found..."
 fi
+{%- endif %}
 
 docker volume rm {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX
