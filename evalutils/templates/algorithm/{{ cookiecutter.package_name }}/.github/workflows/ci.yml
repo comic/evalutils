@@ -7,7 +7,7 @@ env:
 
 jobs:
 
-  algorithm-tests:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Install Python ${{ "{{" }} env.PYTHON_VERSION {{ "}}" }}
