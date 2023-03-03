@@ -1,9 +1,12 @@
 # History
 
-## 0.3.2 (UNRELEASED)
+## 0.4.0 (2023-03-03)
 
  - Removed support for Python 3.7
  - Added support for Python 3.10 and Python 3.11
+ - Added `pip-tools` to manage dependencies, if you want to add any dependencies to your
+   templated container you will need to update the generated `requirements.in` and then
+   run `pip-compile`
 
 ## 0.3.1 (2022-01-24)
 

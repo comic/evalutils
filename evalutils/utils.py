@@ -1,8 +1,12 @@
 import shutil
 import subprocess
+import warnings
 from pathlib import Path
 
-from piptools.scripts.compile import cli
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", category=UserWarning)
+    # Suppress "Setuptools is replacing distutils"
+    from piptools.scripts.compile import cli
 
 EOL_UNIX = b"\n"
 EOL_WIN = b"\r\n"
@@ -45,4 +49,4 @@ def convert_line_endings():
 
 
 def generate_requirements_txt():
-    cli(["--resolver", "backtracking"])
+    cli(["--resolver", "backtracking", "--quiet"])
