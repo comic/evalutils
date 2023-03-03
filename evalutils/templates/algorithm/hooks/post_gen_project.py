@@ -3,8 +3,9 @@ import shutil
 from pathlib import Path
 
 from evalutils.utils import (
-    bootstrap_development_distribution,
     convert_line_endings,
+    generate_requirements_txt,
+    generate_source_wheel,
 )
 
 ALGORITHM_KIND = "{{ cookiecutter.algorithm_kind }}"
@@ -34,9 +35,8 @@ shutil.copy(
 
 remove_result_files()
 
-convert_line_endings()
-
 if IS_DEV_BUILD:
-    bootstrap_development_distribution(
-        ALGORITHM_NAME, template_dir / "devdist"
-    )
+    generate_source_wheel(template_dir / "vendor")
+
+generate_requirements_txt()
+convert_line_endings()

@@ -1,14 +1,14 @@
 {
     "challenge_name": "",
-    "package_name": "{{ cookiecutter.challenge_name|replace(' ', '') }}",
     "challenge_kind": [
         "Classification",
         "Segmentation",
         "Detection"
     ],
-    "evalutils_name": "",
+    "package_name": "{{ cookiecutter.challenge_name|replace(' ', '') }}",
     "evalutils_version": "",
     "dev_build": 0,
     "python_major_version": "",
-    "python_minor_version": ""
+    "python_minor_version": "",
+    "requirements": {}
 }
