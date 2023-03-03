@@ -25,11 +25,17 @@ docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         {{ cookiecutter.package_name|lower }}
 
+{% if cookiecutter.template_kind == "Evaluation" -%}
+docker run --rm \
+        -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
+        python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim cat /output/metrics.json | python -m json.tool
+{%- endif %}
+
+{% if cookiecutter.template_kind == "Algorithm" -%}
 docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim cat /output/results.json | python -m json.tool
 
-{% if cookiecutter.template_kind == "Algorithm" -%}
 docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
         -v $SCRIPTPATH/test/:/input/ \
