@@ -1,4 +1,4 @@
-FROM {{ cookiecutter.docker_base_container }}
+FROM python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim
 
 {% if cookiecutter.dev_build|int -%}
 RUN apt-get update && apt-get install -y git

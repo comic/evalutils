@@ -1,4 +1,5 @@
 import re
+import sys
 from importlib.metadata import version
 from pathlib import Path
 from typing import List
@@ -89,6 +90,8 @@ def init_evaluation(challenge_name, kind, dev):
                 "evalutils_version": evalutils_version,
                 "challenge_kind": kind,
                 "dev_build": 1 if dev else 0,
+                "python_major_version": sys.version_info.major,
+                "python_minor_version": sys.version_info.minor,
             },
         )
         click.echo(f"Created project {challenge_name}")
@@ -179,6 +182,8 @@ def init_algorithm(algorithm_name, kind, dev):
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": evalutils_version,
                 "dev_build": 1 if dev else 0,
+                "python_major_version": sys.version_info.major,
+                "python_minor_version": sys.version_info.minor,
             },
         )
         click.echo(f"Created project {algorithm_name}")
