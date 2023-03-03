@@ -1,4 +1,8 @@
 {
+    "template_kind": [
+        "Algorithm",
+        "Evaluation"
+    ],
     "full_project_name": "",
     "task_kind": [
         "Classification",

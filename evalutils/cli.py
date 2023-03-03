@@ -87,6 +87,7 @@ def init_evaluation(challenge_name, kind, dev):
             extra_context={
                 "full_project_name": challenge_name,
                 "task_kind": kind,
+                "template_kind": "Evaluation",
                 **_get_cookiecutter_base_context(dev_build=dev),
             },
         )
@@ -175,6 +176,7 @@ def init_algorithm(algorithm_name, kind, dev):
             extra_context={
                 "full_project_name": algorithm_name,
                 "task_kind": kind,
+                "template_kind": "Algorithm",
                 **_get_cookiecutter_base_context(dev_build=dev),
             },
         )
