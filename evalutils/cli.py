@@ -30,12 +30,12 @@ def init():
 def validate_python_module_name_fn(option):
     def validate_python_module_name_string(ctx, param, arg):
         if len(arg.strip()) == 0:
-            click.echo(f"{option.upper()} should be non empty. Aborting...")
-            exit(1)
+            raise click.BadParameter(f"{option.upper()} should be non empty")
 
         if not re.match(MODULE_REGEX, arg) or arg in FORBIDDEN_NAMES:
-            click.echo(f"ERROR: {arg!r} is not a valid Python module name!")
-            exit(1)
+            raise click.BadParameter(
+                f"{arg!r} is not a valid Python module name"
+            )
 
         return arg
 
