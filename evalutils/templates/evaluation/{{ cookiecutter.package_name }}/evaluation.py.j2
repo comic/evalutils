@@ -1,4 +1,4 @@
-{%- if cookiecutter.challenge_kind == "Classification" -%}
+{%- if cookiecutter.task_kind == "Classification" -%}
 from sklearn.metrics import accuracy_score
 
 from evalutils import ClassificationEvaluation
@@ -6,7 +6,7 @@ from evalutils.io import CSVLoader
 from evalutils.validators import (
     NumberOfCasesValidator, ExpectedColumnNamesValidator
 )
-{%- elif cookiecutter.challenge_kind == "Segmentation" -%}
+{%- elif cookiecutter.task_kind == "Segmentation" -%}
 import SimpleITK
 
 from evalutils import ClassificationEvaluation
@@ -14,7 +14,7 @@ from evalutils.io import SimpleITKLoader
 from evalutils.validators import (
     NumberOfCasesValidator, UniquePathIndicesValidator, UniqueImagesValidator
 )
-{%- elif cookiecutter.challenge_kind == "Detection" -%}
+{%- elif cookiecutter.task_kind == "Detection" -%}
 from evalutils import DetectionEvaluation
 from evalutils.io import CSVLoader
 from evalutils.validators import ExpectedColumnNamesValidator
@@ -23,14 +23,14 @@ from evalutils.validators import ExpectedColumnNamesValidator
 
 class {{ cookiecutter.package_name|capitalize }}(
 
-{%- if cookiecutter.challenge_kind == "Detection" -%}
+{%- if cookiecutter.task_kind == "Detection" -%}
     DetectionEvaluation
 {%- else -%}
     ClassificationEvaluation
 {%- endif -%}
 
 ):
-{%- if cookiecutter.challenge_kind == "Classification" %}
+{%- if cookiecutter.task_kind == "Classification" %}
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
@@ -48,7 +48,7 @@ class {{ cookiecutter.package_name|capitalize }}(
                 self._cases["class_prediction"],
              ),
         }
-{% elif cookiecutter.challenge_kind == "Detection" %}
+{% elif cookiecutter.task_kind == "Detection" %}
     def __init__(self):
         super().__init__(
             file_loader=CSVLoader(),
@@ -78,7 +78,7 @@ class {{ cookiecutter.package_name|capitalize }}(
             for _, p in points.iterrows()
             if p["score"] > self._detection_threshold
         ]
-{% elif cookiecutter.challenge_kind == "Segmentation" %}
+{% elif cookiecutter.task_kind == "Segmentation" %}
     def __init__(self):
         super().__init__(
             file_loader=SimpleITKLoader(),

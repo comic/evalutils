@@ -1,6 +1,6 @@
 {
     "full_project_name": "",
-    "challenge_kind": [
+    "task_kind": [
         "Classification",
         "Segmentation",
         "Detection"

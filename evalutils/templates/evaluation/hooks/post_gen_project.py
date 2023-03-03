@@ -8,7 +8,7 @@ from evalutils.utils import (
     generate_source_wheel,
 )
 
-CHALLENGE_KIND = "{{ cookiecutter.challenge_kind }}"
+CHALLENGE_KIND = "{{ cookiecutter.task_kind }}"
 IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())

@@ -8,7 +8,7 @@ from evalutils.utils import (
     generate_source_wheel,
 )
 
-ALGORITHM_KIND = "{{ cookiecutter.algorithm_kind }}"
+ALGORITHM_KIND = "{{ cookiecutter.task_kind }}"
 IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())
@@ -20,8 +20,8 @@ for f in templated_files:
 
 
 def remove_result_files():
-    for algorithm_kind in ["segmentation", "detection", "classification"]:
-        os.remove(template_test_dir / f"results_{algorithm_kind}.json")
+    for task_kind in ["segmentation", "detection", "classification"]:
+        os.remove(template_test_dir / f"results_{task_kind}.json")
 
 
 expected_output_file = (

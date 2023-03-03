@@ -1,20 +1,20 @@
-{% if cookiecutter.algorithm_kind == "Classification" %}
+{% if cookiecutter.task_kind == "Classification" %}
 from typing import Dict
 {% endif %}
 import SimpleITK
 import numpy as np
-{% if cookiecutter.algorithm_kind == "Detection" %}
+{% if cookiecutter.task_kind == "Detection" %}
 from pandas import DataFrame
 from scipy.ndimage import center_of_mass, label
 {% endif %}
-from evalutils import {{ cookiecutter.algorithm_kind }}Algorithm
+from evalutils import {{ cookiecutter.task_kind }}Algorithm
 from evalutils.validators import (
     UniquePathIndicesValidator,
     UniqueImagesValidator,
 )
 
 
-class {{ cookiecutter.package_name|capitalize }}({{ cookiecutter.algorithm_kind }}Algorithm):
+class {{ cookiecutter.package_name|capitalize }}({{ cookiecutter.task_kind }}Algorithm):
     def __init__(self):
         super().__init__(
             validators=dict(
@@ -24,7 +24,7 @@ class {{ cookiecutter.package_name|capitalize }}({{ cookiecutter.algorithm_kind 
                 )
             ),
         )
-{% if cookiecutter.algorithm_kind == "Detection" %}
+{% if cookiecutter.task_kind == "Detection" %}
     def predict(self, *, input_image: SimpleITK.Image) -> DataFrame:
         # Extract a numpy array with image data from the SimpleITK Image
         image_data = SimpleITK.GetArrayFromImage(input_image)
@@ -52,13 +52,13 @@ class {{ cookiecutter.package_name|capitalize }}({{ cookiecutter.algorithm_kind 
 
         # Convert serialized candidates to a pandas.DataFrame
         return DataFrame(data)
-{% elif cookiecutter.algorithm_kind == "Segmentation" %}
+{% elif cookiecutter.task_kind == "Segmentation" %}
     def predict(self, *, input_image: SimpleITK.Image) -> SimpleITK.Image:
         # Segment all values greater than 2 in the input image
         return SimpleITK.BinaryThreshold(
             image1=input_image, lowerThreshold=2, insideValue=1, outsideValue=0
         )
-{% elif cookiecutter.algorithm_kind == "Classification" %}
+{% elif cookiecutter.task_kind == "Classification" %}
     def predict(self, *, input_image: SimpleITK.Image) -> Dict:
         # Checks if there are any nodules voxels (> 1) in the input image
         return dict(
