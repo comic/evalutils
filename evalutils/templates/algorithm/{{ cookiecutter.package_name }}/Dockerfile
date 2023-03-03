@@ -1,24 +1,24 @@
 FROM python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim
 
-RUN groupadd -r algorithm && useradd -m --no-log-init -r -g algorithm algorithm
+RUN groupadd -r user && useradd -m --no-log-init -r -g user user
 
-RUN mkdir -p /opt/algorithm /input /output \
-    && chown algorithm:algorithm /opt/algorithm /input /output
+RUN mkdir -p /opt/app /input /output \
+    && chown user:user /opt/app /input /output
 
-USER algorithm
-WORKDIR /opt/algorithm
+USER user
+WORKDIR /opt/app
 
-ENV PATH="/home/algorithm/.local/bin:${PATH}"
+ENV PATH="/home/user/.local/bin:${PATH}"
 
 RUN python -m pip install --user -U pip && python -m pip install --user pip-tools
 
 {% if cookiecutter.dev_build|int -%}
-COPY --chown=algorithm:algorithm vendor /opt/algorithm/vendor
+COPY --chown=user:user vendor /opt/app/vendor
 {%- endif %}
 
-COPY --chown=algorithm:algorithm requirements.txt /opt/algorithm/
+COPY --chown=user:user requirements.txt /opt/app/
 RUN python -m piptools sync requirements.txt
 
-COPY --chown=algorithm:algorithm process.py /opt/algorithm/
+COPY --chown=user:user process.py /opt/app/
 
 ENTRYPOINT [ "python", "-m", "process" ]

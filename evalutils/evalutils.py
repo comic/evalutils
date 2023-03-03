@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_INPUT_PATH = Path("/input/")
 DEFAULT_ALGORITHM_OUTPUT_IMAGES_PATH = Path("/output/images/")
 DEFAULT_ALGORITHM_OUTPUT_FILE_PATH = Path("/output/results.json")
-DEFAULT_GROUND_TRUTH_PATH = Path("/opt/evaluation/ground-truth/")
+DEFAULT_GROUND_TRUTH_PATH = Path("/opt/app/ground-truth/")
 DEFAULT_EVALUATION_OUTPUT_FILE_PATH = Path("/output/metrics.json")
 
 

@@ -1,26 +1,28 @@
 FROM python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim
 
-RUN groupadd -r evaluator && useradd -m --no-log-init -r -g evaluator evaluator
+RUN groupadd -r user && useradd -m --no-log-init -r -g user user
 
-RUN mkdir -p /opt/evaluation /input /output \
-    && chown evaluator:evaluator /opt/evaluation /input /output
+RUN mkdir -p /opt/app /input /output \
+    && chown user:user /opt/app /input /output
 
-USER evaluator
-WORKDIR /opt/evaluation
+USER user
+WORKDIR /opt/app
 
-ENV PATH="/home/evaluator/.local/bin:${PATH}"
+ENV PATH="/home/user/.local/bin:${PATH}"
 
 RUN python -m pip install --user -U pip && python -m pip install --user pip-tools
 
 {% if cookiecutter.dev_build|int -%}
-COPY --chown=evaluator:evaluator vendor /opt/evaluation/vendor
+COPY --chown=user:user vendor /opt/app/vendor
 {%- endif %}
 
-COPY --chown=evaluator:evaluator requirements.txt /opt/evaluation/
+COPY --chown=user:user requirements.txt /opt/app/
 RUN python -m piptools sync requirements.txt
 
-COPY --chown=evaluator:evaluator ground-truth /opt/evaluation/ground-truth
+{% if cookiecutter.template_kind == "Evaluation" -%}
+COPY --chown=user:user ground-truth /opt/app/ground-truth
+{%- endif %}
 
-COPY --chown=evaluator:evaluator evaluation.py /opt/evaluation/
+COPY --chown=user:user evaluation.py /opt/app/
 
 ENTRYPOINT [ "python", "-m", "evaluation" ]
