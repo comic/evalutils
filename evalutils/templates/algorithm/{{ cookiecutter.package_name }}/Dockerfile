@@ -19,6 +19,15 @@ COPY --chown=user:user vendor /opt/app/vendor
 COPY --chown=user:user requirements.txt /opt/app/
 RUN python -m piptools sync requirements.txt
 
+{% if cookiecutter.template_kind == "Evaluation" -%}
+COPY --chown=user:user ground-truth /opt/app/ground-truth
+COPY --chown=user:user evaluation.py /opt/app/
+
+ENTRYPOINT [ "python", "-m", "evaluation" ]
+{%- endif %}
+
+{% if cookiecutter.template_kind == "Algorithm" -%}
 COPY --chown=user:user process.py /opt/app/
 
 ENTRYPOINT [ "python", "-m", "process" ]
+{%- endif %}
