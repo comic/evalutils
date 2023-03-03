@@ -19,10 +19,10 @@
 #
 import os
 import sys
-from importlib.metadata import version
+from importlib.metadata import version as _get_version
 from typing import Dict, List
 
-evalutils_version = version("evalutils")
+evalutils_version = _get_version("evalutils")
 
 sys.path.insert(0, os.path.abspath(".."))
 
