@@ -133,9 +133,9 @@ def test_algorithm_cli(tmpdir, kind):
         Path(__file__).parent.parent
         / "evalutils"
         / "templates"
-        / "algorithm"
+        / "container"
         / "{{ cookiecutter.package_name }}"
-        / "test"
+        / "algorithm_test"
         / f"results_{kind.lower()}.json"
     ) as f:
         expected = json.load(f)

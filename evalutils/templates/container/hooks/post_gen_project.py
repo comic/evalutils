@@ -19,6 +19,9 @@ for f in templated_files:
     shutil.move(f.name, f.stem)
 
 if TEMPLATE_KIND == "Evaluation":  # noqa: C901
+    shutil.rmtree("algorithm_test")
+    os.remove("process.py")
+    os.rename("evaluation_test", "test")
 
     def remove_classification_files():
         os.remove(Path("ground-truth") / "reference.csv")
@@ -46,6 +49,11 @@ if TEMPLATE_KIND == "Evaluation":  # noqa: C901
         remove_classification_files()
 
 elif TEMPLATE_KIND == "Algorithm":
+    shutil.rmtree("evaluation_test")
+    shutil.rmtree("ground-truth")
+    os.remove("evaluation.py")
+    os.rename("algorithm_test", "test")
+
     template_test_dir = template_dir / "test"
 
     def remove_result_files():

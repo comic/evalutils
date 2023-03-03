@@ -79,7 +79,7 @@ class AbbreviatedChoice(click.Choice):
 )
 @click.option("--dev", is_flag=True)
 def init_evaluation(challenge_name, kind, dev):
-    template_dir = Path(__file__).parent / "templates" / "evaluation"
+    template_dir = Path(__file__).parent / "templates" / "container"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
@@ -168,7 +168,7 @@ def req_gpu_prompt(ctx, param, req_gpu_count):
 )
 @click.option("--dev", is_flag=True)
 def init_algorithm(algorithm_name, kind, dev):
-    template_dir = Path(__file__).parent / "templates" / "algorithm"
+    template_dir = Path(__file__).parent / "templates" / "container"
     try:
         cookiecutter(
             template=str(template_dir.absolute()),
