@@ -1,5 +1,10 @@
 # History
 
+## 0.3.2 (UNRELEASED)
+
+ - Removed support for Python 3.7
+ - Added support for Python 3.10 and Python 3.11
+
 ## 0.3.1 (2022-01-24)
 
   - Added parameters to docker run commands to better reflect how

@@ -46,7 +46,7 @@ def first_int_in_filename_key(fname: Path) -> str:
     try:
         return f"{get_first_int_in(fname.stem):>64}"
     except AttributeError:
-        logger.warning(f"Could not find an int in the string '{fname.stem}'.")
+        logger.warning(f"Could not find an int in the string {fname.stem!r}.")
         return fname.stem
 
 

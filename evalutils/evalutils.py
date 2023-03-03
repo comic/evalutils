@@ -131,7 +131,7 @@ class Algorithm(ABC):
         *,
         folder: Path,
         file_loader: ImageLoader,
-        file_filter: Pattern[str] = None,
+        file_filter: Optional[Pattern[str]] = None,
     ) -> DataFrame:
         cases = None
 
@@ -183,7 +183,7 @@ class Algorithm(ABC):
         self.process_cases()
         self.save()
 
-    def process_cases(self, file_loader_key: str = None):
+    def process_cases(self, file_loader_key: Optional[str] = None):
         if file_loader_key is None:
             file_loader_key = self._index_key
         self._case_results = []
@@ -329,8 +329,8 @@ class BaseEvaluation(ABC):
         file_sorter_key: Callable = first_int_in_filename_key,
         file_loader: FileLoader,
         validators: Tuple[DataFrameValidator, ...],
-        join_key: str = None,
-        aggregates: Set[str] = None,
+        join_key: Optional[str] = None,
+        aggregates: Optional[Set[str]] = None,
         output_file: PathLike = DEFAULT_EVALUATION_OUTPUT_FILE_PATH,
     ):
         """

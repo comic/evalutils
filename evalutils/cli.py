@@ -1,4 +1,6 @@
 import re
+import sys
+from importlib.metadata import version
 from pathlib import Path
 from typing import List
 
@@ -6,15 +8,7 @@ import click
 from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
 
-try:
-    from importlib.metadata import version
-
-    evalutils_version = version("evalutils")
-except ImportError:
-    # py <= py37
-    from pkg_resources import get_distribution
-
-    evalutils_version = get_distribution("evalutils").version
+evalutils_version = version("evalutils")
 
 EVALUATION_CHOICES = ["Classification", "Segmentation", "Detection"]
 ALGORITHM_CHOICES = EVALUATION_CHOICES
@@ -40,7 +34,7 @@ def validate_python_module_name_fn(option):
             exit(1)
 
         if not re.match(MODULE_REGEX, arg) or arg in FORBIDDEN_NAMES:
-            click.echo(f"ERROR: '{arg}' is not a valid Python module name!")
+            click.echo(f"ERROR: {arg!r} is not a valid Python module name!")
             exit(1)
 
         return arg
@@ -96,6 +90,8 @@ def init_evaluation(challenge_name, kind, dev):
                 "evalutils_version": evalutils_version,
                 "challenge_kind": kind,
                 "dev_build": 1 if dev else 0,
+                "python_major_version": sys.version_info.major,
+                "python_minor_version": sys.version_info.minor,
             },
         )
         click.echo(f"Created project {challenge_name}")
@@ -186,6 +182,8 @@ def init_algorithm(algorithm_name, kind, dev):
                 "evalutils_name": __name__.split(".")[0],
                 "evalutils_version": evalutils_version,
                 "dev_build": 1 if dev else 0,
+                "python_major_version": sys.version_info.major,
+                "python_minor_version": sys.version_info.minor,
             },
         )
         click.echo(f"Created project {algorithm_name}")

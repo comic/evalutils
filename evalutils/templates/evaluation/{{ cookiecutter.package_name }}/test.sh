@@ -23,6 +23,6 @@ docker run --rm \
 
 docker run --rm \
         -v {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX:/output/ \
-        {{ cookiecutter.docker_base_container }} cat /output/metrics.json | python -m json.tool
+        python:{{ cookiecutter.python_major_version }}.{{ cookiecutter.python_minor_version }}-slim cat /output/metrics.json | python -m json.tool
 
 docker volume rm {{ cookiecutter.package_name|lower }}-output-$VOLUME_SUFFIX

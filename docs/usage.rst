@@ -67,7 +67,7 @@ The different challenge types that you can select are:
     For this sort of challenge, you may have many candidate points and many ground truth points per case.
     By default, the results per case are also reported.
 
-If you do not have a local python 3.7+ environment you can also
+If you do not have a local python 3.8+ environment you can also
 generate your project with docker by running a container and sharing your current user id:
 
 .. code-block:: console
@@ -396,7 +396,7 @@ The different algorithm types that you can select are:
     For instance, this evaluation could be used for detection of tumours in images.
     By default, the algorithm outputs a single `/output/results.json` which lists the results per case.
 
-If you do not have a local python 3.7+ environment you can also
+If you do not have a local python 3.8+ environment you can also
 generate your project with docker by running a container and sharing your current user id:
 
 .. code-block:: console

@@ -19,17 +19,10 @@
 #
 import os
 import sys
+from importlib.metadata import version as _get_version
 from typing import Dict, List
 
-try:
-    from importlib.metadata import version
-
-    evalutils_version = version("evalutils")
-except ImportError:
-    # py <= py37
-    from pkg_resources import get_distribution
-
-    evalutils_version = get_distribution("evalutils").version
+evalutils_version = _get_version("evalutils")
 
 sys.path.insert(0, os.path.abspath(".."))
 
