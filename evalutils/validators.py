@@ -102,7 +102,6 @@ class ExpectedColumnNamesValidator(DataFrameValidator):
         super().__init__()
 
     def validate(self, *, df: DataFrame):
-
         undefined_cols = [c for c in self._expected if c not in df.columns]
 
         if undefined_cols:
