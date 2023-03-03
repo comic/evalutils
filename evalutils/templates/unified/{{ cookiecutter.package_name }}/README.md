@@ -1,4 +1,4 @@
-# {{ cookiecutter.full_project_name }} Algorithm
+# {{ cookiecutter.full_project_name }} {{ cookiecutter.template_kind }}
 
 The source code for the {{ cookiecutter.template_kind.lower() }} container for
 {{ cookiecutter.full_project_name }}, generated with
