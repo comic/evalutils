@@ -85,7 +85,7 @@ def init_evaluation(challenge_name, kind, dev):
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "challenge_name": challenge_name,
+                "full_project_name": challenge_name,
                 "challenge_kind": kind,
                 **_get_cookiecutter_base_context(dev_build=dev),
             },
@@ -173,7 +173,7 @@ def init_algorithm(algorithm_name, kind, dev):
             template=str(template_dir.absolute()),
             no_input=True,
             extra_context={
-                "algorithm_name": algorithm_name,
+                "full_project_name": algorithm_name,
                 "algorithm_kind": kind,
                 **_get_cookiecutter_base_context(dev_build=dev),
             },

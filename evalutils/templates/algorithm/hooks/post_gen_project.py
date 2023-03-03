@@ -9,7 +9,6 @@ from evalutils.utils import (
 )
 
 ALGORITHM_KIND = "{{ cookiecutter.algorithm_kind }}"
-ALGORITHM_NAME = "{{ cookiecutter.algorithm_name }}"
 IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())

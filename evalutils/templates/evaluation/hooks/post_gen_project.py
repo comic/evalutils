@@ -9,7 +9,6 @@ from evalutils.utils import (
 )
 
 CHALLENGE_KIND = "{{ cookiecutter.challenge_kind }}"
-CHALLENGE_NAME = "{{ cookiecutter.challenge_name }}"
 IS_DEV_BUILD = int("{{ cookiecutter.dev_build }}") == 1
 
 template_dir = Path(os.getcwd())

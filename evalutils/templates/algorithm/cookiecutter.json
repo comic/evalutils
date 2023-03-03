@@ -1,11 +1,11 @@
 {
-    "algorithm_name": "",
+    "full_project_name": "",
     "algorithm_kind": [
         "Classification",
         "Segmentation",
         "Detection"
     ],
-    "package_name": "{{ cookiecutter.algorithm_name|replace(' ', '') }}",
+    "package_name": "{{ cookiecutter.full_project_name|replace(' ', '') }}",
     "evalutils_version": "",
     "dev_build": 0,
     "python_major_version": "",
