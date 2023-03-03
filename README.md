@@ -25,7 +25,7 @@ containers for grand-challenge.org.
 
 ## Getting Started
 
-[evalutils](https://github.com/comic/evalutils) requires Python 3.7 or
+[evalutils](https://github.com/comic/evalutils) requires Python 3.8 or
 above, and can be installed from `pip`.
 Please see the [Getting Started](https://comic.github.io/evalutils/usage.html)
 documentation for more details.

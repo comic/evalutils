@@ -17,7 +17,7 @@ classifiers = [
 evalutils = "evalutils.__main__:main"
 
 [tool.poetry.dependencies]
-python = ">=3.7.1,<3.11"  # Pandas requires py>=3.7.1
+python = "^3.8"
 imageio = { version = "*", extras=["tifffile"] }
 # Exclude 2.1.1.1 due to
 # https://github.com/SimpleITK/SimpleITK/issues/1627
@@ -27,12 +27,8 @@ cookiecutter = "*"
 click = "*"
 scipy = "*"
 scikit-learn = "*"
-numpy = [
-  { version = "^1.21", python = "<3.8" },
-  { version = "^1.22", python = ">=3.8,<3.11" }
-]
-pandas = "^1.3"
-setuptools = { version = "*", python = "~3.7" }
+numpy = ">=1.22"
+pandas = ">=1.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
@@ -53,7 +49,7 @@ line_length = 79
 
 [tool.black]
 line-length = 79
-target-version = ['py37']
+target-version = ['py38']
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -75,11 +71,10 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 isolated_build = True
-envlist = py{37, 38, 39, 310}
+envlist = py38, py39, py310
 
 [gh-actions]
 python =
-    3.7: py37
     3.8: py38
     3.9: py39
     3.10: py310
