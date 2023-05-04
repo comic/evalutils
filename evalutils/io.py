@@ -137,7 +137,7 @@ class ImageIOLoader(ImageLoader):
     @staticmethod
     def load_image(fname):
         with open(fname, "rb") as f:
-            with get_reader(f, mode="i", as_gray=True) as r:
+            with get_reader(f, mode="L") as r:
                 return r.get_data(0)
 
     @staticmethod
