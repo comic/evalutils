@@ -1,5 +1,9 @@
 # History
 
+## 0.4.1 (2023-05-11)
+
+ - Maximize pandas version to <2.0 as append is removed
+
 ## 0.4.0 (2023-03-03)
 
  - Removed support for Python 3.7

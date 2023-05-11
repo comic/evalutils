@@ -44,13 +44,11 @@ def test_image_io_loader():
     assert o["hash"] == loader.hash_image(img)
     assert img.shape == (584, 565)
 
+    non_image_fname = (
+        Path(__file__).parent / "resources" / "csv" / "algorithm_result.csv"
+    )
+
     with pytest.raises(FileLoaderError):
-        non_image_fname = (
-            Path(__file__).parent
-            / "resources"
-            / "csv"
-            / "algorithm_result.csv"
-        )
         ImageIOLoader().load(fname=non_image_fname)
 
 
@@ -64,11 +62,11 @@ def test_csv_loader():
         assert set(record.keys()) == {"file_id", "label"}
 
     assert len(records) == 13201
+    non_csv_filename = (
+        Path(__file__).parent / "resources" / "images" / "1_mask.png"
+    )
 
     with pytest.raises(FileLoaderError):
-        non_csv_filename = (
-            Path(__file__).parent / "resources" / "images" / "1_mask.png"
-        )
         CSVLoader().load(fname=non_csv_filename)
 
 
