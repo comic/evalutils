@@ -18,7 +18,7 @@ evalutils = "evalutils.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-imageio = { version = "*", extras=["tifffile"] }
+imageio = { version = ">=2.31", extras=["tifffile"] }
 # Exclude 2.1.1.1 due to
 # https://github.com/SimpleITK/SimpleITK/issues/1627
 # and https://github.com/python-poetry/poetry/issues/2453
