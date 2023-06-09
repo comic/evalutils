@@ -1,5 +1,10 @@
 # History
 
+## 0.4.2 (2023-06-09)
+
+ - Replace pandas append function with concat
+ - Revert pandas version limit
+
 ## 0.4.1 (2023-05-11)
 
  - Maximize pandas version to <2.0 as append is removed
