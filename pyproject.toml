@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "evalutils"
-version = "0.4.1"
+version = "0.4.2"
 description = "evalutils helps users create extensions for grand-challenge.org"
 authors = ["James Meakin <evalutils@jmsmkn.com>"]
 license = "MIT"
