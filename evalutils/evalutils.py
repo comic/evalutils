@@ -586,8 +586,14 @@ class ClassificationEvaluation(BaseEvaluation):
     def score(self):
         self._case_results = DataFrame()
         for idx, case in self._cases.iterrows():
-            self._case_results = self._case_results.append(
-                self.score_case(idx=idx, case=case), ignore_index=True
+            self._case_results = concat(
+                [
+                    self._case_results,
+                    DataFrame.from_records(
+                        [self.score_case(idx=idx, case=case)]
+                    ),
+                ],
+                ignore_index=True,
             )
         self._aggregate_results = self.score_aggregates()
 
@@ -653,11 +659,20 @@ class DetectionEvaluation(BaseEvaluation):
         self._case_results = DataFrame()
 
         for idx, case in enumerate(cases):
-            self._case_results = self._case_results.append(
-                self.score_case(
-                    idx=idx,
-                    case=self._cases.loc[self._cases[self._join_key] == case],
-                ),
+            self._case_results = concat(
+                [
+                    self._case_results,
+                    DataFrame.from_records(
+                        [
+                            self.score_case(
+                                idx=idx,
+                                case=self._cases.loc[
+                                    self._cases[self._join_key] == case
+                                ],
+                            )
+                        ]
+                    ),
+                ],
                 ignore_index=True,
             )
         self._aggregate_results = self.score_aggregates()
