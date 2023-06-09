@@ -1,8 +1,9 @@
 # History
 
-## 0.4.1 (2023-05-11)
+## 0.4.2 (2023-06-09)
 
- - Maximize pandas version to <2.0 as append is removed
+ - Replace pandas append function with concat
+ - Pin minimum version of `imageio`
 
 ## 0.4.0 (2023-03-03)
 
