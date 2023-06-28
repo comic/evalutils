@@ -29,7 +29,7 @@ from .io import (
     first_int_in_filename_key,
 )
 from .scorers import score_detection
-from .validators import DataFrameValidator, UniqueImagesValidator
+from .validators import DataFrameValidator
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +80,7 @@ class Algorithm(ABC):
             Default: `None` (alphanumerical)
         validators
             A dictionary containing the validators that will be used on the
-            loaded data per file_loader key. Default:
-            `evalutils.validators.UniqueImagesValidator` for `input_image`
+            loaded data per file_loader key. Default: {}
         output_file
             The path to the location where the results will be written.
             Default: `/output/results.json`
@@ -100,9 +99,7 @@ class Algorithm(ABC):
         self._case_results: List[Dict] = []
 
         self._validators: Dict[str, Tuple[DataFrameValidator, ...]] = (
-            dict(input_image=(UniqueImagesValidator(),))
-            if validators is None
-            else validators
+            {} if validators is None else validators
         )
         self._file_loaders: Dict[str, FileLoader] = (
             dict(input_image=SimpleITKLoader())
