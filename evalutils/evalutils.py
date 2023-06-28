@@ -99,9 +99,7 @@ class Algorithm(ABC):
         self._case_results: List[Dict] = []
 
         self._validators: Dict[str, Tuple[DataFrameValidator, ...]] = (
-            {}
-            if validators is None
-            else validators
+            {} if validators is None else validators
         )
         self._file_loaders: Dict[str, FileLoader] = (
             dict(input_image=SimpleITKLoader())
