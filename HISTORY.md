@@ -1,5 +1,11 @@
 # History
 
+## 0.5.0 (2024-08-07)
+
+- Removed templating
+- Added support for Python 3.12
+- Dropped support for Python 3.8
+
 ## 0.4.2 (2023-06-09)
 
  - Replace pandas append function with concat

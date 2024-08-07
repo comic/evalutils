@@ -1,195 +1,22 @@
-import gc
 from collections import namedtuple
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from numpy import ndarray
-from scipy.ndimage import binary_erosion, convolve, generate_binary_structure
+from scipy.ndimage import (
+    binary_erosion,
+    convolve,
+    distance_transform_edt,
+    generate_binary_structure,
+)
 
 VOXELSPACING_TYPE = Optional[
-    Union[Tuple[Union[float, int], ...], List[Union[float, int]], float, int]
+    Union[tuple[Union[float, int], ...], list[Union[float, int]], float, int]
 ]
 
 
-def distance_transform_edt_float32(  # noqa: C901
-    input,
-    sampling=None,
-    return_distances=True,
-    return_indices=False,
-    distances=None,
-    indices=None,
-):
-    """Memory efficient version of scipy.ndimage.distance_transform_edt
-
-    The same as scipy.ndimage.distance_transform_edt but
-    using float32 and better memory cleaning internally.
-
-    In addition to the distance transform, the feature transform can
-    be calculated. In this case the index of the closest background
-    element is returned along the first axis of the result.
-
-    Parameters
-    ----------
-    input
-        Input data to transform. Can be any type but will be converted
-        into binary: 1 wherever input equates to True, 0 elsewhere.
-    sampling
-        Spacing of elements along each dimension. If a sequence, must be of
-        length equal to the input rank; if a single number, this is used for
-        all axes. If not specified, a grid spacing of unity is implied.
-    return_distances
-        Whether to return distance matrix. At least one of
-        return_distances/return_indices must be True. Default is True.
-    return_indices
-        Whether to return indices matrix. Default is False.
-    distances
-        Used for output of distance array, must be of type float64.
-    indices
-        Used for output of indices, must be of type int32.
-
-    Returns
-    -------
-    distance_transform_edt
-        Either distance matrix, index matrix, or a list of the two,
-        depending on ``return_x`` flags and ``distance`` and ``indices``
-        input parameters.
-
-    Notes
-    -----
-
-    The euclidean distance transform gives values of the euclidean
-    distance:
-
-    .. code-block:: console
-
-                      n
-        y_i = sqrt(sum (x[i]-b[i])**2)
-                      i
-
-    where b[i] is the background point (value 0) with the smallest
-    Euclidean distance to input points x[i], and n is the
-    number of dimensions.
-
-    Copyright (C) 2003-2005 Peter J. Verveer
-
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-
-    1. Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-
-    2. Redistributions in binary form must reproduce the above
-       copyright notice, this list of conditions and the following
-       disclaimer in the documentation and/or other materials provided
-       with the distribution.
-
-    3. The name of the author may not be used to endorse or promote
-       products derived from this software without specific prior
-       written permission.
-
-    THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS
-    OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-    GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-    """
-    from scipy.ndimage import _nd_image, _ni_support
-
-    if (not return_distances) and (not return_indices):
-        msg = "at least one of distances/indices must be specified"
-        raise RuntimeError(msg)
-
-    ft_inplace = isinstance(indices, np.ndarray)
-    dt_inplace = isinstance(distances, np.ndarray)
-
-    # calculate the feature transform
-    input = np.atleast_1d(np.where(input, 1, 0).astype(np.int8))
-
-    garbage_collect = gc.collect if input.nbytes > 100e6 else lambda: None
-    garbage_collect()
-
-    input = input.astype(np.int32)
-    garbage_collect()
-
-    if sampling is not None:
-        sampling = _ni_support._normalize_sequence(sampling, input.ndim)
-        sampling = np.asarray(sampling, dtype=np.float64)
-        if not sampling.flags.contiguous:
-            sampling = sampling.copy()
-
-    if ft_inplace:
-        ft = indices
-        if ft.shape != (input.ndim,) + input.shape:
-            raise RuntimeError("indices has wrong shape")
-        if ft.dtype.type != np.int32:
-            raise RuntimeError("indices must be of int32 type")
-    else:
-        ft = np.zeros((input.ndim,) + input.shape, dtype=np.int32)
-
-    _nd_image.euclidean_feature_transform(input, sampling, ft)
-    input_shape = input.shape
-
-    del input
-    garbage_collect()
-
-    # if requested, calculate the distance transform
-    if return_distances:
-        # dt = ft - np.indices(input.shape, dtype=ft.dtype)
-        # Paul K. Gerke: Save a lot of memory by doing the operation
-        # column-wise and in-pace.
-
-        if return_indices:
-            dt = ft.copy()
-        else:
-            dt = ft
-            del ft
-
-        c_indices = np.indices((1,) + input_shape[1:], dtype=dt.dtype)
-        for c in range(input_shape[0]):
-            dt[:, c : (c + 1)] -= c_indices  # noqa: E203
-            c_indices[0] += 1
-
-        dt = dt.astype(np.float32, copy=False)
-        if sampling is not None:
-            for ii in range(len(sampling)):
-                dt[ii, ...] *= sampling[ii]
-        np.multiply(dt, dt, dt)
-        if dt_inplace:
-            dt = np.add.reduce(dt, axis=0)
-            if distances.shape != dt.shape:
-                raise RuntimeError("indices has wrong shape")
-            if distances.dtype.type != np.float32:
-                raise RuntimeError("indices must be of float32 type")
-            np.sqrt(dt, distances)
-        else:
-            dt = np.add.reduce(dt, axis=0)
-            dt = np.sqrt(dt)
-
-    # construct and return the result
-    result = []
-    if return_distances and not dt_inplace:
-        result.append(dt)
-    if return_indices and not ft_inplace:
-        result.append(ft)
-
-    if len(result) == 2:
-        return tuple(result)
-    elif len(result) == 1:
-        return result[0]
-    else:
-        return None
-
-
 def calculate_confusion_matrix(
-    y_true: ndarray, y_pred: ndarray, labels: List[int]
+    y_true: ndarray, y_pred: ndarray, labels: list[int]
 ) -> ndarray:
     """
     Efficient confusion matrix calculation, based on sklearn interface
@@ -340,7 +167,6 @@ def __surface_distances(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> ndarray:
     """
     Computes set of surface distances.
@@ -367,11 +193,6 @@ def __surface_distances(
         of the binary objects. This value is passed to
         `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -392,7 +213,7 @@ def __surface_distances(
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    return edt_method(~s2_b, sampling=voxelspacing)[s1_b]
+    return distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
 
 
 def hausdorff_distance(
@@ -400,7 +221,6 @@ def hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Hausdorff Distance (HD) between the binary objects
@@ -425,11 +245,6 @@ def hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -443,12 +258,8 @@ def hausdorff_distance(
     Implementation inspired by medpy.metric.binary
     http://pythonhosted.org/MedPy/_modules/medpy/metric/binary.html
     """
-    s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, edt_method=edt_method
-    )
-    s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, edt_method=edt_method
-    )
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
 
     return max(s1_dist.max(), s2_dist.max())
 
@@ -459,7 +270,6 @@ def percentile_hausdorff_distance(
     percentile: Union[int, float] = 0.95,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Nth Percentile Hausdorff Distance.
@@ -489,11 +299,6 @@ def percentile_hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -511,12 +316,8 @@ def percentile_hausdorff_distance(
     -----
     This is a real metric.
     """
-    s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, edt_method=edt_method
-    )
-    s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, edt_method=edt_method
-    )
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
 
     s1_dist.sort()
     s2_dist.sort()
@@ -532,7 +333,6 @@ def modified_hausdorff_distance(
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Modified Hausdorff Distance (MHD) between the
@@ -557,11 +357,6 @@ def modified_hausdorff_distance(
         of the binary objects. This value is passed to
         `scipy.ndimage.generate_binary_structure` and should usually
         be :math:`> 1`.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -574,12 +369,8 @@ def modified_hausdorff_distance(
     -----
     This is a real metric.
     """
-    s1_dist = __surface_distances(
-        s1, s2, voxelspacing, connectivity, edt_method=edt_method
-    )
-    s2_dist = __surface_distances(
-        s2, s1, voxelspacing, connectivity, edt_method=edt_method
-    )
+    s1_dist = __surface_distances(s1, s2, voxelspacing, connectivity)
+    s2_dist = __surface_distances(s2, s1, voxelspacing, connectivity)
 
     return max(s1_dist.mean(), s2_dist.mean())
 
@@ -668,7 +459,6 @@ def __directed_contour_distances(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> ndarray:
     """
     Computes set of surface contour distances.
@@ -693,11 +483,6 @@ def __directed_contour_distances(
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -720,7 +505,7 @@ def __directed_contour_distances(
     # all elements in neighborhood are fully checked! equals np.ones((3,3,3))
     # for s1.ndim == 3
     footprint = generate_binary_structure(s1.ndim, s1.ndim)
-    df = edt_method(~s2_b, sampling=voxelspacing)
+    df = distance_transform_edt(~s2_b, sampling=voxelspacing)
 
     # generate mask for elements not entirly enclosed by mask s1_b
     # (contours & non-zero elements)
@@ -737,7 +522,6 @@ def mean_contour_distance(
     s1: ndarray,
     s2: ndarray,
     voxelspacing: VOXELSPACING_TYPE = None,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> float:
     """
     Computes the (symmetric) Mean Contour Distance between the binary objects
@@ -757,11 +541,6 @@ def mean_contour_distance(
         along each dimension. If a sequence, must be of length equal to
         the input rank; if a single number, this is used for all axes. If
         not specified, a grid spacing of unity is implied.
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -773,12 +552,8 @@ def mean_contour_distance(
     -----
     This is a real metric that mimics the ITK MeanContourDistanceFilter.
     """
-    s1_c_dist = __directed_contour_distances(
-        s1, s2, voxelspacing, edt_method=edt_method
-    )
-    s2_c_dist = __directed_contour_distances(
-        s2, s1, voxelspacing, edt_method=edt_method
-    )
+    s1_c_dist = __directed_contour_distances(s1, s2, voxelspacing)
+    s2_c_dist = __directed_contour_distances(s2, s1, voxelspacing)
 
     return max(s1_c_dist.mean(), s2_c_dist.mean())
 
@@ -795,7 +570,6 @@ def hausdorff_distance_measures(
     voxelspacing: VOXELSPACING_TYPE = None,
     connectivity: int = 1,
     percentile: float = 0.95,
-    edt_method: Callable = distance_transform_edt_float32,
 ) -> HausdorffMeasures:
     """
     Returns multiple Hausdorff measures - (hd, modified_hd, percentile_hd)
@@ -822,11 +596,6 @@ def hausdorff_distance_measures(
         be :math:`> 1`.
     percentile
         The percentile at which to calculate the Hausdorff Distance
-    edt_method
-        Method used for computing the euclidean distance transform. By default
-        it uses a variant on the `scipy.ndimage.distance_transform_edt`
-        method that uses float32 data to reduce memory costs at the cost of
-        some additional compute time.
 
     Returns
     -------
@@ -845,8 +614,8 @@ def hausdorff_distance_measures(
         s2_b = s2_b & ~binary_erosion(s2_b, structure=footprint, iterations=1)
         s1_b = s1_b & ~binary_erosion(s1_b, structure=footprint, iterations=1)
 
-    s1_dist = edt_method(~s2_b, sampling=voxelspacing)[s1_b]
-    s2_dist = edt_method(~s1_b, sampling=voxelspacing)[s2_b]
+    s1_dist = distance_transform_edt(~s2_b, sampling=voxelspacing)[s1_b]
+    s2_dist = distance_transform_edt(~s1_b, sampling=voxelspacing)[s2_b]
 
     s1_dist.sort()
     s2_dist.sort()

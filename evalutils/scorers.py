@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import List, Tuple
 
 from numpy import array
 from sklearn.neighbors import BallTree
@@ -11,8 +10,8 @@ DetectionScore = namedtuple(
 
 def score_detection(
     *,
-    ground_truth: List[Tuple[float, ...]],
-    predictions: List[Tuple[float, ...]],
+    ground_truth: list[tuple[float, ...]],
+    predictions: list[tuple[float, ...]],
     radius: float = 1.0,
 ) -> DetectionScore:
     """
@@ -97,10 +96,10 @@ def score_detection(
 
 def find_hits_for_targets(
     *,
-    targets: List[Tuple[float, ...]],
-    predictions: List[Tuple[float, ...]],
+    targets: list[tuple[float, ...]],
+    predictions: list[tuple[float, ...]],
     radius: float,
-) -> List[Tuple[int, ...]]:
+) -> list[tuple[int, ...]]:
     """
     Generates a list of the predicted points that are within a radius r of the
     targets. The indicies are returned in sorted order, from closest to

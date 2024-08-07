@@ -2,27 +2,6 @@
 Modules
 =======
 
-
-Evalutils
----------
-
-.. py:module:: evalutils
-
-.. automodule:: evalutils.evalutils
-   :members:
-
-IO
---
-
-.. automodule:: evalutils.io
-   :members:
-
-Validators
-----------
-
-.. automodule:: evalutils.validators
-   :members:
-
 Scorers
 -------
 
@@ -37,8 +16,8 @@ Annotations
 .. autoclass:: BoundingBox()
    :members:
 
-Statistics
-----------
+Stats
+-----
 
 .. automodule:: evalutils.stats
    :members:

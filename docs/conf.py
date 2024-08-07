@@ -20,7 +20,6 @@
 import os
 import sys
 from importlib.metadata import version as _get_version
-from typing import Dict, List
 
 evalutils_version = _get_version("evalutils")
 
@@ -111,7 +110,7 @@ html_theme = "alabaster"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path: List[str] = []
+html_static_path: list[str] = []
 
 
 # -- Options for HTMLHelp output ---------------------------------------
@@ -122,7 +121,7 @@ htmlhelp_basename = "evalutilsdoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_elements: Dict[str, str] = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
