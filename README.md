@@ -13,8 +13,11 @@ evalutils contains useful functions for evaluating machine learning models in th
 
 ## Features
 
-  - Interface to SciKit-Learn metrics
   - Bounding box annotations with Jaccard Index calculations
+  - Calculations of bootstrapped ROC curves
+  - Scoring for detection tasks
+  - Efficient calculation of confusion matrices, jaccard scores, dice scores, hausdorff distances,
+    absolute volume differences, and relative volume differences
 
 ## Getting Started
 

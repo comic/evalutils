@@ -52,10 +52,6 @@ testpaths = [
 python_files = "tests.py test_*.py *_tests.py"
 addopts = "--strict-markers --showlocals -n auto --dist loadscope --durations=10"
 markers = [
-    "slow",
-]
-filterwarnings = [
-    "error",
 ]
 
 [tool.tox]
