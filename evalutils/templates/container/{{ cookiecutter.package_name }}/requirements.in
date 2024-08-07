@@ -1,3 +1,0 @@
-{%- for package, version in cookiecutter.requirements.items() %}
-{{ package }}{{ version }}
-{%- endfor %}

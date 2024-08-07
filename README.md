@@ -14,11 +14,6 @@ containers for grand-challenge.org.
 
 ## Features
 
-  - Generation your challenge evaluation project boilerplate using
-    [Cookiecutter](https://github.com/audreyr/cookiecutter)
-  - Scripts to build, test and export your generated docker container
-    for grand-challenge.org
-  - Loading of CSV, ITK and Pillow compatible prediction files
   - Validation of submitted predictions
   - Interface to SciKit-Learn metrics and Pandas aggregations
   - Bounding box annotations with Jaccard Index calculations

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "evalutils"
-version = "0.4.2"
+version = "0.5.0"
 description = "evalutils helps users create extensions for grand-challenge.org"
 authors = ["James Meakin <evalutils@jmsmkn.com>"]
 license = "MIT"
@@ -18,18 +18,9 @@ evalutils = "evalutils.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-imageio = { version = ">=2.31", extras=["tifffile"] }
-# Exclude 2.1.1.1 due to
-# https://github.com/SimpleITK/SimpleITK/issues/1627
-# and https://github.com/python-poetry/poetry/issues/2453
-SimpleITK = ">=2.0,!=2.1.1.1"
-cookiecutter = "*"
-click = "*"
 scipy = "*"
+numpy = "*"
 scikit-learn = "*"
-numpy = ">=1.22"
-pandas = ">=1.3"
-pip-tools = ">=6"
 
 [tool.poetry.dev-dependencies]
 pytest = "*"
@@ -38,6 +29,7 @@ pytest-randomly = "*"
 pytest-cov = "*"
 sphinx = "*"
 sphinx_autodoc_typehints = "*"
+SimpleITK = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -72,7 +64,7 @@ filterwarnings = [
 legacy_tox_ini = """
 [tox]
 isolated_build = True
-envlist = py38, py39, py310, p311
+envlist = py38, py39, py310, py311, py312
 
 [gh-actions]
 python =
@@ -80,6 +72,7 @@ python =
     3.9: py39
     3.10: py310
     3.11: py311
+    3.12: py312
 
 [testenv]
 allowlist_externals =
