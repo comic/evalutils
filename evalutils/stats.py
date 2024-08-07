@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from numpy import ndarray
@@ -11,12 +11,12 @@ from scipy.ndimage import (
 )
 
 VOXELSPACING_TYPE = Optional[
-    Union[Tuple[Union[float, int], ...], List[Union[float, int]], float, int]
+    Union[tuple[Union[float, int], ...], list[Union[float, int]], float, int]
 ]
 
 
 def calculate_confusion_matrix(
-    y_true: ndarray, y_pred: ndarray, labels: List[int]
+    y_true: ndarray, y_pred: ndarray, labels: list[int]
 ) -> ndarray:
     """
     Efficient confusion matrix calculation, based on sklearn interface

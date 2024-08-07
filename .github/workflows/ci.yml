@@ -8,7 +8,7 @@ on:
       - published
 
 env:
-  MINIMUM_PYTHON_VERSION: "3.8"
+  MINIMUM_PYTHON_VERSION: "3.9"
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python ${{ matrix.python-version }}

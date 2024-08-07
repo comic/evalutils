@@ -4,6 +4,7 @@
 
 - Removed templating
 - Added support for Python 3.12
+- Dropped support for Python 3.8
 
 ## 0.4.2 (2023-06-09)
 

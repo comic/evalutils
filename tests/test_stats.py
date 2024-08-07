@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import pytest
 import scipy.ndimage as ndimage
@@ -20,13 +18,11 @@ def reset_seeds():
 @pytest.mark.parametrize(
     "shape, dtype", (((12,), np.int32), ((10, 2), np.int32), ((10,), np.int8))
 )
-def test_edt32_indices_wrong_format(shape: Tuple[int, ...], dtype: np.dtype):
+def test_edt32_indices_wrong_format(shape: tuple[int, ...], dtype: np.dtype):
     x = np.random.random((10,)) > 0.5
     indices = np.zeros((x.ndim,) + shape, dtype=dtype)
     with pytest.raises(RuntimeError):
-        stats.distance_transform_edt_float32(
-            input=x, sampling=[1.2], indices=indices
-        )
+        stats.distance_transform_edt(input=x, sampling=[1.2], indices=indices)
 
 
 @pytest.mark.parametrize(

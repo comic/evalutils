@@ -1,4 +1,4 @@
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple
 
 import numpy as np
 from numpy import ndarray
@@ -55,9 +55,9 @@ def get_bootstrapped_roc_ci_curves(
     """
 
     rng_seed = 40  # control reproducibility
-    bootstrapped_az_scores: List[float] = []
+    bootstrapped_az_scores: list[float] = []
 
-    tprs_list: List[ndarray] = []
+    tprs_list: list[ndarray] = []
     base_fpr = np.linspace(0, 1, 101)
     rng = np.random.RandomState(rng_seed)
 
@@ -114,7 +114,7 @@ def get_bootstrapped_roc_ci_curves(
 
 
 def average_roc_curves(
-    roc_curves: List[BootstrappedROCCICurves], bins: int = 200
+    roc_curves: list[BootstrappedROCCICurves], bins: int = 200
 ) -> BootstrappedROCCICurves:
     """
     Averages ROC curves using vertical averaging (fixed FP rates),
@@ -237,8 +237,8 @@ def get_bootstrapped_ci_point_error(
         The fpr vals (one per ROC point) representing the highest val in CI
     """
     rng_seed = 40  # control reproducibility
-    tprs_list: List[ndarray] = []
-    fprs_list: List[ndarray] = []
+    tprs_list: list[ndarray] = []
+    fprs_list: list[ndarray] = []
     rng = np.random.RandomState(rng_seed)
 
     num_possible_scores = len(np.unique(y_score))
@@ -302,7 +302,7 @@ def get_bootstrapped_ci_point_error(
 
 def _get_confidence_intervals(
     *, n_bootstraps: int, one_sided_ci: float, points_array
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     ci_upper = []
     ci_lower = []
 

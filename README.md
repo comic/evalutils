@@ -14,13 +14,12 @@ containers for grand-challenge.org.
 
 ## Features
 
-  - Validation of submitted predictions
-  - Interface to SciKit-Learn metrics and Pandas aggregations
+  - Interface to SciKit-Learn metrics
   - Bounding box annotations with Jaccard Index calculations
 
 ## Getting Started
 
-[evalutils](https://github.com/comic/evalutils) requires Python 3.8 or
+[evalutils](https://github.com/comic/evalutils) requires Python 3.9 or
 above, and can be installed from `pip`.
 Please see the [Getting Started](https://comic.github.io/evalutils/usage.html)
 documentation for more details.
