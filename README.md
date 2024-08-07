@@ -6,8 +6,7 @@
 [![Documentation Status](https://img.shields.io/badge/docs-passing-4a4c4c1.svg)](https://comic.github.io/evalutils/)
 [![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
-evalutils helps challenge administrators easily create evaluation
-containers for grand-challenge.org.
+evalutils contains useful functions for evaluating machine learning models in the context of medical imaging.
 
   - Free software: MIT license
   - Documentation: <https://comic.github.io/evalutils/>.
@@ -19,7 +18,5 @@ containers for grand-challenge.org.
 
 ## Getting Started
 
-[evalutils](https://github.com/comic/evalutils) requires Python 3.9 or
-above, and can be installed from `pip`.
-Please see the [Getting Started](https://comic.github.io/evalutils/usage.html)
-documentation for more details.
+[evalutils](https://github.com/comic/evalutils) requires Python 3.9 or above, and can be installed from `pip`.
+Please see the [Getting Started](https://comic.github.io/evalutils/usage.html) documentation for more details.

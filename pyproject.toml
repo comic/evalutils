@@ -56,8 +56,6 @@ markers = [
 ]
 filterwarnings = [
     "error",
-    "ignore:.*The default dtype for empty Series will be 'object' instead of 'float64' in a future version.*",
-    "ignore:.*Use pandas.concat instead\\.:FutureWarning",
 ]
 
 [tool.tox]
